@@ -38,10 +38,15 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
               ? session.payment_intent
               : session.payment_intent?.id ?? null;
 
-            // Mark pending row as completed and grant credit
+            const kind = (session.metadata?.kind as string) || "identity";
+            const journeyMetaId = session.metadata?.journeyId || null;
+            const userIdMeta = session.metadata?.userId;
+
+            // Mark pending row completed (or insert if missing) and capture id
+            let payRowId: string | null = null;
             const { data: existing } = await supabaseAdmin
               .from("payment_transactions")
-              .select("id, credits_remaining")
+              .select("id")
               .eq("stripe_session_id", sessionId)
               .maybeSingle();
 
@@ -54,9 +59,10 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                   credits_remaining: 1,
                 })
                 .eq("id", existing.id);
-            } else if (session.metadata?.userId) {
-              await supabaseAdmin.from("payment_transactions").insert({
-                user_id: session.metadata.userId,
+              payRowId = existing.id;
+            } else if (userIdMeta) {
+              const { data: inserted } = await supabaseAdmin.from("payment_transactions").insert({
+                user_id: userIdMeta,
                 stripe_session_id: sessionId,
                 stripe_payment_intent: paymentIntentId,
                 amount_cents: session.amount_total ?? 299,
@@ -65,7 +71,49 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                 credits_granted: 1,
                 credits_remaining: 1,
                 env,
-              });
+                kind,
+              }).select("id").single();
+              payRowId = inserted?.id ?? null;
+            }
+
+            // Auto-issue passport on completed passport payment
+            if (kind === "passport" && payRowId && userIdMeta) {
+              const { data: existingP } = await supabaseAdmin
+                .from("passports").select("id").eq("user_id", userIdMeta).maybeSingle();
+              if (!existingP) {
+                const num = "AP-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+                await supabaseAdmin.from("passports").insert({
+                  user_id: userIdMeta, passport_number: num, origin_planet: "Terra", payment_id: payRowId,
+                });
+              }
+              await supabaseAdmin.from("payment_transactions").update({ credits_remaining: 0 }).eq("id", payRowId);
+            }
+
+            // Auto-issue visa for the journey's current level
+            if (kind === "visa" && payRowId && userIdMeta && journeyMetaId) {
+              const { data: journey } = await supabaseAdmin
+                .from("journeys").select("*").eq("id", journeyMetaId).eq("user_id", userIdMeta).maybeSingle();
+              if (journey && journey.status === "active") {
+                const { DESTINATIONS, destinationForLevel } = await import("@/lib/intergalactic");
+                const dest = destinationForLevel(journey.current_level);
+                await supabaseAdmin.from("visas").insert({
+                  user_id: userIdMeta, journey_id: journey.id, destination_id: dest.id,
+                  destination_name: dest.name, transport: dest.transport, payment_id: payRowId, kind: "normal",
+                }).then(() => {}, () => {});
+                if (journey.current_level >= DESTINATIONS.length) {
+                  await supabaseAdmin.from("journeys").update({
+                    status: "completed",
+                    final_destination_name: dest.name,
+                    final_destination_kind: "normal",
+                    completed_at: new Date().toISOString(),
+                  }).eq("id", journey.id);
+                } else {
+                  await supabaseAdmin.from("journeys").update({
+                    current_level: journey.current_level + 1, attempts_used: 0,
+                  }).eq("id", journey.id);
+                }
+                await supabaseAdmin.from("payment_transactions").update({ credits_remaining: 0 }).eq("id", payRowId);
+              }
             }
           }
 

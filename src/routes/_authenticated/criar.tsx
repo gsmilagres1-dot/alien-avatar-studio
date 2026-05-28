@@ -221,6 +221,7 @@ function Criar() {
           {step === "final" && savedIdentity && (
             <FinalView
               identity={savedIdentity}
+              identityId={savedIdentity.id}
               avatarUrl={savedIdentity.avatarUrl}
               shipImageUrl={savedIdentity.shipImageUrl}
               shipCategory={shipCategory}
@@ -228,6 +229,7 @@ function Criar() {
               shipLoading={shipLoading}
               onGenShip={genShip}
               onNew={() => { navigate({ to: "/_authenticated/criar" }); window.location.reload(); }}
+              onTravel={() => navigate({ to: "/_authenticated/galaxia", search: { identityId: savedIdentity.id } })}
             />
           )}
         </div>
@@ -238,6 +240,7 @@ function Criar() {
 
 function FinalView(props: {
   identity: AlienIdentity;
+  identityId: string;
   avatarUrl: string;
   shipImageUrl: string | null;
   shipCategory: "esportiva" | "offroad" | "corrida";
@@ -245,6 +248,7 @@ function FinalView(props: {
   shipLoading: boolean;
   onGenShip: () => void;
   onNew: () => void;
+  onTravel: () => void;
 }) {
   const url = typeof window !== "undefined" ? window.location.origin : "";
   return (
@@ -285,6 +289,9 @@ function FinalView(props: {
       <div className="mt-8 space-y-3">
         <ShareButtons url={url} text={`Sou ${props.identity.alienName}, ${props.identity.species} de ${props.identity.planetName}. Crie a sua identidade alien:`} />
         <div className="flex flex-wrap gap-2 justify-center">
+          <button onClick={props.onTravel} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-alien-grad text-primary-foreground font-bold text-xs shadow-neon">
+            <Rocket className="w-3.5 h-3.5" /> Viajar pela galáxia
+          </button>
           <button onClick={() => window.print()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-xs">
             <Printer className="w-3.5 h-3.5" /> Imprimir crachá
           </button>

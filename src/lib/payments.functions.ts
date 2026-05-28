@@ -4,12 +4,19 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createStripeClient, getStripeErrorMessage, type StripeEnv } from "@/lib/stripe.server";
 
-const PRICE_ID = "alien_identity_single";
-const PRICE_AMOUNT_CENTS = 299;
+type Kind = "identity" | "passport" | "visa";
+
+const PRICES: Record<Kind, { lookup: string; amount: number }> = {
+  identity: { lookup: "alien_identity_single", amount: 299 },
+  passport: { lookup: "alien_passport_single", amount: 299 },
+  visa:     { lookup: "alien_visa_single",     amount: 199 },
+};
 
 const input = z.object({
   environment: z.enum(["sandbox", "live"]),
   returnUrl: z.string().url(),
+  kind: z.enum(["identity", "passport", "visa"]).default("identity"),
+  journeyId: z.string().uuid().optional(),
 });
 
 type Result = { clientSecret: string; paymentRowId: string } | { error: string };
@@ -48,9 +55,11 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     try {
       const { userId, claims } = context;
       const env: StripeEnv = data.environment;
+      const kind: Kind = data.kind;
+      const cfg = PRICES[kind];
       const stripe = createStripeClient(env);
 
-      const prices = await stripe.prices.list({ lookup_keys: [PRICE_ID] });
+      const prices = await stripe.prices.list({ lookup_keys: [cfg.lookup] });
       if (!prices.data.length) throw new Error("Preço não configurado");
       const stripePrice = prices.data[0];
 
@@ -67,21 +76,21 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         return_url: data.returnUrl,
         customer: customerId,
         payment_intent_data: { description: product.name },
-        metadata: { userId },
+        metadata: { userId, kind, journeyId: data.journeyId ?? "" },
       });
 
-      // Pre-insert pending row keyed by stripe session id (webhook will mark completed)
       const { data: row, error } = await supabaseAdmin
         .from("payment_transactions")
         .insert({
           user_id: userId,
           stripe_session_id: session.id,
-          amount_cents: PRICE_AMOUNT_CENTS,
+          amount_cents: cfg.amount,
           currency: "brl",
           status: "pending",
           credits_granted: 1,
           credits_remaining: 0,
           env,
+          kind,
         })
         .select("id")
         .single();

@@ -3,11 +3,17 @@ import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { useServerFn } from "@tanstack/react-start";
 import { createCheckoutSession } from "@/lib/payments.functions";
 
-export function StripeEmbeddedCheckout({ returnUrl }: { returnUrl: string }) {
+interface Props {
+  returnUrl: string;
+  kind?: "identity" | "passport" | "visa";
+  journeyId?: string;
+}
+
+export function StripeEmbeddedCheckout({ returnUrl, kind = "identity", journeyId }: Props) {
   const create = useServerFn(createCheckoutSession);
 
   const fetchClientSecret = async (): Promise<string> => {
-    const result = await create({ data: { environment: getStripeEnvironment(), returnUrl } });
+    const result = await create({ data: { environment: getStripeEnvironment(), returnUrl, kind, journeyId } });
     if ("error" in result) throw new Error(result.error);
     if (!result.clientSecret) throw new Error("Sem client secret");
     return result.clientSecret;
