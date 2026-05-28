@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Camera, Loader2, Rocket, Sparkles, Wand2, Download, Calendar as CalendarIcon } from "lucide-react";
 import { PLANETS, generateAlienIdentity, type AlienIdentity, type PlanetId } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
