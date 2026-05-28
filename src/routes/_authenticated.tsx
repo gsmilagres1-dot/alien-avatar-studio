@@ -32,6 +32,9 @@ function AuthLayout() {
             <Link to="/_authenticated/criar" className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
               <Rocket className="w-3.5 h-3.5" /> Criar
             </Link>
+            <Link to="/_authenticated/galaxia" className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
+              <Globe2 className="w-3.5 h-3.5" /> Galáxia
+            </Link>
             <Link to="/_authenticated/galeria" className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
               <Images className="w-3.5 h-3.5" /> Galeria
             </Link>
