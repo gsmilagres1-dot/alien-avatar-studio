@@ -352,3 +352,86 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
+
+function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [raw, setRaw] = useState("");
+  const hiddenDateRef = useRef<HTMLInputElement>(null);
+
+  // Sync internal display format when external ISO value changes
+  useState(() => {
+    if (value) {
+      const [y, m, d] = value.split("-");
+      if (y && m && d) setRaw(`${d}/${m}/${y}`);
+    } else {
+      setRaw("");
+    }
+  });
+
+  function parseRaw(input: string) {
+    const digits = input.replace(/\D/g, "");
+    let display = "";
+    let iso = "";
+
+    if (digits.length >= 2) display = digits.slice(0, 2);
+    if (digits.length >= 4) display += "/" + digits.slice(2, 4);
+    if (digits.length >= 6) display += "/" + digits.slice(4, 8);
+
+    if (digits.length === 8) {
+      const d = digits.slice(0, 2);
+      const m = digits.slice(2, 4);
+      const y = digits.slice(4, 8);
+      iso = `${y}-${m}-${d}`;
+      // Validate date roughly
+      const dd = parseInt(d, 10);
+      const mm = parseInt(m, 10);
+      const yy = parseInt(y, 10);
+      if (dd > 0 && dd <= 31 && mm > 0 && mm <= 12 && yy >= 1900 && yy <= 2100) {
+        onChange(iso);
+      } else {
+        onChange("");
+      }
+    } else {
+      onChange("");
+    }
+
+    setRaw(display);
+  }
+
+  function onPickCalendar(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value; // YYYY-MM-DD
+    if (v) {
+      const [y, m, d] = v.split("-");
+      setRaw(`${d}/${m}/${y}`);
+      onChange(v);
+    }
+  }
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        inputMode="numeric"
+        placeholder="DD/MM/AAAA"
+        value={raw}
+        onChange={(e) => parseRaw(e.target.value)}
+        className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pr-12"
+      />
+      <button
+        type="button"
+        onClick={() => hiddenDateRef.current?.showPicker?.()}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent transition-colors"
+        aria-label="Abrir calendário"
+      >
+        <CalendarIcon className="w-5 h-5" />
+      </button>
+      <input
+        ref={hiddenDateRef}
+        type="date"
+        value={value}
+        onChange={onPickCalendar}
+        className="sr-only"
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
