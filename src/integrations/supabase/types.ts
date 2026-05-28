@@ -123,6 +123,39 @@ export type Database = {
           },
         ]
       }
+      passports: {
+        Row: {
+          id: string
+          issued_at: string
+          level: number
+          origin_planet: string
+          passport_number: string
+          payment_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          issued_at?: string
+          level?: number
+          origin_planet: string
+          passport_number: string
+          payment_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          issued_at?: string
+          level?: number
+          origin_planet?: string
+          passport_number?: string
+          payment_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           amount_cents: number
@@ -132,6 +165,7 @@ export type Database = {
           currency: string
           env: string
           id: string
+          kind: string
           status: string
           stripe_payment_intent: string | null
           stripe_session_id: string | null
@@ -146,6 +180,7 @@ export type Database = {
           currency?: string
           env?: string
           id?: string
+          kind?: string
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
@@ -160,6 +195,7 @@ export type Database = {
           currency?: string
           env?: string
           id?: string
+          kind?: string
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
@@ -188,6 +224,78 @@ export type Database = {
           display_name?: string | null
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_attempts: {
+        Row: {
+          answers: Json | null
+          created_at: string
+          id: string
+          level: number
+          passed: boolean
+          questions: Json | null
+          score: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          created_at?: string
+          id?: string
+          level: number
+          passed?: boolean
+          questions?: Json | null
+          score: number
+          total: number
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          created_at?: string
+          id?: string
+          level?: number
+          passed?: boolean
+          questions?: Json | null
+          score?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      visas: {
+        Row: {
+          destination_id: string
+          destination_name: string
+          expires_at: string | null
+          id: string
+          issued_at: string
+          payment_id: string | null
+          status: string
+          transport: string
+          user_id: string
+        }
+        Insert: {
+          destination_id: string
+          destination_name: string
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          payment_id?: string | null
+          status?: string
+          transport: string
+          user_id: string
+        }
+        Update: {
+          destination_id?: string
+          destination_name?: string
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          payment_id?: string | null
+          status?: string
+          transport?: string
           user_id?: string
         }
         Relationships: []
