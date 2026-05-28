@@ -358,19 +358,18 @@ function DateInput({ value, onChange }: { value: string; onChange: (v: string) =
   const hiddenDateRef = useRef<HTMLInputElement>(null);
 
   // Sync internal display format when external ISO value changes
-  useState(() => {
+  useEffect(() => {
     if (value) {
       const [y, m, d] = value.split("-");
       if (y && m && d) setRaw(`${d}/${m}/${y}`);
     } else {
       setRaw("");
     }
-  });
+  }, [value]);
 
   function parseRaw(input: string) {
     const digits = input.replace(/\D/g, "");
     let display = "";
-    let iso = "";
 
     if (digits.length >= 2) display = digits.slice(0, 2);
     if (digits.length >= 4) display += "/" + digits.slice(2, 4);
@@ -380,7 +379,7 @@ function DateInput({ value, onChange }: { value: string; onChange: (v: string) =
       const d = digits.slice(0, 2);
       const m = digits.slice(2, 4);
       const y = digits.slice(4, 8);
-      iso = `${y}-${m}-${d}`;
+      const iso = `${y}-${m}-${d}`;
       // Validate date roughly
       const dd = parseInt(d, 10);
       const mm = parseInt(m, 10);
