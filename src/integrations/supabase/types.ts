@@ -123,6 +123,56 @@ export type Database = {
           },
         ]
       }
+      journeys: {
+        Row: {
+          attempts_used: number
+          completed_at: string | null
+          created_at: string
+          current_level: number
+          final_destination_kind: string | null
+          final_destination_name: string | null
+          id: string
+          identity_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts_used?: number
+          completed_at?: string | null
+          created_at?: string
+          current_level?: number
+          final_destination_kind?: string | null
+          final_destination_name?: string | null
+          id?: string
+          identity_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts_used?: number
+          completed_at?: string | null
+          created_at?: string
+          current_level?: number
+          final_destination_kind?: string | null
+          final_destination_name?: string | null
+          id?: string
+          identity_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journeys_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: true
+            referencedRelation: "identities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       passports: {
         Row: {
           id: string
@@ -233,6 +283,7 @@ export type Database = {
           answers: Json | null
           created_at: string
           id: string
+          journey_id: string | null
           level: number
           passed: boolean
           questions: Json | null
@@ -244,6 +295,7 @@ export type Database = {
           answers?: Json | null
           created_at?: string
           id?: string
+          journey_id?: string | null
           level: number
           passed?: boolean
           questions?: Json | null
@@ -255,6 +307,7 @@ export type Database = {
           answers?: Json | null
           created_at?: string
           id?: string
+          journey_id?: string | null
           level?: number
           passed?: boolean
           questions?: Json | null
@@ -262,7 +315,15 @@ export type Database = {
           total?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       visas: {
         Row: {
@@ -271,6 +332,8 @@ export type Database = {
           expires_at: string | null
           id: string
           issued_at: string
+          journey_id: string | null
+          kind: string
           payment_id: string | null
           status: string
           transport: string
@@ -282,6 +345,8 @@ export type Database = {
           expires_at?: string | null
           id?: string
           issued_at?: string
+          journey_id?: string | null
+          kind?: string
           payment_id?: string | null
           status?: string
           transport: string
@@ -293,12 +358,22 @@ export type Database = {
           expires_at?: string | null
           id?: string
           issued_at?: string
+          journey_id?: string | null
+          kind?: string
           payment_id?: string | null
           status?: string
           transport?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "visas_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
