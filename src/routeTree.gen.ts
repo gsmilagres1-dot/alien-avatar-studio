@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthenticatedGaleriaRouteImport } from './routes/_authenticated/galeria'
+import { Route as AuthenticatedGalaxiaRouteImport } from './routes/_authenticated/galaxia'
 import { Route as AuthenticatedCriarRouteImport } from './routes/_authenticated/criar'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -41,6 +42,11 @@ const AuthenticatedGaleriaRoute = AuthenticatedGaleriaRouteImport.update({
   path: '/galeria',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGalaxiaRoute = AuthenticatedGalaxiaRouteImport.update({
+  id: '/galaxia',
+  path: '/galaxia',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCriarRoute = AuthenticatedCriarRouteImport.update({
   id: '/criar',
   path: '/criar',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/criar': typeof AuthenticatedCriarRoute
+  '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/criar': typeof AuthenticatedCriarRoute
+  '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/criar': typeof AuthenticatedCriarRoute
+  '/_authenticated/galaxia': typeof AuthenticatedGalaxiaRoute
   '/_authenticated/galeria': typeof AuthenticatedGaleriaRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/criar'
+    | '/galaxia'
     | '/galeria'
     | '/checkout/return'
     | '/api/public/payments/webhook'
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/criar'
+    | '/galaxia'
     | '/galeria'
     | '/checkout/return'
     | '/api/public/payments/webhook'
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/criar'
+    | '/_authenticated/galaxia'
     | '/_authenticated/galeria'
     | '/checkout/return'
     | '/api/public/payments/webhook'
@@ -152,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGaleriaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/galaxia': {
+      id: '/_authenticated/galaxia'
+      path: '/galaxia'
+      fullPath: '/galaxia'
+      preLoaderRoute: typeof AuthenticatedGalaxiaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/criar': {
       id: '/_authenticated/criar'
       path: '/criar'
@@ -171,11 +190,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCriarRoute: typeof AuthenticatedCriarRoute
+  AuthenticatedGalaxiaRoute: typeof AuthenticatedGalaxiaRoute
   AuthenticatedGaleriaRoute: typeof AuthenticatedGaleriaRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCriarRoute: AuthenticatedCriarRoute,
+  AuthenticatedGalaxiaRoute: AuthenticatedGalaxiaRoute,
   AuthenticatedGaleriaRoute: AuthenticatedGaleriaRoute,
 }
 
@@ -193,3 +214,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
