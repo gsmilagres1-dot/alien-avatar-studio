@@ -308,6 +308,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [raw, setRaw] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const hiddenDateRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -317,31 +318,53 @@ function DateInput({ value, onChange }: { value: string; onChange: (v: string) =
     }
   }, [value]);
 
+  function validate(d: number, m: number, y: number): string | null {
+    if (y < 1900 || y > 2100) return "Ano deve estar entre 1900 e 2100";
+    if (m < 1 || m > 12) return "Mês inválido";
+    const daysInMonth = new Date(y, m, 0).getDate();
+    if (d < 1 || d > daysInMonth) return `Dia inválido para ${String(m).padStart(2, "0")}/${y}`;
+    if (new Date(y, m - 1, d) > new Date()) return "Data não pode estar no futuro";
+    return null;
+  }
+
   function parseRaw(input: string) {
-    const digits = input.replace(/\D/g, "");
-    let display = "";
-    if (digits.length >= 2) display = digits.slice(0, 2);
-    if (digits.length >= 4) display += "/" + digits.slice(2, 4);
-    if (digits.length >= 6) display += "/" + digits.slice(4, 8);
-    if (digits.length === 8) {
-      const d = digits.slice(0, 2), m = digits.slice(2, 4), y = digits.slice(4, 8);
-      const dd = +d, mm = +m, yy = +y;
-      if (dd > 0 && dd <= 31 && mm > 0 && mm <= 12 && yy >= 1900 && yy <= 2100) onChange(`${y}-${m}-${d}`);
-      else onChange("");
-    } else onChange("");
+    const digits = input.replace(/\D/g, "").slice(0, 8);
+    let display = digits.slice(0, Math.min(2, digits.length));
+    if (digits.length >= 3) display = digits.slice(0, 2) + "/" + digits.slice(2, Math.min(4, digits.length));
+    if (digits.length >= 5) display = digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4, 8);
     setRaw(display);
+
+    if (digits.length === 0) { setError(null); onChange(""); return; }
+    if (digits.length < 8) { setError("Data incompleta"); onChange(""); return; }
+
+    const d = +digits.slice(0, 2), m = +digits.slice(2, 4), y = +digits.slice(4, 8);
+    const err = validate(d, m, y);
+    if (err) { setError(err); onChange(""); }
+    else { setError(null); onChange(`${digits.slice(4, 8)}-${digits.slice(2, 4)}-${digits.slice(0, 2)}`); }
   }
 
   return (
     <div className="relative">
-      <input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={raw} onChange={(e) => parseRaw(e.target.value)} className="w-full px-4 py-3 rounded-lg bg-input border border-border focus:ring-2 focus:ring-ring outline-none pr-12" />
+      <input
+        type="text"
+        inputMode="numeric"
+        placeholder="DD/MM/AAAA"
+        value={raw}
+        onChange={(e) => parseRaw(e.target.value)}
+        aria-invalid={!!error}
+        aria-describedby={error ? "birthdate-error" : undefined}
+        className={`w-full px-4 py-3 rounded-lg bg-input border focus:ring-2 outline-none pr-12 ${error ? "border-destructive focus:ring-destructive" : "border-border focus:ring-ring"}`}
+      />
       <button type="button" onClick={() => hiddenDateRef.current?.showPicker?.()} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent">
         <CalendarIcon className="w-5 h-5" />
       </button>
-      <input ref={hiddenDateRef} type="date" value={value} onChange={(e) => {
+      <input ref={hiddenDateRef} type="date" value={value} max={new Date().toISOString().slice(0, 10)} onChange={(e) => {
         const v = e.target.value;
-        if (v) { const [y, m, d] = v.split("-"); setRaw(`${d}/${m}/${y}`); onChange(v); }
+        if (v) { const [y, m, d] = v.split("-"); setRaw(`${d}/${m}/${y}`); setError(null); onChange(v); }
       }} className="sr-only" tabIndex={-1} />
+      {error && (
+        <p id="birthdate-error" className="mt-1.5 text-xs text-destructive font-mono">{error}</p>
+      )}
     </div>
   );
 }
