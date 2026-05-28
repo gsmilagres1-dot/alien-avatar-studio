@@ -241,12 +241,7 @@ function FormStep(props: {
         </Field>
 
         <Field label="Data de nascimento (Terra)">
-          <input
-            type="date"
-            value={props.birthdate}
-            onChange={(e) => props.setBirthdate(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+          <DateInput value={props.birthdate} onChange={props.setBirthdate} />
         </Field>
 
         <Field label="Planeta de origem">
