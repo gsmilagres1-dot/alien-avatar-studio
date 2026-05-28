@@ -24,8 +24,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         try {
           if (
             event.type === "checkout.session.completed" ||
-            event.type === "checkout.session.async_payment_succeeded" ||
-            event.type === "transaction.completed"
+            event.type === "checkout.session.async_payment_succeeded"
           ) {
             const session = event.data.object as {
               id: string;
@@ -70,7 +69,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
             }
           }
 
-          if (event.type === "checkout.session.async_payment_failed" || event.type === "transaction.payment_failed") {
+          if (event.type === "checkout.session.async_payment_failed") {
             const session = event.data.object as { id: string };
             await supabaseAdmin
               .from("payment_transactions")
