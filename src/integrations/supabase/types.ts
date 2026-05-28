@@ -14,7 +14,184 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      avatar_drafts: {
+        Row: {
+          avatar_url: string
+          created_at: string
+          id: string
+          payment_id: string | null
+          prompt_seed: string | null
+          user_id: string
+          variant_index: number
+        }
+        Insert: {
+          avatar_url: string
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          prompt_seed?: string | null
+          user_id: string
+          variant_index?: number
+        }
+        Update: {
+          avatar_url?: string
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          prompt_seed?: string | null
+          user_id?: string
+          variant_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avatar_drafts_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      identities: {
+        Row: {
+          alien_name: string
+          avatar_url: string
+          birthdate: string
+          created_at: string
+          galactic_birth: string
+          gender: string
+          human_name: string
+          id: string
+          id_number: string
+          license_class: string
+          payment_id: string | null
+          planet_id: string
+          rank: string
+          ship_category: string | null
+          ship_image_url: string | null
+          species: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alien_name: string
+          avatar_url: string
+          birthdate: string
+          created_at?: string
+          galactic_birth: string
+          gender: string
+          human_name: string
+          id?: string
+          id_number: string
+          license_class: string
+          payment_id?: string | null
+          planet_id: string
+          rank: string
+          ship_category?: string | null
+          ship_image_url?: string | null
+          species: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alien_name?: string
+          avatar_url?: string
+          birthdate?: string
+          created_at?: string
+          galactic_birth?: string
+          gender?: string
+          human_name?: string
+          id?: string
+          id_number?: string
+          license_class?: string
+          payment_id?: string | null
+          planet_id?: string
+          rank?: string
+          ship_category?: string | null
+          ship_image_url?: string | null
+          species?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identities_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          credits_granted: number
+          credits_remaining: number
+          currency: string
+          env: string
+          id: string
+          status: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          credits_granted?: number
+          credits_remaining?: number
+          currency?: string
+          env?: string
+          id?: string
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          credits_granted?: number
+          credits_remaining?: number
+          currency?: string
+          env?: string
+          id?: string
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
