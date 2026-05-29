@@ -10,7 +10,7 @@ import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { DESTINATIONS, destinationForLevel, MAX_QUIZ_ATTEMPTS } from "@/lib/intergalactic";
 
-export const Route = createFileRoute("/galaxia")({
+export const Route = createFileRoute("/_authenticated/galaxia")({
   validateSearch: (s: Record<string, unknown>) => ({
     identityId: typeof s.identityId === "string" ? s.identityId : undefined,
   }),

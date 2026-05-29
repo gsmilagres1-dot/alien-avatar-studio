@@ -11,7 +11,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { createAvatarDraft, getActivePayment, saveIdentity, generateShipImage } from "@/lib/identities.functions";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/criar")({ component: Criar });
+export const Route = createFileRoute("/_authenticated/criar")({ component: Criar });
 
 type Step = "intro" | "pay" | "form" | "drafts" | "final";
 
