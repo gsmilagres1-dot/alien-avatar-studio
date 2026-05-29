@@ -10,7 +10,7 @@ import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { DESTINATIONS, destinationForLevel, MAX_QUIZ_ATTEMPTS } from "@/lib/intergalactic";
 
-export const Route = createFileRoute("/_authenticated/galaxia")({
+export const Route = createFileRoute("/galaxia")({
   validateSearch: (s: Record<string, unknown>) => ({
     identityId: typeof s.identityId === "string" ? s.identityId : undefined,
   }),
@@ -56,7 +56,7 @@ function Galaxia() {
             <Rocket className="w-10 h-10 text-accent mx-auto" />
             <h1 className="font-display text-2xl mt-3 text-gradient-neon">Área Intergaláctica</h1>
             <p className="text-sm text-muted-foreground mt-2">Você precisa de uma identidade alienígena antes de viajar.</p>
-            <Link to="/_authenticated/criar" className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
+            <Link to="/criar" className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
               <Plus className="w-3.5 h-3.5" /> Criar identidade (R$ 2,99)
             </Link>
           </div>
@@ -69,7 +69,7 @@ function Galaxia() {
         <p className="text-sm text-muted-foreground mb-6">Cada identidade tem sua própria viagem. Comprar uma nova identidade começa uma viagem do zero.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {list.map((i) => (
-            <button key={i.id} onClick={() => navigate({ to: "/_authenticated/galaxia", search: { identityId: i.id } })}
+            <button key={i.id} onClick={() => navigate({ to: "/galaxia", search: { identityId: i.id } })}
               className="glass rounded-2xl overflow-hidden text-left hover:ring-2 hover:ring-accent transition">
               <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover" />
               <div className="p-4">
@@ -91,7 +91,7 @@ function Galaxia() {
 
   // Payment overlay
   if (showPay) {
-    const next = `/_authenticated/galaxia?identityId=${identityId}`;
+    const next = `/galaxia?identityId=${identityId}`;
     const returnUrl = `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}&next=${encodeURIComponent(next)}`;
     return (
       <>
@@ -122,10 +122,10 @@ function Galaxia() {
             <span className="font-bold text-gradient-neon">{journey.final_destination_name}</span>
           </p>
           <div className="mt-6 flex flex-col gap-2">
-            <Link to="/_authenticated/criar" className="px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
+            <Link to="/criar" className="px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
               Nova identidade (R$ 2,99) → nova viagem
             </Link>
-            <Link to="/_authenticated/galeria" className="text-xs text-muted-foreground hover:underline">
+            <Link to="/galeria" className="text-xs text-muted-foreground hover:underline">
               Ver na galeria
             </Link>
           </div>

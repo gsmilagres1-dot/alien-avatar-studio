@@ -11,7 +11,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { createAvatarDraft, getActivePayment, saveIdentity, generateShipImage } from "@/lib/identities.functions";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/criar")({ component: Criar });
+export const Route = createFileRoute("/criar")({ component: Criar });
 
 type Step = "intro" | "pay" | "form" | "drafts" | "final";
 
@@ -228,8 +228,8 @@ function Criar() {
               setShipCategory={setShipCategory}
               shipLoading={shipLoading}
               onGenShip={genShip}
-              onNew={() => { navigate({ to: "/_authenticated/criar" }); window.location.reload(); }}
-              onTravel={() => navigate({ to: "/_authenticated/galaxia", search: { identityId: savedIdentity.id } })}
+              onNew={() => { navigate({ to: "/criar" }); window.location.reload(); }}
+              onTravel={() => navigate({ to: "/galaxia", search: { identityId: savedIdentity.id } })}
             />
           )}
         </div>
