@@ -6,7 +6,7 @@ import { listIdentitiesWithJourneys } from "@/lib/gallery.functions";
 import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/galeria")({ component: Galeria });
+export const Route = createFileRoute("/galeria")({ component: Galeria });
 
 function Galeria() {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ function Galeria() {
     <main className="px-4 py-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl text-gradient-neon">Minha galeria</h1>
-        <Link to="/_authenticated/criar" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-xs font-bold shadow-neon">
+        <Link to="/criar" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-xs font-bold shadow-neon">
           <Plus className="w-3.5 h-3.5" /> Nova
         </Link>
       </div>
@@ -71,7 +71,7 @@ function Galeria() {
 
                 <div className="mt-3 flex items-center justify-between">
                   <button
-                    onClick={() => navigate({ to: "/_authenticated/galaxia", search: { identityId: i.id } })}
+                    onClick={() => navigate({ to: "/galaxia", search: { identityId: i.id } })}
                     className="text-xs text-accent hover:underline inline-flex items-center gap-1">
                     <Rocket className="w-3 h-3" /> {active ? "Continuar viagem" : journey ? "Ver viagem" : "Começar viagem"}
                   </button>

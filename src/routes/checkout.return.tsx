@@ -15,7 +15,7 @@ function ReturnPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const dest = next && next.startsWith("/") ? next : "/_authenticated/criar";
+    const dest = next && next.startsWith("/") ? next : "/criar";
     const t = setTimeout(() => navigate({ to: dest }), 1800);
     return () => clearTimeout(t);
   }, [navigate, next]);

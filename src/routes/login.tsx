@@ -7,7 +7,7 @@ import { Loader2, Mail, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => ({
-    redirect: typeof s.redirect === "string" ? s.redirect : "/_authenticated/criar",
+    redirect: typeof s.redirect === "string" ? s.redirect : "/criar",
   }),
   component: LoginPage,
 });

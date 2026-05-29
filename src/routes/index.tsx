@@ -34,14 +34,14 @@ function Landing() {
 
         <div className="mt-8 inline-flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            to={auth.isAuthenticated ? "/_authenticated/criar" : "/login"}
+            to={auth.isAuthenticated ? "/criar" : "/login"}
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon hover:scale-105 transition"
           >
             <Camera className="w-5 h-5" />
             Criar minha identidade — R$ 2,99
           </Link>
           {auth.isAuthenticated && (
-            <Link to="/_authenticated/galeria" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full glass">
+            <Link to="/galeria" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full glass">
               Minha galeria
             </Link>
           )}
