@@ -16,7 +16,13 @@ interface QuizQuestion { q: string; choices: string[]; answer: number }
 async function generateQuizWithAI(level: number, destinationName: string): Promise<QuizQuestion[]> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY ausente");
-  const prompt = `Gere ${QUESTIONS_PER_QUIZ} perguntas de múltipla escolha em PT-BR, nível ${level}/5 de dificuldade, sobre o destino intergaláctico "${destinationName}" — temas: astronomia, exploração espacial, transportes (naves, teletransporte, buracos de minhoca), física básica do espaço. Responda APENAS com JSON válido no formato: {"questions":[{"q":"...","choices":["a","b","c","d"],"answer":0}]} onde "answer" é o índice (0-3) da resposta correta. Sem comentários ou texto fora do JSON.`;
+  const prompt = `Gere ${QUESTIONS_PER_QUIZ} perguntas DIVERTIDAS e LEVES de múltipla escolha em PT-BR, nível ${level}/5 de dificuldade, ambientadas na viagem ao destino "${destinationName}". Misture temas POP e ACESSÍVEIS — evite física pesada e astronomia técnica. Use:
+- Filmes e séries de ficção científica (Star Wars, Star Trek, E.T., Men in Black, Interestelar, Marte, Guardiões da Galáxia, Alien, Duna, Matrix, De Volta para o Futuro, Jornada nas Estrelas)
+- Espécies alienígenas famosas da cultura pop (Yoda, Wookiees, Vulcanos, Predadores, Xenomorfos, Klingons, ETs cinzas, Marcianos clássicos)
+- Curiosidades básicas e divertidas do espaço (qual planeta é vermelho? qual é o maior? a Lua tem queijo?)
+- Mitos populares, OVNIs, Área 51, abduções no folclore, discos voadores
+- Cultura brasileira do espaço (Chapolin, Jetsons dublado, Zequinha de Marte, ETs no sertão)
+Varie os temas entre as ${QUESTIONS_PER_QUIZ} perguntas. Tom: descontraído, quase brincadeira. Responda APENAS com JSON válido: {"questions":[{"q":"...","choices":["a","b","c","d"],"answer":0}]} onde "answer" é o índice (0-3) da correta. Sem texto fora do JSON.`;
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
