@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { listMyIdentities } from "@/lib/identities.functions";
-import { getJourneyState, startQuiz, submitQuiz } from "@/lib/intergalactic.functions";
+import { getJourneyState, startQuiz, submitQuiz, claimPassportWithPayment, claimVisaWithPayment } from "@/lib/intergalactic.functions";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { DESTINATIONS, destinationForLevel, MAX_QUIZ_ATTEMPTS } from "@/lib/intergalactic";
