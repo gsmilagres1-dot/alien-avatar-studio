@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { listMyIdentities } from "@/lib/identities.functions";
-import { getJourneyState, startQuiz, submitQuiz } from "@/lib/intergalactic.functions";
+import { getJourneyState, startQuiz, submitQuiz, claimPassportWithPayment, claimVisaWithPayment } from "@/lib/intergalactic.functions";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { DESTINATIONS, destinationForLevel, MAX_QUIZ_ATTEMPTS } from "@/lib/intergalactic";
@@ -27,6 +27,8 @@ function Galaxia() {
   const stateFn = useServerFn(getJourneyState);
   const quizStartFn = useServerFn(startQuiz);
   const quizSubmitFn = useServerFn(submitQuiz);
+  const claimPassFn = useServerFn(claimPassportWithPayment);
+  const claimVisaFn = useServerFn(claimVisaWithPayment);
 
   const { data: ids, isLoading: idsLoading } = useQuery({
     queryKey: ["identities"], queryFn: () => listFn(),
@@ -85,7 +87,7 @@ function Galaxia() {
 
   if (stateLoading || !state) return <Loader />;
 
-  const { journey, passport, visas, identity } = state;
+  const { journey, passport, visas, identity, passportCredit, visaCredit } = state;
   const dest = destinationForLevel(journey.current_level);
   const attemptsLeft = MAX_QUIZ_ATTEMPTS - journey.attempts_used;
 
@@ -144,10 +146,23 @@ function Galaxia() {
           <p className="text-sm text-muted-foreground mt-2">
             {identity?.alien_name} precisa de um passaporte alienígena oficial pra viajar pela Federação.
           </p>
-          <button onClick={() => setShowPay("passport")}
-            className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
-            Comprar passaporte · R$ 2,99
-          </button>
+          {passportCredit ? (
+            <button onClick={async () => {
+              try {
+                await claimPassFn({ data: { paymentId: passportCredit.id } });
+                toast.success("Passaporte emitido!");
+                await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+              } catch (e) { toast.error((e as Error).message); }
+            }}
+              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
+              Usar passaporte grátis (teste)
+            </button>
+          ) : (
+            <button onClick={() => setShowPay("passport")}
+              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
+              Comprar passaporte · R$ 2,99
+            </button>
+          )}
         </div>
       </main>
     );
@@ -267,9 +282,21 @@ function Galaxia() {
             className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
             {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
           </button>
-          <button onClick={() => setShowPay("visa")} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
-            Comprar visto · R$ 1,99 <ArrowRight className="w-3.5 h-3.5 inline" />
-          </button>
+          {visaCredit ? (
+            <button onClick={async () => {
+              try {
+                await claimVisaFn({ data: { journeyId: journey.id, paymentId: visaCredit.id } });
+                toast.success(`Visto emitido para ${dest.name}!`);
+                await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+              } catch (e) { toast.error((e as Error).message); }
+            }} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
+              Usar visto grátis (teste) <ArrowRight className="w-3.5 h-3.5 inline" />
+            </button>
+          ) : (
+            <button onClick={() => setShowPay("visa")} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
+              Comprar visto · R$ 1,99 <ArrowRight className="w-3.5 h-3.5 inline" />
+            </button>
+          )}
         </div>
       </div>
 
