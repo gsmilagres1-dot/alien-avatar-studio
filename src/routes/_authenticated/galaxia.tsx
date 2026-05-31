@@ -87,7 +87,7 @@ function Galaxia() {
 
   if (stateLoading || !state) return <Loader />;
 
-  const { journey, passport, visas, identity } = state;
+  const { journey, passport, visas, identity, passportCredit, visaCredit } = state;
   const dest = destinationForLevel(journey.current_level);
   const attemptsLeft = MAX_QUIZ_ATTEMPTS - journey.attempts_used;
 
