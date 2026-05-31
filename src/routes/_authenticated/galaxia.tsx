@@ -27,6 +27,8 @@ function Galaxia() {
   const stateFn = useServerFn(getJourneyState);
   const quizStartFn = useServerFn(startQuiz);
   const quizSubmitFn = useServerFn(submitQuiz);
+  const claimPassFn = useServerFn(claimPassportWithPayment);
+  const claimVisaFn = useServerFn(claimVisaWithPayment);
 
   const { data: ids, isLoading: idsLoading } = useQuery({
     queryKey: ["identities"], queryFn: () => listFn(),
