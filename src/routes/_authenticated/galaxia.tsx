@@ -146,10 +146,23 @@ function Galaxia() {
           <p className="text-sm text-muted-foreground mt-2">
             {identity?.alien_name} precisa de um passaporte alienígena oficial pra viajar pela Federação.
           </p>
-          <button onClick={() => setShowPay("passport")}
-            className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
-            Comprar passaporte · R$ 2,99
-          </button>
+          {passportCredit ? (
+            <button onClick={async () => {
+              try {
+                await claimPassFn({ data: { paymentId: passportCredit.id } });
+                toast.success("Passaporte emitido!");
+                await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+              } catch (e) { toast.error((e as Error).message); }
+            }}
+              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
+              Usar passaporte grátis (teste)
+            </button>
+          ) : (
+            <button onClick={() => setShowPay("passport")}
+              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
+              Comprar passaporte · R$ 2,99
+            </button>
+          )}
         </div>
       </main>
     );
