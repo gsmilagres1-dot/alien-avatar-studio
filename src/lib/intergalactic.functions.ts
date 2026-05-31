@@ -65,12 +65,16 @@ export const getJourneyState = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const journey = await ensureJourney(userId, data.identityId);
-    const [{ data: passport }, { data: visas }, { data: identity }] = await Promise.all([
+    const [{ data: passport }, { data: visas }, { data: identity }, { data: credits }] = await Promise.all([
       supabaseAdmin.from("passports").select("*").eq("user_id", userId).maybeSingle(),
       supabaseAdmin.from("visas").select("*").eq("journey_id", journey.id).order("issued_at"),
       supabaseAdmin.from("identities").select("alien_name, planet_id, avatar_url").eq("id", data.identityId).single(),
+      supabaseAdmin.from("payment_transactions").select("id, kind, credits_remaining")
+        .eq("user_id", userId).eq("status", "completed").gt("credits_remaining", 0),
     ]);
-    return { journey, passport, visas: visas ?? [], identity };
+    const passportCredit = credits?.find((c) => c.kind === "passport") ?? null;
+    const visaCredit = credits?.find((c) => c.kind === "visa") ?? null;
+    return { journey, passport, visas: visas ?? [], identity, passportCredit, visaCredit };
   });
 
 export const startQuiz = createServerFn({ method: "POST" })
