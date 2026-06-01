@@ -75,7 +75,7 @@ export const getJourneyState = createServerFn({ method: "POST" })
     const [{ data: passport }, { data: visas }, { data: identity }, { data: credits }] = await Promise.all([
       supabaseAdmin.from("passports").select("*").eq("user_id", userId).maybeSingle(),
       supabaseAdmin.from("visas").select("*").eq("journey_id", journey.id).order("issued_at"),
-      supabaseAdmin.from("identities").select("alien_name, planet_id, avatar_url").eq("id", data.identityId).single(),
+      supabaseAdmin.from("identities").select("alien_name, planet_id, avatar_url, ship_image_url, ship_category").eq("id", data.identityId).single(),
       supabaseAdmin.from("payment_transactions").select("id, kind, credits_remaining")
         .eq("user_id", userId).eq("status", "completed").gt("credits_remaining", 0),
     ]);
