@@ -192,12 +192,15 @@ function Galaxia() {
             {identity?.alien_name} precisa de uma nave antes de embarcar no quiz da viagem.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
           {SHIPS.map((s) => (
             <button key={s.id} onClick={() => setShipCategory(s.id)}
-              className={`px-3 py-3 rounded-xl border text-left transition ${shipCategory === s.id ? "border-accent bg-accent/15 shadow-neon" : "border-border bg-input/50"}`}>
-              <div className="font-display text-sm">{s.name}</div>
-              <div className="text-[10px] text-muted-foreground">{s.desc}</div>
+              className={`rounded-xl border overflow-hidden text-left transition ${shipCategory === s.id ? "border-accent shadow-neon ring-2 ring-accent" : "border-border bg-input/50"}`}>
+              <img src={SHIP_PREVIEWS[s.id]} alt={s.name} loading="lazy" width={768} height={768} className="w-full aspect-square object-cover" />
+              <div className="p-3">
+                <div className="font-display text-sm">{s.name}</div>
+                <div className="text-[10px] text-muted-foreground">{s.desc}</div>
+              </div>
             </button>
           ))}
         </div>
