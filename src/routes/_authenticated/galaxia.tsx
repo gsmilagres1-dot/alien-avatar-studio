@@ -2,13 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus } from "lucide-react";
+import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2 } from "lucide-react";
 import { toast } from "sonner";
-import { listMyIdentities } from "@/lib/identities.functions";
+import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
 import { getJourneyState, startQuiz, submitQuiz, claimPassportWithPayment, claimVisaWithPayment } from "@/lib/intergalactic.functions";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { DESTINATIONS, destinationForLevel, MAX_QUIZ_ATTEMPTS } from "@/lib/intergalactic";
+import { SHIPS } from "@/lib/alien";
 
 export const Route = createFileRoute("/_authenticated/galaxia")({
   validateSearch: (s: Record<string, unknown>) => ({
