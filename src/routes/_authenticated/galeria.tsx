@@ -51,7 +51,12 @@ function Galeria() {
           const done = journey?.status === "completed";
           return (
             <div key={i.id} className="glass rounded-2xl overflow-hidden">
-              <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover" />
+              <div className="relative">
+                <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover" />
+                {i.ship_image_url && (
+                  <img src={i.ship_image_url} alt="Nave" className="absolute bottom-2 right-2 w-20 h-20 rounded-xl object-cover border-2 border-accent shadow-neon" />
+                )}
+              </div>
               <div className="p-4">
                 <div className="font-display text-lg text-gradient-neon">{i.alien_name}</div>
                 <div className="text-xs text-muted-foreground">{i.species} · {i.planet_id}</div>
