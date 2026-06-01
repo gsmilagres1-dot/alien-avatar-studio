@@ -10,6 +10,15 @@ import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { DESTINATIONS, destinationForLevel, MAX_QUIZ_ATTEMPTS } from "@/lib/intergalactic";
 import { SHIPS } from "@/lib/alien";
+import shipEsportiva from "@/assets/ship-esportiva.jpg";
+import shipOffroad from "@/assets/ship-offroad.jpg";
+import shipCorrida from "@/assets/ship-corrida.jpg";
+
+const SHIP_PREVIEWS: Record<"esportiva" | "offroad" | "corrida", string> = {
+  esportiva: shipEsportiva,
+  offroad: shipOffroad,
+  corrida: shipCorrida,
+};
 
 export const Route = createFileRoute("/_authenticated/galaxia")({
   validateSearch: (s: Record<string, unknown>) => ({
