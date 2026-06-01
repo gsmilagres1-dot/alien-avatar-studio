@@ -47,6 +47,8 @@ function Galaxia() {
   const [quizLoading, setQuizLoading] = useState(false);
   const [showPay, setShowPay] = useState<null | "passport" | "visa">(null);
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null } | null>(null);
+  const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
+  const [shipLoading, setShipLoading] = useState(false);
 
   if (idsLoading) return <Loader />;
 
