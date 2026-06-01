@@ -2,13 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus } from "lucide-react";
+import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2 } from "lucide-react";
 import { toast } from "sonner";
-import { listMyIdentities } from "@/lib/identities.functions";
+import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
 import { getJourneyState, startQuiz, submitQuiz, claimPassportWithPayment, claimVisaWithPayment } from "@/lib/intergalactic.functions";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { DESTINATIONS, destinationForLevel, MAX_QUIZ_ATTEMPTS } from "@/lib/intergalactic";
+import { SHIPS } from "@/lib/alien";
 
 export const Route = createFileRoute("/_authenticated/galaxia")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -29,6 +30,7 @@ function Galaxia() {
   const quizSubmitFn = useServerFn(submitQuiz);
   const claimPassFn = useServerFn(claimPassportWithPayment);
   const claimVisaFn = useServerFn(claimVisaWithPayment);
+  const shipFn = useServerFn(generateShipImage);
 
   const { data: ids, isLoading: idsLoading } = useQuery({
     queryKey: ["identities"], queryFn: () => listFn(),
@@ -45,6 +47,8 @@ function Galaxia() {
   const [quizLoading, setQuizLoading] = useState(false);
   const [showPay, setShowPay] = useState<null | "passport" | "visa">(null);
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null } | null>(null);
+  const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
+  const [shipLoading, setShipLoading] = useState(false);
 
   if (idsLoading) return <Loader />;
 
@@ -164,6 +168,42 @@ function Galaxia() {
             </button>
           )}
         </div>
+      </main>
+    );
+  }
+
+  // Ship selection — required before any quiz
+  if (!identity?.ship_image_url) {
+    return (
+      <main className="px-4 py-8 max-w-2xl mx-auto">
+        <div className="glass rounded-2xl p-6 text-center">
+          <Rocket className="w-10 h-10 text-accent mx-auto" />
+          <h1 className="font-display text-2xl mt-3 text-gradient-neon">Escolha sua nave</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            {identity?.alien_name} precisa de uma nave antes de embarcar no quiz da viagem.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5">
+          {SHIPS.map((s) => (
+            <button key={s.id} onClick={() => setShipCategory(s.id)}
+              className={`px-3 py-3 rounded-xl border text-left transition ${shipCategory === s.id ? "border-accent bg-accent/15 shadow-neon" : "border-border bg-input/50"}`}>
+              <div className="font-display text-sm">{s.name}</div>
+              <div className="text-[10px] text-muted-foreground">{s.desc}</div>
+            </button>
+          ))}
+        </div>
+        <button disabled={shipLoading} onClick={async () => {
+          setShipLoading(true);
+          try {
+            await shipFn({ data: { identityId: identityId!, category: shipCategory } });
+            toast.success("Nave pronta para decolar!");
+            await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+          } catch (e) { toast.error((e as Error).message); }
+          finally { setShipLoading(false); }
+        }}
+          className="mt-5 w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-alien-grad text-primary-foreground font-display font-bold shadow-neon disabled:opacity-60">
+          {shipLoading ? <><Loader2 className="w-4 h-4 animate-spin" />Gerando nave...</> : <><Wand2 className="w-4 h-4" />Gerar minha nave</>}
+        </button>
       </main>
     );
   }
