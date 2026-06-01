@@ -271,6 +271,9 @@ function Galaxia() {
           <div className="font-display text-lg text-gradient-neon">{identity?.alien_name}</div>
           <div className="text-xs text-muted-foreground">Origem: {passport.origin_planet}</div>
         </div>
+        {identity?.ship_image_url && (
+          <img src={identity.ship_image_url} alt="Nave" className="w-20 h-20 rounded-xl object-cover border border-accent/40" />
+        )}
       </div>
 
       {/* Level progress */}
