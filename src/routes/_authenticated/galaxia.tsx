@@ -104,23 +104,7 @@ function Galaxia() {
   const dest = destinationForLevel(journey.current_level);
   const attemptsLeft = MAX_QUIZ_ATTEMPTS - journey.attempts_used;
 
-  // Payment overlay
-  if (showPay) {
-    const next = `/galaxia?identityId=${identityId}`;
-    const returnUrl = `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}&next=${encodeURIComponent(next)}`;
-    return (
-      <>
-        <PaymentTestModeBanner />
-        <main className="px-4 py-6 max-w-2xl mx-auto">
-          <button onClick={() => setShowPay(null)} className="text-xs text-muted-foreground hover:underline mb-3">← cancelar</button>
-          <h2 className="font-display text-xl mb-3 text-center">
-            {showPay === "passport" ? "Passaporte Alienígena · R$ 2,99" : `Visto para ${dest.name} · R$ 1,99`}
-          </h2>
-          <StripeEmbeddedCheckout returnUrl={returnUrl} kind={showPay} journeyId={journey.id} />
-        </main>
-      </>
-    );
-  }
+  // Pagamento removido — modo grátis
 
   // Journey ended (completed or lost)
   if (journey.status !== "active") {
