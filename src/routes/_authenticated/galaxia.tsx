@@ -292,7 +292,7 @@ function Galaxia() {
             className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
             {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
           </button>
-          {visaCredit ? (
+          {visaCredit && (
             <button onClick={async () => {
               try {
                 await claimVisaFn({ data: { journeyId: journey.id, paymentId: visaCredit.id } });
@@ -300,11 +300,7 @@ function Galaxia() {
                 await qc.invalidateQueries({ queryKey: ["journey", identityId] });
               } catch (e) { toast.error((e as Error).message); }
             }} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
-              Usar visto grátis (teste) <ArrowRight className="w-3.5 h-3.5 inline" />
-            </button>
-          ) : (
-            <button onClick={() => setShowPay("visa")} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
-              Comprar visto · R$ 1,99 <ArrowRight className="w-3.5 h-3.5 inline" />
+              Embarcar (grátis) <ArrowRight className="w-3.5 h-3.5 inline" />
             </button>
           )}
         </div>
