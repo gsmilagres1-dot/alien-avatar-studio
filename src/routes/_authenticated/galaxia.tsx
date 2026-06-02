@@ -149,37 +149,8 @@ function Galaxia() {
     );
   }
 
-  // No passport yet
-  if (!passport) {
-    return (
-      <main className="px-4 py-10 max-w-2xl mx-auto">
-        <div className="glass rounded-2xl p-8 text-center">
-          <Stamp className="w-12 h-12 text-accent mx-auto" />
-          <h1 className="font-display text-2xl mt-3 text-gradient-neon">Passaporte necessário</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            {identity?.alien_name} precisa de um passaporte alienígena oficial pra viajar pela Federação.
-          </p>
-          {passportCredit ? (
-            <button onClick={async () => {
-              try {
-                await claimPassFn({ data: { paymentId: passportCredit.id } });
-                toast.success("Passaporte emitido!");
-                await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-              } catch (e) { toast.error((e as Error).message); }
-            }}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
-              Usar passaporte grátis (teste)
-            </button>
-          ) : (
-            <button onClick={() => setShowPay("passport")}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
-              Comprar passaporte · R$ 2,99
-            </button>
-          )}
-        </div>
-      </main>
-    );
-  }
+  // Passaporte é emitido automaticamente (modo grátis); guarda apenas em caso raro de race
+  if (!passport) return <Loader />;
 
   // Ship selection — required before any quiz
   if (!identity?.ship_image_url) {
