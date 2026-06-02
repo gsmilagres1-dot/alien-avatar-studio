@@ -72,16 +72,42 @@ export const getJourneyState = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const journey = await ensureJourney(userId, data.identityId);
-    const [{ data: passport }, { data: visas }, { data: identity }, { data: credits }] = await Promise.all([
-      supabaseAdmin.from("passports").select("*").eq("user_id", userId).maybeSingle(),
+
+    // Modo grátis: garante passaporte sem cobrança
+    let { data: passport } = await supabaseAdmin
+      .from("passports").select("*").eq("user_id", userId).maybeSingle();
+    if (!passport) {
+      const num = "AP-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+      const ins = await supabaseAdmin.from("passports").insert({
+        user_id: userId, passport_number: num, origin_planet: "Terra",
+      }).select("*").single();
+      passport = ins.data;
+    }
+
+    const [{ data: visas }, { data: identity }] = await Promise.all([
       supabaseAdmin.from("visas").select("*").eq("journey_id", journey.id).order("issued_at"),
       supabaseAdmin.from("identities").select("alien_name, planet_id, avatar_url, ship_image_url, ship_category").eq("id", data.identityId).single(),
-      supabaseAdmin.from("payment_transactions").select("id, kind, credits_remaining")
-        .eq("user_id", userId).eq("status", "completed").gt("credits_remaining", 0),
     ]);
-    const passportCredit = credits?.find((c) => c.kind === "passport") ?? null;
-    const visaCredit = credits?.find((c) => c.kind === "visa") ?? null;
-    return { journey, passport, visas: visas ?? [], identity, passportCredit, visaCredit };
+
+    // Modo grátis: sempre disponibiliza um "crédito" de visto para a viagem ativa
+    let visaCredit: { id: string; kind: string; credits_remaining: number } | null = null;
+    if (journey.status === "active") {
+      const { data: existing } = await supabaseAdmin.from("payment_transactions")
+        .select("id, kind, credits_remaining")
+        .eq("user_id", userId).eq("status", "completed").eq("kind", "visa")
+        .gt("credits_remaining", 0).limit(1).maybeSingle();
+      if (existing) {
+        visaCredit = existing;
+      } else {
+        const ins = await supabaseAdmin.from("payment_transactions").insert({
+          user_id: userId, amount_cents: 0, currency: "brl", status: "completed",
+          credits_granted: 1, credits_remaining: 1, env: "sandbox", kind: "visa",
+        }).select("id, kind, credits_remaining").single();
+        visaCredit = ins.data;
+      }
+    }
+
+    return { journey, passport, visas: visas ?? [], identity, passportCredit: null, visaCredit };
   });
 
 export const startQuiz = createServerFn({ method: "POST" })
