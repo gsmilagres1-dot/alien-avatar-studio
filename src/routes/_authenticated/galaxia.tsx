@@ -69,7 +69,7 @@ function Galaxia() {
             <h1 className="font-display text-2xl mt-3 text-gradient-neon">Área Intergaláctica</h1>
             <p className="text-sm text-muted-foreground mt-2">Você precisa de uma identidade alienígena antes de viajar.</p>
             <Link to="/criar" className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
-              <Plus className="w-3.5 h-3.5" /> Criar identidade (R$ 2,99)
+              <Plus className="w-3.5 h-3.5" /> Criar identidade (grátis)
             </Link>
           </div>
         </main>
@@ -119,7 +119,7 @@ function Galaxia() {
           </p>
           <div className="mt-6 flex flex-col gap-2">
             <Link to="/criar" className="px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
-              Nova identidade (R$ 2,99) → nova viagem
+              Nova identidade (grátis) → nova viagem
             </Link>
             <Link to="/galeria" className="text-xs text-muted-foreground hover:underline">
               Ver na galeria
@@ -245,7 +245,7 @@ function Galaxia() {
               <Check className="w-6 h-6 text-accent mt-0.5" />
               <div>
                 <div className="font-display text-lg">Passou! {lastResult.score}/5</div>
-                <div className="text-xs text-muted-foreground">Agora compre o visto de R$ 1,99 pra embarcar.</div>
+                <div className="text-xs text-muted-foreground">Agora é só embarcar (grátis).</div>
               </div>
             </div>
           ) : lastResult.fatal ? (

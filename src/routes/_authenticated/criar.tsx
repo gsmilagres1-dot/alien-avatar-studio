@@ -61,7 +61,7 @@ function Criar() {
   async function genDraft() {
     if (!photo) return toast.error("Adicione uma foto");
     if (!name || !birthdate) return toast.error("Preencha nome e data");
-    if (!payment) return toast.error("Pague primeiro");
+    if (!payment) return toast.error("Aguarde…");
     if (drafts.length >= 3) return toast.error("Limite de 3 avatares");
     setGenLoading(true);
     try {
@@ -287,7 +287,7 @@ function FinalView(props: {
             <Printer className="w-3.5 h-3.5" /> Imprimir crachá
           </button>
           <button onClick={props.onNew} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-xs shadow-neon">
-            <Sparkles className="w-3.5 h-3.5" /> Criar outra (R$ 2,99)
+            <Sparkles className="w-3.5 h-3.5" /> Criar outra (grátis)
           </button>
         </div>
       </div>
