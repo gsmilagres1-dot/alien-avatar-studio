@@ -229,7 +229,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data } = await supabaseAdmin
+    let { data } = await supabaseAdmin
       .from("payment_transactions")
       .select("id, status, credits_remaining, created_at")
       .eq("user_id", userId)
@@ -239,6 +239,25 @@ export const getActivePayment = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    // Modo grátis: auto-cria um "crédito" de identidade sem cobrança
+    if (!data) {
+      const ins = await supabaseAdmin
+        .from("payment_transactions")
+        .insert({
+          user_id: userId,
+          amount_cents: 0,
+          currency: "brl",
+          status: "completed",
+          credits_granted: 1,
+          credits_remaining: 1,
+          env: "sandbox",
+          kind: "identity",
+        })
+        .select("id, status, credits_remaining, created_at")
+        .single();
+      data = ins.data;
+    }
 
     if (!data) return { payment: null, drafts: [] };
 
