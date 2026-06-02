@@ -5,9 +5,7 @@ import { useState } from "react";
 import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
-import { getJourneyState, startQuiz, submitQuiz, claimPassportWithPayment, claimVisaWithPayment } from "@/lib/intergalactic.functions";
-import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
-import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { getJourneyState, startQuiz, submitQuiz, claimVisaWithPayment } from "@/lib/intergalactic.functions";
 import { DESTINATIONS, destinationForLevel, MAX_QUIZ_ATTEMPTS } from "@/lib/intergalactic";
 import { SHIPS } from "@/lib/alien";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
@@ -37,7 +35,6 @@ function Galaxia() {
   const stateFn = useServerFn(getJourneyState);
   const quizStartFn = useServerFn(startQuiz);
   const quizSubmitFn = useServerFn(submitQuiz);
-  const claimPassFn = useServerFn(claimPassportWithPayment);
   const claimVisaFn = useServerFn(claimVisaWithPayment);
   const shipFn = useServerFn(generateShipImage);
 
@@ -54,7 +51,7 @@ function Galaxia() {
   const [quiz, setQuiz] = useState<{ questions: Question[]; level: number; destinationName: string } | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
   const [quizLoading, setQuizLoading] = useState(false);
-  const [showPay, setShowPay] = useState<null | "passport" | "visa">(null);
+  // showPay removed: modo grátis
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null } | null>(null);
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
@@ -72,7 +69,7 @@ function Galaxia() {
             <h1 className="font-display text-2xl mt-3 text-gradient-neon">Área Intergaláctica</h1>
             <p className="text-sm text-muted-foreground mt-2">Você precisa de uma identidade alienígena antes de viajar.</p>
             <Link to="/criar" className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
-              <Plus className="w-3.5 h-3.5" /> Criar identidade (R$ 2,99)
+              <Plus className="w-3.5 h-3.5" /> Criar identidade (grátis)
             </Link>
           </div>
         </main>
@@ -104,23 +101,7 @@ function Galaxia() {
   const dest = destinationForLevel(journey.current_level);
   const attemptsLeft = MAX_QUIZ_ATTEMPTS - journey.attempts_used;
 
-  // Payment overlay
-  if (showPay) {
-    const next = `/galaxia?identityId=${identityId}`;
-    const returnUrl = `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}&next=${encodeURIComponent(next)}`;
-    return (
-      <>
-        <PaymentTestModeBanner />
-        <main className="px-4 py-6 max-w-2xl mx-auto">
-          <button onClick={() => setShowPay(null)} className="text-xs text-muted-foreground hover:underline mb-3">← cancelar</button>
-          <h2 className="font-display text-xl mb-3 text-center">
-            {showPay === "passport" ? "Passaporte Alienígena · R$ 2,99" : `Visto para ${dest.name} · R$ 1,99`}
-          </h2>
-          <StripeEmbeddedCheckout returnUrl={returnUrl} kind={showPay} journeyId={journey.id} />
-        </main>
-      </>
-    );
-  }
+  // Pagamento removido — modo grátis
 
   // Journey ended (completed or lost)
   if (journey.status !== "active") {
@@ -138,7 +119,7 @@ function Galaxia() {
           </p>
           <div className="mt-6 flex flex-col gap-2">
             <Link to="/criar" className="px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
-              Nova identidade (R$ 2,99) → nova viagem
+              Nova identidade (grátis) → nova viagem
             </Link>
             <Link to="/galeria" className="text-xs text-muted-foreground hover:underline">
               Ver na galeria
@@ -149,37 +130,8 @@ function Galaxia() {
     );
   }
 
-  // No passport yet
-  if (!passport) {
-    return (
-      <main className="px-4 py-10 max-w-2xl mx-auto">
-        <div className="glass rounded-2xl p-8 text-center">
-          <Stamp className="w-12 h-12 text-accent mx-auto" />
-          <h1 className="font-display text-2xl mt-3 text-gradient-neon">Passaporte necessário</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            {identity?.alien_name} precisa de um passaporte alienígena oficial pra viajar pela Federação.
-          </p>
-          {passportCredit ? (
-            <button onClick={async () => {
-              try {
-                await claimPassFn({ data: { paymentId: passportCredit.id } });
-                toast.success("Passaporte emitido!");
-                await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-              } catch (e) { toast.error((e as Error).message); }
-            }}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
-              Usar passaporte grátis (teste)
-            </button>
-          ) : (
-            <button onClick={() => setShowPay("passport")}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-bold shadow-neon">
-              Comprar passaporte · R$ 2,99
-            </button>
-          )}
-        </div>
-      </main>
-    );
-  }
+  // Passaporte é emitido automaticamente (modo grátis); guarda apenas em caso raro de race
+  if (!passport) return <Loader />;
 
   // Ship selection — required before any quiz
   if (!identity?.ship_image_url) {
@@ -293,7 +245,7 @@ function Galaxia() {
               <Check className="w-6 h-6 text-accent mt-0.5" />
               <div>
                 <div className="font-display text-lg">Passou! {lastResult.score}/5</div>
-                <div className="text-xs text-muted-foreground">Agora compre o visto de R$ 1,99 pra embarcar.</div>
+                <div className="text-xs text-muted-foreground">Agora é só embarcar (grátis).</div>
               </div>
             </div>
           ) : lastResult.fatal ? (
@@ -337,7 +289,7 @@ function Galaxia() {
             className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
             {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
           </button>
-          {visaCredit ? (
+          {visaCredit && (
             <button onClick={async () => {
               try {
                 await claimVisaFn({ data: { journeyId: journey.id, paymentId: visaCredit.id } });
@@ -345,11 +297,7 @@ function Galaxia() {
                 await qc.invalidateQueries({ queryKey: ["journey", identityId] });
               } catch (e) { toast.error((e as Error).message); }
             }} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
-              Usar visto grátis (teste) <ArrowRight className="w-3.5 h-3.5 inline" />
-            </button>
-          ) : (
-            <button onClick={() => setShowPay("visa")} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
-              Comprar visto · R$ 1,99 <ArrowRight className="w-3.5 h-3.5 inline" />
+              Embarcar (grátis) <ArrowRight className="w-3.5 h-3.5 inline" />
             </button>
           )}
         </div>

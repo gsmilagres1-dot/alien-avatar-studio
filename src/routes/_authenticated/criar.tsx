@@ -6,14 +6,12 @@ import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, Rota
 import { PLANETS, SHIPS, generateAlienIdentity, type PlanetId, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
-import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
-import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { createAvatarDraft, getActivePayment, saveIdentity, generateShipImage } from "@/lib/identities.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/criar")({ component: Criar });
 
-type Step = "intro" | "pay" | "form" | "drafts" | "final";
+type Step = "intro" | "form" | "drafts" | "final";
 
 function Criar() {
   const navigate = useNavigate();
@@ -63,7 +61,7 @@ function Criar() {
   async function genDraft() {
     if (!photo) return toast.error("Adicione uma foto");
     if (!name || !birthdate) return toast.error("Preencha nome e data");
-    if (!payment) return toast.error("Pague primeiro");
+    if (!payment) return toast.error("Aguarde…");
     if (drafts.length >= 3) return toast.error("Limite de 3 avatares");
     setGenLoading(true);
     try {
@@ -114,7 +112,6 @@ function Criar() {
 
   return (
     <>
-      <PaymentTestModeBanner />
       <main className="relative z-10 px-4 py-6 sm:py-10">
         <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => onPickFile(e.target.files?.[0])} />
 
@@ -123,19 +120,13 @@ function Criar() {
             <section className="glass rounded-2xl p-8 text-center">
               <Sparkles className="w-10 h-10 text-accent mx-auto" />
               <h2 className="font-display text-2xl mt-3 text-gradient-neon">Criar nova identidade</h2>
-              <p className="text-sm text-muted-foreground mt-2">R$ 2,99 — até 3 opções de avatar, escolha 1 para virar a identidade final.</p>
-              <button onClick={() => setStep("pay")} className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon">
-                Pagar e começar
+              <p className="text-sm text-muted-foreground mt-2">Grátis — até 3 opções de avatar, escolha 1 para virar a identidade final.</p>
+              <button onClick={() => setStep("form")} className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon">
+                Começar
               </button>
             </section>
           )}
 
-          {step === "pay" && (
-            <section>
-              <h2 className="font-display text-xl mb-3 text-center">Finalize o pagamento</h2>
-              <StripeEmbeddedCheckout returnUrl={`${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`} />
-            </section>
-          )}
 
           {step === "form" && payment && (
             <section className="glass rounded-2xl p-5 sm:p-7">
@@ -296,7 +287,7 @@ function FinalView(props: {
             <Printer className="w-3.5 h-3.5" /> Imprimir crachá
           </button>
           <button onClick={props.onNew} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-xs shadow-neon">
-            <Sparkles className="w-3.5 h-3.5" /> Criar outra (R$ 2,99)
+            <Sparkles className="w-3.5 h-3.5" /> Criar outra (grátis)
           </button>
         </div>
       </div>
