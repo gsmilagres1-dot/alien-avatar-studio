@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/criar")({ component: Criar });
 
-type Step = "intro" | "pay" | "form" | "drafts" | "final";
+type Step = "intro" | "form" | "drafts" | "final";
 
 function Criar() {
   const navigate = useNavigate();
