@@ -51,7 +51,7 @@ function Galaxia() {
   const [quiz, setQuiz] = useState<{ questions: Question[]; level: number; destinationName: string } | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
   const [quizLoading, setQuizLoading] = useState(false);
-  const [showPay, setShowPay] = useState<null | "passport" | "visa">(null);
+  // showPay removed: modo grátis
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null } | null>(null);
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
