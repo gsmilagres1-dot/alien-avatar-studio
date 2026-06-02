@@ -6,8 +6,6 @@ import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, Rota
 import { PLANETS, SHIPS, generateAlienIdentity, type PlanetId, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
-import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
-import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { createAvatarDraft, getActivePayment, saveIdentity, generateShipImage } from "@/lib/identities.functions";
 import { toast } from "sonner";
 
