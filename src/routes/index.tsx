@@ -38,7 +38,7 @@ function Landing() {
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon hover:scale-105 transition"
           >
             <Camera className="w-5 h-5" />
-            Criar minha identidade — R$ 2,99
+            Criar minha identidade — grátis
           </Link>
           {auth.isAuthenticated && (
             <Link to="/galeria" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full glass">
