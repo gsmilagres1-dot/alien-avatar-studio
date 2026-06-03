@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const { auth } = Route.useRouteContext();
+
   return (
     <main className="relative z-10 min-h-screen px-4 py-12">
       <div className="max-w-3xl mx-auto text-center">
