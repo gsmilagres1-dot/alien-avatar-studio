@@ -4,8 +4,8 @@ import { Camera, Rocket, Sparkles, Wallet, Share2 } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Identidade Alien · Vire um alienígena por R$ 2,99" },
-      { name: "description", content: "Tire uma selfie, escolha um planeta e receba RG, CTPS e CNH alienígenas. Inclui nave personalizada. R$ 2,99 por identidade." },
+      { title: "Identidade Alien · Vire um alienígena grátis" },
+      { name: "description", content: "Tire uma selfie, escolha um planeta e receba RG, CTPS e CNH alienígenas. Inclui nave personalizada. 100% grátis." },
       { property: "og:title", content: "Identidade Alien" },
       { property: "og:description", content: "Sua versão alienígena com IA: identidade, CTPS, CNH e nave. Compartilhe nas redes." },
     ],
