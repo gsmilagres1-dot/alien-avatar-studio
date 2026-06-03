@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const { auth } = Route.useRouteContext();
+
   return (
     <main className="relative z-10 min-h-screen px-4 py-12">
       <div className="max-w-3xl mx-auto text-center">
@@ -34,17 +34,15 @@ function Landing() {
 
         <div className="mt-8 inline-flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            to={auth.isAuthenticated ? "/criar" : "/login"}
+            to="/criar"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon hover:scale-105 transition"
           >
             <Camera className="w-5 h-5" />
             Criar minha identidade — grátis
           </Link>
-          {auth.isAuthenticated && (
-            <Link to="/galeria" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full glass">
-              Minha galeria
-            </Link>
-          )}
+          <Link to="/galeria" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full glass">
+            Minha galeria
+          </Link>
         </div>
 
         <div className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
