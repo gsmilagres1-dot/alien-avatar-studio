@@ -63,7 +63,7 @@ function Landing() {
         </div>
 
         <p className="mt-12 text-[11px] font-mono text-muted-foreground">
-          R$ 2,99 = 1 identidade final + até 3 opções de avatar pra escolher.
+          Grátis · 1 identidade final + até 3 opções de avatar pra escolher.
         </p>
       </div>
     </main>
