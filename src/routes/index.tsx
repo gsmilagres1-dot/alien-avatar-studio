@@ -4,8 +4,8 @@ import { Camera, Rocket, Sparkles, Wallet, Share2 } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Identidade Alien · Vire um alienígena por R$ 2,99" },
-      { name: "description", content: "Tire uma selfie, escolha um planeta e receba RG, CTPS e CNH alienígenas. Inclui nave personalizada. R$ 2,99 por identidade." },
+      { title: "Identidade Alien · Vire um alienígena grátis" },
+      { name: "description", content: "Tire uma selfie, escolha um planeta e receba RG, CTPS e CNH alienígenas. Inclui nave personalizada. 100% grátis." },
       { property: "og:title", content: "Identidade Alien" },
       { property: "og:description", content: "Sua versão alienígena com IA: identidade, CTPS, CNH e nave. Compartilhe nas redes." },
     ],
@@ -38,7 +38,7 @@ function Landing() {
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon hover:scale-105 transition"
           >
             <Camera className="w-5 h-5" />
-            Criar minha identidade — R$ 2,99
+            Criar minha identidade — grátis
           </Link>
           {auth.isAuthenticated && (
             <Link to="/galeria" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full glass">
@@ -63,7 +63,7 @@ function Landing() {
         </div>
 
         <p className="mt-12 text-[11px] font-mono text-muted-foreground">
-          R$ 2,99 = 1 identidade final + até 3 opções de avatar pra escolher.
+          Grátis · 1 identidade final + até 3 opções de avatar pra escolher.
         </p>
       </div>
     </main>
