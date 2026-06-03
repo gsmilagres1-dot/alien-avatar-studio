@@ -16,12 +16,15 @@ interface QuizQuestion { q: string; choices: string[]; answer: number }
 async function generateQuizWithAI(level: number, destinationName: string): Promise<QuizQuestion[]> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY ausente");
-  const prompt = `Gere ${QUESTIONS_PER_QUIZ} perguntas DIVERTIDAS e LEVES de múltipla escolha em PT-BR, nível ${level}/5 de dificuldade, ambientadas na viagem ao destino "${destinationName}". Cada pergunta deve ter uma resposta que qualquer pessoa possa confirmar com uma busca rápida no Google — use fatos populares, curiosidades famosas e referências bem conhecidas. Misture temas POP e ACESSÍVEIS — evite física pesada e astronomia técnica. Use:
-- Filmes e séries de ficção científica MUITO FAMOSOS (Star Wars, Star Trek, E.T., Men in Black, Interestelar, Guardiões da Galáxia, Alien, Duna, Matrix, De Volta para o Futuro, Jornada nas Estrelas)
-- Espécies alienígenas icônicas da cultura pop (Yoda, Wookiees, Vulcanos, Predadores, Xenomorfos, Klingons, ETs cinzas, Marcianos clássicos)
-- Curiosidades básicas e divertidas do espaço que todo mundo já ouviu falar (qual planeta é vermelho? qual é o maior? a Lua tem queijo?)
-- Mitos populares, OVNIs, Área 51, abduções no folclore, discos voadores
-- Cultura brasileira do espaço (Chapolin, Jetsons dublado, Zequinha de Marte, ETs no sertão)
+  const prompt = `Gere ${QUESTIONS_PER_QUIZ} perguntas DIVERTIDAS e LEVES de múltipla escolha em PT-BR, nível ${level}/5 de dificuldade, ambientadas na viagem ao destino "${destinationName}". Cada pergunta deve ter uma resposta que qualquer pessoa possa confirmar com uma busca rápida no Google — use fatos populares, curiosidades famosas e referências bem conhecidas. Misture temas POP e ACESSÍVEIS — evite física pesada e astronomia técnica. Varie os temas a cada pergunta, cobrindo o MÁXIMO POSSÍVEL dos universos abaixo:
+- Filmes de ficção científica: Star Wars, Star Trek, E.T. — O Extraterrestre, Interestelar, Guardiões da Galáxia, Alien, Duna, Matrix, De Volta para o Futuro, Avatar, Cocoon, Transformers, Men in Black, Predador, O Predador
+- Desenhos e cartoons: Jetsons, Simpsons (Treehouse of Horror com aliens), Pica-Pau, Looney Tunes (Marvin, o Marciano), Scooby-Doo encontra aliens, Duck Dodgers, Space Jam, Invader Zim, Ben 10, KND — A Turma do Bairro, Buzz Lightyear do Comando Estelar, Lilo & Stitch, Final Space
+- Séries clássicas de TV: Alf, o Eteimoso, Viagem Insólita, Arquivo X, Supermax, V, Smallville, Roswell, 3ª Rocha do Sol
+- Animês: Dragon Ball (Piccolo, Namekuseijin), One Piece (Enel, Birkans), Sailor Moon, Cowboy Bebop, Evangelion, Gurren Lagann, Space Dandy
+- Cultura brasileira do espaço: Chapolin Colorado vs marcianos, O Menino do Planeta Marte, Zequinha de Marte, Os Trapalhões no Planalto dos Macacos, Xuxa no Mundo da Imaginação, ET Bilu, "Miau" alienígena do humor brasileiro
+- Personagens alienígenas icônicos: Yoda, Wookiees, Vulcans, Klingons, Ewoks, Predador, Xenomorfo, E.T., Stitch, Alf, Groot, Rocket Raccoon, Megatron, Optimus Prime, Marvin (Looney Tunes), Roger (American Dad), Bender (Futurama), Zoidberg, Kang e Kodos (Simpsons)
+- Curiosidades espaciais básicas e divertidas (planetas do sistema solar, Sol, Lua, estrelas, buracos negros, galáxias)
+- Mitos e folclore: OVNIs, Área 51, Roswell, abduções, discos voadores, vida em Marte, "a Lua tem queijo"
 REGRA IMPORTANTE: as respostas corretas devem ser FACTUAIS e FACILMENTE VERIFICÁVEIS em uma busca no Google. Evite perguntas com respostas subjetivas, de nicho muito específico ou que exijam conhecimento técnico avançado. Cada alternativa deve ser claramente diferente da outra.
 Tom: descontraído, quase brincadeira, como um quiz de bar. Responda APENAS com JSON válido: {"questions":[{"q":"...","choices":["a","b","c","d"],"answer":0}]} onde "answer" é o índice (0-3) da correta. Sem texto fora do JSON.`;
 
