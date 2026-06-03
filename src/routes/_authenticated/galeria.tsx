@@ -40,7 +40,7 @@ function Galeria() {
         <div className="glass rounded-2xl p-10 text-center">
           <Rocket className="w-10 h-10 text-accent mx-auto" />
           <p className="font-display mt-3">Nenhuma identidade ainda</p>
-          <p className="text-xs text-muted-foreground mt-1">Crie sua primeira por R$ 2,99.</p>
+          <p className="text-xs text-muted-foreground mt-1">Crie sua primeira grátis.</p>
         </div>
       )}
 
