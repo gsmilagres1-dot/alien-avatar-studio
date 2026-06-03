@@ -1,23 +1,21 @@
-import { createFileRoute, redirect, Outlet, Link, useRouter } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Sparkles, Rocket, Images, Globe2 } from "lucide-react";
+import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
+import { Sparkles, Rocket, Images, Globe2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: ({ context, location }) => {
-    if (!context.auth.isAuthenticated && !context.auth.loading) {
-      throw redirect({ to: "/login", search: { redirect: location.href } });
-    }
-  },
   component: AuthLayout,
 });
 
 function AuthLayout() {
   const { auth } = Route.useRouteContext();
-  const router = useRouter();
 
-  async function logout() {
-    await supabase.auth.signOut();
-    router.navigate({ to: "/" });
+  if (auth.loading || !auth.isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xs font-mono text-muted-foreground animate-pulse">
+          Conectando à Federação Galáctica…
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -38,9 +36,6 @@ function AuthLayout() {
             <Link to="/galeria" className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
               <Images className="w-3.5 h-3.5" /> Galeria
             </Link>
-            <button onClick={logout} className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5" title={auth.email ?? ""}>
-              <LogOut className="w-3.5 h-3.5" /> Sair
-            </button>
           </div>
         </div>
       </nav>
