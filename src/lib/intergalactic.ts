@@ -10,7 +10,7 @@ export interface Destination {
 }
 
 export const DESTINATIONS: Destination[] = [
-  { id: "moon",       name: "Lua de Cristal",                transport: "nave estelar",        level: 1 },
+  { id: "jupiter",    name: "Luas de Júpiter",               transport: "nave estelar",        level: 1 },
   { id: "mars",       name: "Colônia de Marte",              transport: "teletransporte",      level: 2 },
   { id: "andromeda",  name: "Galáxia de Andrômeda",          transport: "buraco de minhoca",   level: 3 },
   { id: "multidim",   name: "Multidimensão Z-9",             transport: "transmutação",        level: 4 },
