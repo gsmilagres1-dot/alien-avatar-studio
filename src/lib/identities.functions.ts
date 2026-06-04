@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, PLANETS, SHIPS } from "@/lib/alien";
+import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, getRace, raceFromBirthdate, RACES, SHIPS } from "@/lib/alien";
 
 const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
 
