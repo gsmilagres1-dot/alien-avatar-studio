@@ -80,7 +80,7 @@ function Criar() {
     setGenLoading(true);
     try {
       const r = await saveFn({ data: { paymentId: payment.id, draftId: selectedDraft, humanName: name, birthdate, gender, planetId: planet } });
-      const id = generateAlienIdentity({ name, birthdate, planetId: planet, gender });
+      const id = generateAlienIdentity({ name, birthdate, planetId: planet as never, gender });
       const draftRow = drafts.find((d) => d.id === selectedDraft);
       setSavedIdentity({ ...id, avatarUrl: draftRow?.avatar_url ?? "", id: r.identity.id, shipImageUrl: null });
       await qc.invalidateQueries({ queryKey: ["active-payment"] });
