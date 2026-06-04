@@ -59,7 +59,7 @@ function Galeria() {
               </div>
               <div className="p-4">
                 <div className="font-display text-lg text-gradient-neon">{i.alien_name}</div>
-                <div className="text-xs text-muted-foreground">{i.species} · {i.planet_id}</div>
+                <div className="text-xs text-muted-foreground">{i.species}</div>
                 <div className="font-mono text-[10px] text-accent mt-1">{i.id_number}</div>
 
                 <div className={`mt-3 rounded-lg p-2 text-xs flex items-start gap-2 ${fatal ? "bg-destructive/10 border border-destructive/30" : done ? "bg-accent/10 border border-accent/30" : "bg-muted/30"}`}>

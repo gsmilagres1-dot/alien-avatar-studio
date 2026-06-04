@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, PLANETS, SHIPS } from "@/lib/alien";
+import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, getRace, raceFromBirthdate, RACES, SHIPS } from "@/lib/alien";
 
 const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
 
@@ -78,10 +78,9 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
     if ((count ?? 0) >= 3) throw new Error("Limite de 3 avatares por pagamento atingido");
 
     const variant = count ?? 0;
-    const planet = PLANETS.find((p) => p.id === data.planetId) ?? PLANETS[2];
+    const race = getRace(data.planetId);
     const prompt = buildAvatarPrompt({
-      planet: planet.name,
-      species: planet.species,
+      race,
       gender: data.gender,
       variant,
     });
@@ -189,8 +188,8 @@ export const generateShipImage = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!ident) throw new Error("Identidade não encontrada");
 
-    const planet = PLANETS.find((p) => p.id === ident.planet_id) ?? PLANETS[2];
-    const prompt = buildShipPrompt(data.category, planet.name);
+    const race = getRace(ident.planet_id);
+    const prompt = buildShipPrompt(data.category, race.origin);
     const bytes = await generateImage(prompt);
     const url = await uploadImage(userId, "ship", bytes);
 

@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Printer } from "lucide-react";
-import { PLANETS, SHIPS, generateAlienIdentity, type PlanetId, type Gender, type AlienIdentity } from "@/lib/alien";
+import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
 import { createAvatarDraft, getActivePayment, saveIdentity, generateShipImage } from "@/lib/identities.functions";
@@ -31,7 +31,7 @@ function Criar() {
   const [name, setName] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [gender, setGender] = useState<Gender>("undefined");
-  const [planet, setPlanet] = useState<PlanetId>("marte");
+  const [planet, setPlanet] = useState<string>("starseed");
   const [selectedDraft, setSelectedDraft] = useState<string | null>(null);
   const [genLoading, setGenLoading] = useState(false);
   const [savedIdentity, setSavedIdentity] = useState<AlienIdentity & { avatarUrl: string; id: string; shipImageUrl: string | null } | null>(null);
@@ -80,7 +80,7 @@ function Criar() {
     setGenLoading(true);
     try {
       const r = await saveFn({ data: { paymentId: payment.id, draftId: selectedDraft, humanName: name, birthdate, gender, planetId: planet } });
-      const id = generateAlienIdentity({ name, birthdate, planetId: planet, gender });
+      const id = generateAlienIdentity({ name, birthdate, planetId: planet as never, gender });
       const draftRow = drafts.find((d) => d.id === selectedDraft);
       setSavedIdentity({ ...id, avatarUrl: draftRow?.avatar_url ?? "", id: r.identity.id, shipImageUrl: null });
       await qc.invalidateQueries({ queryKey: ["active-payment"] });
@@ -161,16 +161,30 @@ function Criar() {
                     ))}
                   </div>
                 </Field>
-                <Field label="Planeta de origem">
-                  <div className="grid grid-cols-2 gap-2">
-                    {PLANETS.map((p) => (
-                      <button key={p.id} type="button" onClick={() => setPlanet(p.id)} className={`text-left px-3 py-2.5 rounded-lg border transition ${planet === p.id ? "border-accent bg-accent/15 shadow-neon" : "border-border bg-input/50 hover:border-accent/50"}`}>
-                        <div className="font-display text-sm">{p.name}</div>
-                        <div className="text-[10px] text-muted-foreground">{p.species}</div>
-                      </button>
-                    ))}
+                {birthdate ? (() => {
+                  const race = raceFromBirthdate(birthdate);
+                  // Sincroniza o estado com a raça derivada
+                  if (planet !== race.id) setTimeout(() => setPlanet(race.id), 0);
+                  return (
+                    <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 shadow-neon">
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Sua origem cósmica revelada</div>
+                      <div className="mt-1 font-display text-xl text-gradient-neon">{race.name}</div>
+                      <div className="text-xs text-muted-foreground">{race.species} · {race.origin}</div>
+                      <div className="mt-3 grid grid-cols-1 gap-1.5 text-xs">
+                        <div><span className="text-accent font-bold">Natureza:</span> {race.nature}</div>
+                        <div><span className="text-accent font-bold">Poderes:</span> {race.powers.join(" · ")}</div>
+                        <div><span className="text-accent font-bold">Propósito:</span> {race.purpose}</div>
+                      </div>
+                      <div className="mt-3 text-[10px] text-muted-foreground">
+                        Sua raça foi determinada pela sua data de nascimento. As {RACES.length} raças possíveis: {RACES.map(r => r.name).join(", ")}.
+                      </div>
+                    </div>
+                  );
+                })() : (
+                  <div className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground text-center">
+                    Informe sua data de nascimento para revelar sua raça alienígena.
                   </div>
-                </Field>
+                )}
               </div>
 
               <button onClick={genDraft} disabled={genLoading} className="mt-6 w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full bg-alien-grad text-primary-foreground font-display font-bold shadow-neon disabled:opacity-60">
