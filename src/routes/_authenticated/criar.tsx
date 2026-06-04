@@ -31,7 +31,7 @@ function Criar() {
   const [name, setName] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [gender, setGender] = useState<Gender>("undefined");
-  const [planet, setPlanet] = useState<PlanetId>("marte");
+  const [planet, setPlanet] = useState<string>("starseed");
   const [selectedDraft, setSelectedDraft] = useState<string | null>(null);
   const [genLoading, setGenLoading] = useState(false);
   const [savedIdentity, setSavedIdentity] = useState<AlienIdentity & { avatarUrl: string; id: string; shipImageUrl: string | null } | null>(null);
