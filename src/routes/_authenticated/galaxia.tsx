@@ -86,7 +86,7 @@ function Galaxia() {
               <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover" />
               <div className="p-4">
                 <div className="font-display text-lg text-gradient-neon">{i.alien_name}</div>
-                <div className="text-xs text-muted-foreground">{i.species} · {i.planet_id}</div>
+                <div className="text-xs text-muted-foreground">{i.species}</div>
               </div>
             </button>
           ))}
