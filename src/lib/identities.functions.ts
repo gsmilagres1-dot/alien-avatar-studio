@@ -188,8 +188,8 @@ export const generateShipImage = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!ident) throw new Error("Identidade não encontrada");
 
-    const planet = PLANETS.find((p) => p.id === ident.planet_id) ?? PLANETS[2];
-    const prompt = buildShipPrompt(data.category, planet.name);
+    const race = getRace(ident.planet_id);
+    const prompt = buildShipPrompt(data.category, race.origin);
     const bytes = await generateImage(prompt);
     const url = await uploadImage(userId, "ship", bytes);
 
