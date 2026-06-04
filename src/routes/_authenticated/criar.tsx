@@ -161,16 +161,30 @@ function Criar() {
                     ))}
                   </div>
                 </Field>
-                <Field label="Planeta de origem">
-                  <div className="grid grid-cols-2 gap-2">
-                    {PLANETS.map((p) => (
-                      <button key={p.id} type="button" onClick={() => setPlanet(p.id)} className={`text-left px-3 py-2.5 rounded-lg border transition ${planet === p.id ? "border-accent bg-accent/15 shadow-neon" : "border-border bg-input/50 hover:border-accent/50"}`}>
-                        <div className="font-display text-sm">{p.name}</div>
-                        <div className="text-[10px] text-muted-foreground">{p.species}</div>
-                      </button>
-                    ))}
+                {birthdate ? (() => {
+                  const race = raceFromBirthdate(birthdate);
+                  // Sincroniza o estado com a raça derivada
+                  if (planet !== race.id) setTimeout(() => setPlanet(race.id), 0);
+                  return (
+                    <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 shadow-neon">
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Sua origem cósmica revelada</div>
+                      <div className="mt-1 font-display text-xl text-gradient-neon">{race.name}</div>
+                      <div className="text-xs text-muted-foreground">{race.species} · {race.origin}</div>
+                      <div className="mt-3 grid grid-cols-1 gap-1.5 text-xs">
+                        <div><span className="text-accent font-bold">Natureza:</span> {race.nature}</div>
+                        <div><span className="text-accent font-bold">Poderes:</span> {race.powers.join(" · ")}</div>
+                        <div><span className="text-accent font-bold">Propósito:</span> {race.purpose}</div>
+                      </div>
+                      <div className="mt-3 text-[10px] text-muted-foreground">
+                        Sua raça foi determinada pela sua data de nascimento. As {RACES.length} raças possíveis: {RACES.map(r => r.name).join(", ")}.
+                      </div>
+                    </div>
+                  );
+                })() : (
+                  <div className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground text-center">
+                    Informe sua data de nascimento para revelar sua raça alienígena.
                   </div>
-                </Field>
+                )}
               </div>
 
               <button onClick={genDraft} disabled={genLoading} className="mt-6 w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full bg-alien-grad text-primary-foreground font-display font-bold shadow-neon disabled:opacity-60">
