@@ -78,10 +78,9 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
     if ((count ?? 0) >= 3) throw new Error("Limite de 3 avatares por pagamento atingido");
 
     const variant = count ?? 0;
-    const planet = PLANETS.find((p) => p.id === data.planetId) ?? PLANETS[2];
+    const race = getRace(data.planetId);
     const prompt = buildAvatarPrompt({
-      planet: planet.name,
-      species: planet.species,
+      race,
       gender: data.gender,
       variant,
     });
