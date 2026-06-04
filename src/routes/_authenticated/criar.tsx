@@ -162,28 +162,80 @@ function Criar() {
                     ))}
                   </div>
                 </Field>
-                {birthdate ? (() => {
-                  const race = raceFromBirthdate(birthdate);
-                  // Sincroniza o estado com a raça derivada
-                  if (planet !== race.id) setTimeout(() => setPlanet(race.id), 0);
-                  return (
-                    <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 shadow-neon">
-                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Sua origem cósmica revelada</div>
-                      <div className="mt-1 font-display text-xl text-gradient-neon">{race.name}</div>
-                      <div className="text-xs text-muted-foreground">{race.species} · {race.origin}</div>
-                      <div className="mt-3 grid grid-cols-1 gap-1.5 text-xs">
-                        <div><span className="text-accent font-bold">Natureza:</span> {race.nature}</div>
-                        <div><span className="text-accent font-bold">Poderes:</span> {race.powers.join(" · ")}</div>
-                        <div><span className="text-accent font-bold">Propósito:</span> {race.purpose}</div>
+                <Field label="Como definir sua raça?">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setRaceMode("auto"); if (birthdate) setPlanet(raceFromBirthdate(birthdate).id); }}
+                      className={`px-3 py-2.5 rounded-lg border text-sm ${raceMode === "auto" ? "border-accent bg-accent/15 shadow-neon" : "border-border bg-input/50"}`}
+                    >
+                      🌌 Pela data de nascimento
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRaceMode("manual")}
+                      className={`px-3 py-2.5 rounded-lg border text-sm ${raceMode === "manual" ? "border-accent bg-accent/15 shadow-neon" : "border-border bg-input/50"}`}
+                    >
+                      ✨ Escolher manualmente
+                    </button>
+                  </div>
+                </Field>
+
+                {raceMode === "auto" && (
+                  birthdate ? (() => {
+                    const race = raceFromBirthdate(birthdate);
+                    if (planet !== race.id) setTimeout(() => setPlanet(race.id), 0);
+                    return (
+                      <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 shadow-neon">
+                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Sua origem cósmica revelada</div>
+                        <div className="mt-1 font-display text-xl text-gradient-neon">{race.name}</div>
+                        <div className="text-xs text-muted-foreground">{race.species} · {race.origin}</div>
+                        <div className="mt-3 grid grid-cols-1 gap-1.5 text-xs">
+                          <div><span className="text-accent font-bold">Natureza:</span> {race.nature}</div>
+                          <div><span className="text-accent font-bold">Poderes:</span> {race.powers.join(" · ")}</div>
+                          <div><span className="text-accent font-bold">Propósito:</span> {race.purpose}</div>
+                        </div>
+                        <div className="mt-3 text-[10px] text-muted-foreground">
+                          Raça determinada pela sua data de nascimento. Toque "Escolher manualmente" para gerar outras raças.
+                        </div>
                       </div>
-                      <div className="mt-3 text-[10px] text-muted-foreground">
-                        Sua raça foi determinada pela sua data de nascimento. As {RACES.length} raças possíveis: {RACES.map(r => r.name).join(", ")}.
-                      </div>
+                    );
+                  })() : (
+                    <div className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground text-center">
+                      Informe sua data de nascimento para revelar sua raça alienígena.
                     </div>
-                  );
-                })() : (
-                  <div className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground text-center">
-                    Informe sua data de nascimento para revelar sua raça alienígena.
+                  )
+                )}
+
+                {raceMode === "manual" && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {RACES.map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => setPlanet(r.id)}
+                          className={`px-3 py-2.5 rounded-lg border text-left ${planet === r.id ? "border-accent bg-accent/15 shadow-neon" : "border-border bg-input/50"}`}
+                        >
+                          <div className="font-display text-sm">{r.name}</div>
+                          <div className="text-[10px] text-muted-foreground truncate">{r.origin}</div>
+                        </button>
+                      ))}
+                    </div>
+                    {(() => {
+                      const race = RACES.find((r) => r.id === planet) ?? RACES[0];
+                      return (
+                        <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 shadow-neon">
+                          <div className="font-display text-lg text-gradient-neon">{race.name}</div>
+                          <div className="text-xs text-muted-foreground">{race.species} · {race.origin}</div>
+                          <div className="mt-2 grid grid-cols-1 gap-1.5 text-xs">
+                            <div><span className="text-accent font-bold">Natureza:</span> {race.nature}</div>
+                            <div><span className="text-accent font-bold">Poderes:</span> {race.powers.join(" · ")}</div>
+                            <div><span className="text-accent font-bold">Propósito:</span> {race.purpose}</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
