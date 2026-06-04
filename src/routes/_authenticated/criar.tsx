@@ -32,6 +32,7 @@ function Criar() {
   const [birthdate, setBirthdate] = useState("");
   const [gender, setGender] = useState<Gender>("undefined");
   const [planet, setPlanet] = useState<string>("starseed");
+  const [raceMode, setRaceMode] = useState<"auto" | "manual">("auto");
   const [selectedDraft, setSelectedDraft] = useState<string | null>(null);
   const [genLoading, setGenLoading] = useState(false);
   const [savedIdentity, setSavedIdentity] = useState<AlienIdentity & { avatarUrl: string; id: string; shipImageUrl: string | null } | null>(null);
