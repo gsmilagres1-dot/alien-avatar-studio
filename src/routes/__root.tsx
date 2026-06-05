@@ -61,10 +61,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient; auth
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Identidade Alien · Sua versão alienígena" },
-      { name: "description", content: "Crie sua identidade alienígena com IA grátis: RG, CTPS, CNH e nave personalizada." },
+      { name: "description", content: "Crie sua identidade alienígena com IA grátis: RG universal, passaporte e nave personalizada." },
       { property: "og:type", content: "website" },
       { property: "og:title", content: "Identidade Alien" },
-      { property: "og:description", content: "Vire um alien em segundos. Crie sua identidade, CTPS, CNH e nave." },
+      { property: "og:description", content: "Vire um alien em segundos. Crie sua identidade, passaporte e nave — grátis." },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [

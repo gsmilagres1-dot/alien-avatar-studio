@@ -319,8 +319,6 @@ function FinalView(props: {
 
       <div className="space-y-6 print:space-y-2" id="badges">
         <AlienCard type="identidade" identity={props.identity} avatarUrl={props.avatarUrl} />
-        <AlienCard type="trabalho" identity={props.identity} avatarUrl={props.avatarUrl} />
-        <AlienCard type="motorista" identity={props.identity} avatarUrl={props.avatarUrl} />
       </div>
 
       <div className="mt-8 glass rounded-2xl p-5">
