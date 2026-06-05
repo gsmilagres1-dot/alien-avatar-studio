@@ -5,9 +5,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Identidade Alien · Vire um alienígena grátis" },
-      { name: "description", content: "Tire uma selfie, escolha um planeta e receba RG, CTPS e CNH alienígenas. Inclui nave personalizada. 100% grátis." },
+      { name: "description", content: "Tire uma selfie, escolha sua raça e receba sua identidade alienígena, passaporte e nave personalizada. 100% grátis." },
       { property: "og:title", content: "Identidade Alien" },
-      { property: "og:description", content: "Sua versão alienígena com IA: identidade, CTPS, CNH e nave. Compartilhe nas redes." },
+      { property: "og:description", content: "Sua versão alienígena com IA: identidade, passaporte e nave. Viaje pela galáxia grátis." },
     ],
   }),
   component: Landing,
@@ -29,7 +29,7 @@ function Landing() {
           <span className="text-gradient-neon">alienígena</span>
         </h1>
         <p className="mt-6 text-muted-foreground max-w-md mx-auto">
-          Sua selfie + IA = RG, CTPS, CNH e até uma nave alien. Pronto pra imprimir como crachá e compartilhar.
+          Sua selfie + IA = identidade alien, passaporte cósmico e nave personalizada. Pronto pra imprimir e compartilhar.
         </p>
 
         <div className="mt-8 inline-flex flex-col sm:flex-row gap-3 justify-center">
@@ -48,7 +48,7 @@ function Landing() {
         <div className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
           {[
             { i: Camera, t: "Sua selfie", d: "Foto vira avatar alien" },
-            { i: Wallet, t: "3 carteiras", d: "RG, CTPS e CNH" },
+            { i: Wallet, t: "Identidade", d: "RG universal + passaporte" },
             { i: Rocket, t: "Sua nave", d: "Esportiva, off-road ou corrida" },
             { i: Share2, t: "Compartilhe", d: "Instagram, X, Threads..." },
           ].map((x) => (
