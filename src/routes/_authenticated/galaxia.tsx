@@ -2,11 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2 } from "lucide-react";
+import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2, Sun, Moon, Globe2, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
-import { getJourneyState, startQuiz, submitQuiz, claimVisaWithPayment } from "@/lib/intergalactic.functions";
-import { DESTINATIONS, destinationForLevel, MAX_QUIZ_ATTEMPTS } from "@/lib/intergalactic";
+import { getJourneyState, startQuiz, submitQuiz, claimVisa, completeJourney } from "@/lib/intergalactic.functions";
+import { DESTINATIONS, getDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, type Destination } from "@/lib/intergalactic";
 import { SHIPS } from "@/lib/alien";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
@@ -27,6 +27,12 @@ export const Route = createFileRoute("/_authenticated/galaxia")({
 
 interface Question { q: string; choices: string[]; answer: number }
 
+function KindIcon({ kind, className }: { kind: Destination["kind"]; className?: string }) {
+  if (kind === "sun") return <Sun className={className} />;
+  if (kind === "moon") return <Moon className={className} />;
+  return <Globe2 className={className} />;
+}
+
 function Galaxia() {
   const navigate = useNavigate();
   const { identityId } = Route.useSearch();
@@ -35,7 +41,8 @@ function Galaxia() {
   const stateFn = useServerFn(getJourneyState);
   const quizStartFn = useServerFn(startQuiz);
   const quizSubmitFn = useServerFn(submitQuiz);
-  const claimVisaFn = useServerFn(claimVisaWithPayment);
+  const claimVisaFn = useServerFn(claimVisa);
+  const completeFn = useServerFn(completeJourney);
   const shipFn = useServerFn(generateShipImage);
 
   const { data: ids, isLoading: idsLoading } = useQuery({
@@ -48,10 +55,10 @@ function Galaxia() {
     enabled: !!identityId,
   });
 
-  const [quiz, setQuiz] = useState<{ questions: Question[]; level: number; destinationName: string } | null>(null);
+  const [chosenDestId, setChosenDestId] = useState<string | null>(null);
+  const [quiz, setQuiz] = useState<{ questions: Question[]; level: number; destinationId: string; destinationName: string } | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
   const [quizLoading, setQuizLoading] = useState(false);
-  // showPay removed: modo grátis
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null } | null>(null);
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
@@ -78,7 +85,7 @@ function Galaxia() {
     return (
       <main className="px-4 py-8 max-w-4xl mx-auto">
         <h1 className="font-display text-2xl text-gradient-neon mb-2">Escolha a identidade que vai viajar</h1>
-        <p className="text-sm text-muted-foreground mb-6">Cada identidade tem sua própria viagem. Comprar uma nova identidade começa uma viagem do zero.</p>
+        <p className="text-sm text-muted-foreground mb-6">Cada identidade tem sua própria viagem 100% grátis.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {list.map((i) => (
             <button key={i.id} onClick={() => navigate({ to: "/galaxia", search: { identityId: i.id } })}
@@ -97,11 +104,11 @@ function Galaxia() {
 
   if (stateLoading || !state) return <Loader />;
 
-  const { journey, passport, visas, identity, passportCredit, visaCredit } = state;
-  const dest = destinationForLevel(journey.current_level);
+  const { journey, passport, visas, identity } = state;
+  const visitedIds = new Set(visas.map((v) => v.destination_id));
+  const remaining = DESTINATIONS.filter((d) => !visitedIds.has(d.id));
+  const currentDest = chosenDestId ? getDestination(chosenDestId) ?? null : null;
   const attemptsLeft = MAX_QUIZ_ATTEMPTS - journey.attempts_used;
-
-  // Pagamento removido — modo grátis
 
   // Journey ended (completed or lost)
   if (journey.status !== "active") {
@@ -117,6 +124,15 @@ function Galaxia() {
             {identity?.alien_name} {fatal ? "acabou em" : "chegou em"}{" "}
             <span className="font-bold text-gradient-neon">{journey.final_destination_name}</span>
           </p>
+          {visas.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1.5 justify-center">
+              {visas.map((v) => (
+                <span key={v.id} className="glass px-2.5 py-1 rounded-full text-[10px]">
+                  <Stamp className="w-3 h-3 inline mr-1" /> {v.destination_name}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="mt-6 flex flex-col gap-2">
             <Link to="/criar" className="px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
               Nova identidade (grátis) → nova viagem
@@ -130,10 +146,9 @@ function Galaxia() {
     );
   }
 
-  // Passaporte é emitido automaticamente (modo grátis); guarda apenas em caso raro de race
   if (!passport) return <Loader />;
 
-  // Ship selection — required before any quiz
+  // Ship selection
   if (!identity?.ship_image_url) {
     return (
       <main className="px-4 py-8 max-w-2xl mx-auto">
@@ -177,7 +192,7 @@ function Galaxia() {
     const allAnswered = answers.length === quiz.questions.length && answers.every((a) => a !== undefined);
     return (
       <main className="px-4 py-6 max-w-2xl mx-auto">
-        <div className="text-xs text-muted-foreground mb-2">Nível {quiz.level} · {quiz.destinationName}</div>
+        <div className="text-xs text-muted-foreground mb-2">Dificuldade nível {quiz.level} · {quiz.destinationName}</div>
         <h1 className="font-display text-xl text-gradient-neon mb-4">Quiz da viagem</h1>
         <div className="space-y-5">
           {quiz.questions.map((q, qi) => (
@@ -199,7 +214,7 @@ function Galaxia() {
         <button disabled={!allAnswered || quizLoading} onClick={async () => {
           setQuizLoading(true);
           try {
-            const r = await quizSubmitFn({ data: { journeyId: journey.id, questions: quiz.questions, answers } });
+            const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, questions: quiz.questions, answers } });
             setLastResult(r);
             setQuiz(null); setAnswers([]);
             await qc.invalidateQueries({ queryKey: ["journey", identityId] });
@@ -228,13 +243,14 @@ function Galaxia() {
         )}
       </div>
 
-      {/* Level progress */}
+      {/* Progress */}
       <div className="mb-5">
-        <div className="text-xs text-muted-foreground mb-2">Progresso da viagem</div>
-        <div className="flex items-center gap-2">
-          {DESTINATIONS.map((d) => (
-            <div key={d.id} className={`flex-1 h-2 rounded-full ${d.level < journey.current_level ? "bg-accent" : d.level === journey.current_level ? "bg-accent/40" : "bg-muted"}`} />
-          ))}
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+          <span>Destinos visitados</span>
+          <span>{visas.length}/{DESTINATIONS.length}</span>
+        </div>
+        <div className="h-2 rounded-full bg-muted overflow-hidden">
+          <div className="h-full bg-accent" style={{ width: `${(visas.length / DESTINATIONS.length) * 100}%` }} />
         </div>
       </div>
 
@@ -268,40 +284,97 @@ function Galaxia() {
         </div>
       )}
 
-      <div className="glass rounded-2xl p-6">
-        <div className="text-xs text-muted-foreground">Nível {journey.current_level} de {DESTINATIONS.length}</div>
-        <h2 className="font-display text-2xl text-gradient-neon flex items-center gap-2 mt-1">
-          <MapPin className="w-5 h-5" /> {dest.name}
-        </h2>
-        <div className="text-xs text-muted-foreground mt-1">Transporte: {dest.transport}</div>
-        <div className="text-xs mt-3">Precisa de ≥ 80% no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+      {/* Destination picker */}
+      {!currentDest && (
+        <div className="glass rounded-2xl p-5">
+          <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Escolha seu próximo destino</h2>
+          <p className="text-xs text-muted-foreground mt-1">Selecione um planeta, sol ou lua para tentar o quiz da viagem. Tudo grátis.</p>
 
-        <div className="mt-5 flex flex-col sm:flex-row gap-2">
-          <button disabled={quizLoading} onClick={async () => {
-            setQuizLoading(true);
-            try {
-              const r = await quizStartFn({ data: { journeyId: journey.id } });
-              setQuiz({ questions: r.questions, level: r.level, destinationName: r.destination.name });
-              setAnswers([]); setLastResult(null);
-            } catch (e) { toast.error((e as Error).message); }
-            finally { setQuizLoading(false); }
-          }}
-            className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
-            {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
-          </button>
-          {visaCredit && (
-            <button onClick={async () => {
-              try {
-                await claimVisaFn({ data: { journeyId: journey.id, paymentId: visaCredit.id } });
-                toast.success(`Visto emitido para ${dest.name}!`);
-                await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-              } catch (e) { toast.error((e as Error).message); }
-            }} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
-              Embarcar (grátis) <ArrowRight className="w-3.5 h-3.5 inline" />
-            </button>
+          {remaining.length === 0 ? (
+            <div className="mt-5 text-center">
+              <Sparkles className="w-10 h-10 text-accent mx-auto" />
+              <p className="font-display text-lg mt-2">Você visitou todos os destinos!</p>
+              <button onClick={async () => {
+                try {
+                  await completeFn({ data: { journeyId: journey.id } });
+                  await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+                } catch (e) { toast.error((e as Error).message); }
+              }} className="mt-4 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
+                Finalizar viagem
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {remaining.map((d) => (
+                  <button key={d.id} onClick={() => setChosenDestId(d.id)}
+                    className="rounded-xl border border-border bg-input/50 hover:border-accent hover:bg-accent/5 p-3 text-left transition">
+                    <div className="flex items-center gap-2">
+                      <KindIcon kind={d.kind} className="w-4 h-4 text-accent" />
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{KIND_LABEL[d.kind]}</span>
+                    </div>
+                    <div className="font-display text-sm mt-1">{d.name}</div>
+                    <div className="text-[10px] text-muted-foreground">{d.transport}</div>
+                    <div className="text-[10px] text-accent mt-1">Dificuldade {d.level}/5</div>
+                  </button>
+                ))}
+              </div>
+              {visas.length > 0 && (
+                <button onClick={async () => {
+                  try {
+                    await completeFn({ data: { journeyId: journey.id } });
+                    await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+                  } catch (e) { toast.error((e as Error).message); }
+                }} className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-accent/40 hover:bg-accent/10 text-xs">
+                  <Flag className="w-3.5 h-3.5" /> Encerrar viagem aqui
+                </button>
+              )}
+            </>
           )}
         </div>
-      </div>
+      )}
+
+      {currentDest && (
+        <div className="glass rounded-2xl p-6">
+          <button onClick={() => setChosenDestId(null)} className="text-xs text-muted-foreground hover:text-accent mb-3">← trocar destino</button>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <KindIcon kind={currentDest.kind} className="w-3.5 h-3.5" />
+            {KIND_LABEL[currentDest.kind]} · Dificuldade {currentDest.level}/5
+          </div>
+          <h2 className="font-display text-2xl text-gradient-neon flex items-center gap-2 mt-1">
+            <MapPin className="w-5 h-5" /> {currentDest.name}
+          </h2>
+          <div className="text-xs text-muted-foreground mt-1">Transporte: {currentDest.transport}</div>
+          <div className="text-xs mt-3">Precisa de ≥ 80% no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+
+          <div className="mt-5 flex flex-col sm:flex-row gap-2">
+            <button disabled={quizLoading} onClick={async () => {
+              setQuizLoading(true);
+              try {
+                const r = await quizStartFn({ data: { journeyId: journey.id, destinationId: currentDest.id } });
+                setQuiz({ questions: r.questions, level: r.level, destinationId: currentDest.id, destinationName: r.destination.name });
+                setAnswers([]); setLastResult(null);
+              } catch (e) { toast.error((e as Error).message); }
+              finally { setQuizLoading(false); }
+            }}
+              className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
+              {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
+            </button>
+            {lastResult?.passed && (
+              <button onClick={async () => {
+                try {
+                  await claimVisaFn({ data: { journeyId: journey.id, destinationId: currentDest.id } });
+                  toast.success(`Visto emitido para ${currentDest.name}!`);
+                  setChosenDestId(null); setLastResult(null);
+                  await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+                } catch (e) { toast.error((e as Error).message); }
+              }} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
+                Embarcar (grátis) <ArrowRight className="w-3.5 h-3.5 inline" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {visas.length > 0 && (
         <div className="mt-6">
