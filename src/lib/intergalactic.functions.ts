@@ -7,7 +7,7 @@ import {
   MAX_QUIZ_ATTEMPTS,
   QUESTIONS_PER_QUIZ,
   QUIZ_PASS_RATIO,
-  destinationForLevel,
+  getDestination,
   pickFatalDestination,
 } from "@/lib/intergalactic";
 
@@ -16,17 +16,7 @@ interface QuizQuestion { q: string; choices: string[]; answer: number }
 async function generateQuizWithAI(level: number, destinationName: string): Promise<QuizQuestion[]> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY ausente");
-  const prompt = `Gere ${QUESTIONS_PER_QUIZ} perguntas DIVERTIDAS e LEVES de múltipla escolha em PT-BR, nível ${level}/5 de dificuldade, ambientadas na viagem ao destino "${destinationName}". Cada pergunta deve ter uma resposta que qualquer pessoa possa confirmar com uma busca rápida no Google — use fatos populares, curiosidades famosas e referências bem conhecidas. Misture temas POP e ACESSÍVEIS — evite física pesada e astronomia técnica. Varie os temas a cada pergunta, cobrindo o MÁXIMO POSSÍVEL dos universos abaixo:
-- Filmes de ficção científica: Star Wars, Star Trek, E.T. — O Extraterrestre, Interestelar, Guardiões da Galáxia, Alien, Duna, Matrix, De Volta para o Futuro, Avatar, Cocoon, Transformers, Men in Black, Predador, O Predador
-- Desenhos e cartoons: Jetsons, Simpsons (Treehouse of Horror com aliens), Pica-Pau, Looney Tunes (Marvin, o Marciano), Scooby-Doo encontra aliens, Duck Dodgers, Space Jam, Invader Zim, Ben 10, KND — A Turma do Bairro, Buzz Lightyear do Comando Estelar, Lilo & Stitch, Final Space
-- Séries clássicas de TV: Alf, o Eteimoso, Viagem Insólita, Arquivo X, Supermax, V, Smallville, Roswell, 3ª Rocha do Sol
-- Animês: Dragon Ball (Piccolo, Namekuseijin), One Piece (Enel, Birkans), Sailor Moon, Cowboy Bebop, Evangelion, Gurren Lagann, Space Dandy
-- Cultura brasileira do espaço: Chapolin Colorado vs marcianos, O Menino do Planeta Marte, Zequinha de Marte, Os Trapalhões no Planalto dos Macacos, Xuxa no Mundo da Imaginação, ET Bilu, "Miau" alienígena do humor brasileiro
-- Personagens alienígenas icônicos: Yoda, Wookiees, Vulcans, Klingons, Ewoks, Predador, Xenomorfo, E.T., Stitch, Alf, Groot, Rocket Raccoon, Megatron, Optimus Prime, Marvin (Looney Tunes), Roger (American Dad), Bender (Futurama), Zoidberg, Kang e Kodos (Simpsons)
-- Curiosidades espaciais básicas e divertidas (planetas do sistema solar, Sol, Lua, estrelas, buracos negros, galáxias)
-- Mitos e folclore: OVNIs, Área 51, Roswell, abduções, discos voadores, vida em Marte, "a Lua tem queijo"
-REGRA IMPORTANTE: as respostas corretas devem ser FACTUAIS e FACILMENTE VERIFICÁVEIS em uma busca no Google. Evite perguntas com respostas subjetivas, de nicho muito específico ou que exijam conhecimento técnico avançado. Cada alternativa deve ser claramente diferente da outra.
-Tom: descontraído, quase brincadeira, como um quiz de bar. Responda APENAS com JSON válido: {"questions":[{"q":"...","choices":["a","b","c","d"],"answer":0}]} onde "answer" é o índice (0-3) da correta. Sem texto fora do JSON.`;
+  const prompt = `Gere ${QUESTIONS_PER_QUIZ} perguntas DIVERTIDAS e LEVES de múltipla escolha em PT-BR, nível ${level}/5 de dificuldade, ambientadas na viagem ao destino "${destinationName}". Cada pergunta deve ter uma resposta que qualquer pessoa possa confirmar com uma busca rápida no Google — use fatos populares, curiosidades famosas e referências bem conhecidas. Misture temas POP e ACESSÍVEIS. Tom: descontraído, como um quiz de bar. Responda APENAS com JSON válido: {"questions":[{"q":"...","choices":["a","b","c","d"],"answer":0}]} onde "answer" é o índice (0-3) da correta. Sem texto fora do JSON.`;
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -76,7 +66,7 @@ export const getJourneyState = createServerFn({ method: "POST" })
     const { userId } = context;
     const journey = await ensureJourney(userId, data.identityId);
 
-    // Modo grátis: garante passaporte sem cobrança
+    // Passaporte grátis (auto-emitido)
     let { data: passport } = await supabaseAdmin
       .from("passports").select("*").eq("user_id", userId).maybeSingle();
     if (!passport) {
@@ -92,30 +82,15 @@ export const getJourneyState = createServerFn({ method: "POST" })
       supabaseAdmin.from("identities").select("alien_name, planet_id, avatar_url, ship_image_url, ship_category").eq("id", data.identityId).single(),
     ]);
 
-    // Modo grátis: sempre disponibiliza um "crédito" de visto para a viagem ativa
-    let visaCredit: { id: string; kind: string; credits_remaining: number } | null = null;
-    if (journey.status === "active") {
-      const { data: existing } = await supabaseAdmin.from("payment_transactions")
-        .select("id, kind, credits_remaining")
-        .eq("user_id", userId).eq("status", "completed").eq("kind", "visa")
-        .gt("credits_remaining", 0).limit(1).maybeSingle();
-      if (existing) {
-        visaCredit = existing;
-      } else {
-        const ins = await supabaseAdmin.from("payment_transactions").insert({
-          user_id: userId, amount_cents: 0, currency: "brl", status: "completed",
-          credits_granted: 1, credits_remaining: 1, env: "sandbox", kind: "visa",
-        }).select("id, kind, credits_remaining").single();
-        visaCredit = ins.data;
-      }
-    }
-
-    return { journey, passport, visas: visas ?? [], identity, passportCredit: null, visaCredit };
+    return { journey, passport, visas: visas ?? [], identity };
   });
 
 export const startQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ journeyId: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => z.object({
+    journeyId: z.string().uuid(),
+    destinationId: z.string().min(1).max(64),
+  }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { data: journey } = await supabaseAdmin
@@ -123,19 +98,22 @@ export const startQuiz = createServerFn({ method: "POST" })
     if (!journey) throw new Error("Viagem não encontrada");
     if (journey.status !== "active") throw new Error("Esta viagem já terminou");
 
-    const { data: passport } = await supabaseAdmin
-      .from("passports").select("id").eq("user_id", userId).maybeSingle();
-    if (!passport) throw new Error("Você precisa de um passaporte primeiro");
+    const dest = getDestination(data.destinationId);
+    if (!dest) throw new Error("Destino inválido");
 
-    const dest = destinationForLevel(journey.current_level);
-    const questions = await generateQuizWithAI(journey.current_level, dest.name);
-    return { questions, level: journey.current_level, destination: dest, attemptsUsed: journey.attempts_used };
+    const { data: already } = await supabaseAdmin
+      .from("visas").select("id").eq("journey_id", journey.id).eq("destination_id", dest.id).maybeSingle();
+    if (already) throw new Error("Você já visitou esse destino");
+
+    const questions = await generateQuizWithAI(dest.level, dest.name);
+    return { questions, level: dest.level, destination: dest, attemptsUsed: journey.attempts_used };
   });
 
 export const submitQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     journeyId: z.string().uuid(),
+    destinationId: z.string().min(1).max(64),
     questions: z.array(z.object({ q: z.string(), choices: z.array(z.string()), answer: z.number() })).length(QUESTIONS_PER_QUIZ),
     answers: z.array(z.number().min(0).max(3)).length(QUESTIONS_PER_QUIZ),
   }).parse(d))
@@ -145,11 +123,14 @@ export const submitQuiz = createServerFn({ method: "POST" })
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey || journey.status !== "active") throw new Error("Viagem inválida");
 
+    const dest = getDestination(data.destinationId);
+    if (!dest) throw new Error("Destino inválido");
+
     const score = data.answers.reduce((acc, a, i) => acc + (a === data.questions[i].answer ? 1 : 0), 0);
     const passed = score / QUESTIONS_PER_QUIZ >= QUIZ_PASS_RATIO;
 
     await supabaseAdmin.from("quiz_attempts").insert({
-      user_id: userId, journey_id: journey.id, level: journey.current_level,
+      user_id: userId, journey_id: journey.id, level: dest.level,
       score, total: QUESTIONS_PER_QUIZ, passed, questions: data.questions, answers: data.answers,
     });
 
@@ -174,64 +155,60 @@ export const submitQuiz = createServerFn({ method: "POST" })
     return { passed: false, score, attemptsLeft: MAX_QUIZ_ATTEMPTS - newAttempts, fatal: null };
   });
 
-export const claimVisaWithPayment = createServerFn({ method: "POST" })
+export const claimVisa = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
-    journeyId: z.string().uuid(), paymentId: z.string().uuid(),
+    journeyId: z.string().uuid(),
+    destinationId: z.string().min(1).max(64),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const { data: pay } = await supabaseAdmin
-      .from("payment_transactions").select("*").eq("id", data.paymentId).eq("user_id", userId).maybeSingle();
-    if (!pay || pay.status !== "completed" || pay.credits_remaining < 1) throw new Error("Pagamento inválido");
-    if (pay.kind !== "visa") throw new Error("Esse pagamento não é de visto");
-
     const { data: journey } = await supabaseAdmin
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey || journey.status !== "active") throw new Error("Viagem inválida");
 
-    const dest = destinationForLevel(journey.current_level);
+    const dest = getDestination(data.destinationId);
+    if (!dest) throw new Error("Destino inválido");
+
     const { error } = await supabaseAdmin.from("visas").insert({
       user_id: userId, journey_id: journey.id, destination_id: dest.id,
-      destination_name: dest.name, transport: dest.transport, payment_id: pay.id, kind: "normal",
+      destination_name: dest.name, transport: dest.transport, kind: "normal",
     });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
 
-    await supabaseAdmin.from("payment_transactions").update({ credits_remaining: 0 }).eq("id", pay.id);
-
-    if (journey.current_level >= DESTINATIONS.length) {
+    const newLevel = journey.current_level + 1;
+    if (newLevel > DESTINATIONS.length) {
       await supabaseAdmin.from("journeys").update({
         status: "completed",
+        current_level: newLevel,
         final_destination_name: dest.name,
         final_destination_kind: "normal",
         completed_at: new Date().toISOString(),
       }).eq("id", journey.id);
     } else {
       await supabaseAdmin.from("journeys").update({
-        current_level: journey.current_level + 1, attempts_used: 0,
+        current_level: newLevel, attempts_used: 0,
       }).eq("id", journey.id);
     }
     return { ok: true };
   });
 
-export const claimPassportWithPayment = createServerFn({ method: "POST" })
+export const completeJourney = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ paymentId: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ journeyId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const { data: pay } = await supabaseAdmin
-      .from("payment_transactions").select("*").eq("id", data.paymentId).eq("user_id", userId).maybeSingle();
-    if (!pay || pay.status !== "completed" || pay.credits_remaining < 1) throw new Error("Pagamento inválido");
-    if (pay.kind !== "passport") throw new Error("Esse pagamento não é de passaporte");
-
-    const { data: existing } = await supabaseAdmin
-      .from("passports").select("id").eq("user_id", userId).maybeSingle();
-    if (!existing) {
-      const num = "AP-" + Math.random().toString(36).slice(2, 8).toUpperCase();
-      await supabaseAdmin.from("passports").insert({
-        user_id: userId, passport_number: num, origin_planet: "Terra", payment_id: pay.id,
-      });
-    }
-    await supabaseAdmin.from("payment_transactions").update({ credits_remaining: 0 }).eq("id", pay.id);
+    const { data: journey } = await supabaseAdmin
+      .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
+    if (!journey || journey.status !== "active") throw new Error("Viagem inválida");
+    const { data: visas } = await supabaseAdmin
+      .from("visas").select("destination_name").eq("journey_id", journey.id).order("issued_at", { ascending: false }).limit(1);
+    const last = visas?.[0]?.destination_name ?? "Casa";
+    await supabaseAdmin.from("journeys").update({
+      status: "completed",
+      final_destination_name: last,
+      final_destination_kind: "normal",
+      completed_at: new Date().toISOString(),
+    }).eq("id", journey.id);
     return { ok: true };
   });

@@ -1,32 +1,51 @@
 // Shared constants for the intergalactic area (client + server safe).
 
-export type DestinationKind = "normal" | "fatal";
+export type DestinationKind = "planet" | "sun" | "moon" | "fatal";
 
 export interface Destination {
   id: string;
   name: string;
   transport: string;
-  level: number;
+  level: number; // dificuldade do quiz (1-5)
+  kind: DestinationKind;
 }
 
 export const DESTINATIONS: Destination[] = [
-  { id: "jupiter",    name: "Luas de Júpiter",               transport: "nave estelar",        level: 1 },
-  { id: "mars",       name: "Colônia de Marte",              transport: "teletransporte",      level: 2 },
-  { id: "andromeda",  name: "Galáxia de Andrômeda",          transport: "buraco de minhoca",   level: 3 },
-  { id: "multidim",   name: "Multidimensão Z-9",             transport: "transmutação",        level: 4 },
-  { id: "core",       name: "Coração da Via Láctea",         transport: "nave-mãe ancestral",  level: 5 },
+  // 10 planetas
+  { id: "mercurio",  name: "Mercúrio",            transport: "nave térmica",         level: 1, kind: "planet" },
+  { id: "venus",     name: "Vênus",               transport: "cápsula pressurizada", level: 2, kind: "planet" },
+  { id: "marte",     name: "Marte",               transport: "teletransporte",       level: 1, kind: "planet" },
+  { id: "jupiter",   name: "Júpiter",             transport: "nave estelar",         level: 2, kind: "planet" },
+  { id: "saturno",   name: "Saturno",             transport: "nave dos anéis",       level: 3, kind: "planet" },
+  { id: "urano",     name: "Urano",               transport: "submersível gasoso",   level: 3, kind: "planet" },
+  { id: "netuno",    name: "Netuno",              transport: "nave de gelo",         level: 3, kind: "planet" },
+  { id: "plutao",    name: "Plutão",              transport: "sonda gélida",         level: 2, kind: "planet" },
+  { id: "kepler",    name: "Kepler-22b",          transport: "buraco de minhoca",    level: 4, kind: "planet" },
+  { id: "proxima",   name: "Proxima Centauri b",  transport: "dobra warp",           level: 5, kind: "planet" },
+  // 3 sois
+  { id: "sol",         name: "Sol",                transport: "nave fotônica",        level: 5, kind: "sun" },
+  { id: "alpha_a",     name: "Alpha Centauri A",   transport: "vela solar",           level: 4, kind: "sun" },
+  { id: "betelgeuse",  name: "Betelgeuse",         transport: "salto hiperespacial",  level: 5, kind: "sun" },
+  // 2 luas
+  { id: "lua",     name: "Lua",                       transport: "módulo lunar",          level: 1, kind: "moon" },
+  { id: "europa",  name: "Europa (lua de Júpiter)",   transport: "submarino criogênico",  level: 3, kind: "moon" },
 ];
 
 export const FATAL_DESTINATIONS = [
-  { id: "sun",       name: "Sol",                          transport: "queda livre solar" },
-  { id: "blackhole", name: "Buraco Negro Sagitário A*",    transport: "espaguetificação" },
-  { id: "vacuum",    name: "Vácuo do Espaço Profundo",     transport: "deriva eterna" },
+  { id: "sun_core", name: "Coração do Sol",            transport: "queda livre solar" },
+  { id: "blackhole", name: "Buraco Negro Sagitário A*", transport: "espaguetificação" },
+  { id: "vacuum",    name: "Vácuo do Espaço Profundo",  transport: "deriva eterna" },
 ] as const;
 
-export const MAX_QUIZ_ATTEMPTS = 3; // 3 chances per level before fatal
-export const QUIZ_PASS_RATIO = 0.8; // 80%
+export const MAX_QUIZ_ATTEMPTS = 3;
+export const QUIZ_PASS_RATIO = 0.8;
 export const QUESTIONS_PER_QUIZ = 5;
 
+export function getDestination(id: string): Destination | undefined {
+  return DESTINATIONS.find((d) => d.id === id);
+}
+
+/** @deprecated mantido por compatibilidade; usar getDestination(id) */
 export function destinationForLevel(level: number): Destination {
   return DESTINATIONS[Math.min(Math.max(level, 1), DESTINATIONS.length) - 1];
 }
@@ -36,3 +55,10 @@ export function pickFatalDestination(seed: string): (typeof FATAL_DESTINATIONS)[
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
   return FATAL_DESTINATIONS[h % FATAL_DESTINATIONS.length];
 }
+
+export const KIND_LABEL: Record<DestinationKind, string> = {
+  planet: "Planeta",
+  sun: "Sol",
+  moon: "Lua",
+  fatal: "Fim trágico",
+};
