@@ -43,13 +43,14 @@ function Criar() {
   const payment = active?.payment ?? null;
   const drafts = active?.drafts ?? [];
 
+  const [initialized, setInitialized] = useState(false);
   useEffect(() => {
-    if (!isLoading) {
-      if (payment && drafts.length === 0) setStep("form");
-      else if (payment && drafts.length > 0) setStep("drafts");
-      else setStep("intro");
-    }
-  }, [isLoading, payment, drafts.length]);
+    if (isLoading || initialized) return;
+    if (payment && drafts.length > 0) setStep("drafts");
+    else if (payment) setStep("form");
+    else setStep("intro");
+    setInitialized(true);
+  }, [isLoading, payment, drafts.length, initialized]);
 
   function onPickFile(file?: File) {
     if (!file) return;

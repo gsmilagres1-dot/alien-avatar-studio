@@ -148,44 +148,7 @@ function Galaxia() {
 
   if (!passport) return <Loader />;
 
-  // Ship selection
-  if (!identity?.ship_image_url) {
-    return (
-      <main className="px-4 py-8 max-w-2xl mx-auto">
-        <div className="glass rounded-2xl p-6 text-center">
-          <Rocket className="w-10 h-10 text-accent mx-auto" />
-          <h1 className="font-display text-2xl mt-3 text-gradient-neon">Escolha sua nave</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            {identity?.alien_name} precisa de uma nave antes de embarcar no quiz da viagem.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
-          {SHIPS.map((s) => (
-            <button key={s.id} onClick={() => setShipCategory(s.id)}
-              className={`rounded-xl border overflow-hidden text-left transition ${shipCategory === s.id ? "border-accent shadow-neon ring-2 ring-accent" : "border-border bg-input/50"}`}>
-              <img src={SHIP_PREVIEWS[s.id]} alt={s.name} loading="lazy" width={768} height={768} className="w-full aspect-square object-cover" />
-              <div className="p-3">
-                <div className="font-display text-sm">{s.name}</div>
-                <div className="text-[10px] text-muted-foreground">{s.desc}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-        <button disabled={shipLoading} onClick={async () => {
-          setShipLoading(true);
-          try {
-            await shipFn({ data: { identityId: identityId!, category: shipCategory } });
-            toast.success("Nave pronta para decolar!");
-            await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-          } catch (e) { toast.error((e as Error).message); }
-          finally { setShipLoading(false); }
-        }}
-          className="mt-5 w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-alien-grad text-primary-foreground font-display font-bold shadow-neon disabled:opacity-60">
-          {shipLoading ? <><Loader2 className="w-4 h-4 animate-spin" />Gerando nave...</> : <><Wand2 className="w-4 h-4" />Gerar minha nave</>}
-        </button>
-      </main>
-    );
-  }
+  // Ship is optional — user can generate it anytime from the journey panel
 
   // Active quiz
   if (quiz) {
@@ -238,8 +201,34 @@ function Galaxia() {
           <div className="font-display text-lg text-gradient-neon">{identity?.alien_name}</div>
           <div className="text-xs text-muted-foreground">Origem: {passport.origin_planet}</div>
         </div>
-        {identity?.ship_image_url && (
+        {identity?.ship_image_url ? (
           <img src={identity.ship_image_url} alt="Nave" className="w-20 h-20 rounded-xl object-cover border border-accent/40" />
+        ) : (
+          <details className="text-xs">
+            <summary className="cursor-pointer text-accent hover:underline">+ nave (opcional)</summary>
+            <div className="mt-2 w-56 space-y-2">
+              <div className="grid grid-cols-3 gap-1">
+                {SHIPS.map((s) => (
+                  <button key={s.id} onClick={() => setShipCategory(s.id)}
+                    className={`rounded-md border overflow-hidden text-left text-[10px] ${shipCategory === s.id ? "border-accent ring-1 ring-accent" : "border-border"}`}>
+                    <img src={SHIP_PREVIEWS[s.id]} alt={s.name} className="w-full aspect-square object-cover" />
+                    <div className="px-1 py-0.5">{s.name}</div>
+                  </button>
+                ))}
+              </div>
+              <button disabled={shipLoading} onClick={async () => {
+                setShipLoading(true);
+                try {
+                  await shipFn({ data: { identityId: identityId!, category: shipCategory } });
+                  toast.success("Nave pronta!");
+                  await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+                } catch (e) { toast.error((e as Error).message); }
+                finally { setShipLoading(false); }
+              }} className="w-full px-2 py-1.5 rounded-md bg-accent text-accent-foreground text-[11px] font-bold disabled:opacity-60">
+                {shipLoading ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : "Gerar nave"}
+              </button>
+            </div>
+          </details>
         )}
       </div>
 
