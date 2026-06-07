@@ -6,7 +6,7 @@ import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, Rota
 import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
-import { createAvatarDraft, getActivePayment, saveIdentity, generateShipImage } from "@/lib/identities.functions";
+import { createAvatarDraft, getActivePayment, saveIdentity, generateShipImage, restartIdentityFlow } from "@/lib/identities.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/criar")({ component: Criar });
@@ -20,6 +20,7 @@ function Criar() {
   const draftFn = useServerFn(createAvatarDraft);
   const saveFn = useServerFn(saveIdentity);
   const shipFn = useServerFn(generateShipImage);
+  const restartFn = useServerFn(restartIdentityFlow);
 
   const { data: active, isLoading } = useQuery({
     queryKey: ["active-payment"],
@@ -53,11 +54,49 @@ function Criar() {
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
     if (isLoading || initialized) return;
-    if (payment && drafts.length > 0 && hasForm) setStep("drafts");
+    if (payment && drafts.length > 0) setStep("drafts");
     else if (payment) setStep("form");
     else setStep("intro");
     setInitialized(true);
   }, [isLoading, payment, drafts.length, initialized, hasForm]);
+
+  useEffect(() => {
+    if (step === "drafts" && !selectedDraft && drafts[0]) {
+      setSelectedDraft(drafts[0].id);
+    }
+  }, [step, selectedDraft, drafts]);
+
+  function clearFormState() {
+    setPhoto(null);
+    setName("");
+    setBirthdate("");
+    setGender("undefined");
+    setPlanet("starseed");
+    setRaceMode("auto");
+    setSelectedDraft(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("alien:name");
+      localStorage.removeItem("alien:birthdate");
+      localStorage.removeItem("alien:gender");
+      localStorage.removeItem("alien:planet");
+      localStorage.removeItem("alien:raceMode");
+    }
+  }
+
+  async function restartFlow() {
+    setGenLoading(true);
+    try {
+      clearFormState();
+      await restartFn();
+      await qc.invalidateQueries({ queryKey: ["active-payment"] });
+      setStep("form");
+      toast.success("Novo começo liberado");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setGenLoading(false);
+    }
+  }
 
   function onPickFile(file?: File) {
     if (!file) return;
@@ -256,6 +295,17 @@ function Criar() {
               <button onClick={genDraft} disabled={genLoading} className="mt-6 w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full bg-alien-grad text-primary-foreground font-display font-bold shadow-neon disabled:opacity-60">
                 {genLoading ? <><Loader2 className="w-5 h-5 animate-spin" />Transmutando DNA...</> : <><Wand2 className="w-5 h-5" />Gerar avatar alien (1/3)</>}
               </button>
+
+              <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                {drafts.length > 0 && (
+                  <button onClick={() => setStep("drafts")} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full glass text-xs">
+                    <Check className="w-4 h-4" /> Ver avatares já gerados ({drafts.length}/3)
+                  </button>
+                )}
+                <button onClick={restartFlow} disabled={genLoading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-accent/40 text-xs disabled:opacity-60">
+                  <RotateCcw className="w-4 h-4" /> Começar nova identidade
+                </button>
+              </div>
             </section>
           )}
 
@@ -276,7 +326,16 @@ function Criar() {
                 ))}
               </div>
 
+              {!hasForm && (
+                <div className="glass rounded-xl p-4 mb-4 text-center text-xs text-muted-foreground">
+                  Preencha nome e data de nascimento para confirmar a identidade final.
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <button onClick={() => setStep("form")} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full glass">
+                  <CalendarIcon className="w-4 h-4" /> {hasForm ? "Editar dados" : "Preencher dados"}
+                </button>
                 {drafts.length < 3 && (
                   <button onClick={() => setStep("form")} disabled={genLoading} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full glass">
                     <RotateCcw className="w-4 h-4" /> Gerar mais 1 ({drafts.length}/3)
@@ -284,6 +343,9 @@ function Criar() {
                 )}
                 <button onClick={confirmFinal} disabled={!selectedDraft || genLoading} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon disabled:opacity-50">
                   {genLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Confirmar identidade final
+                </button>
+                <button onClick={restartFlow} disabled={genLoading} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-accent/40 text-xs disabled:opacity-60">
+                  <Sparkles className="w-4 h-4" /> Começar do zero
                 </button>
               </div>
             </section>
@@ -299,7 +361,7 @@ function Criar() {
               setShipCategory={setShipCategory}
               shipLoading={shipLoading}
               onGenShip={genShip}
-              onNew={() => { navigate({ to: "/criar" }); window.location.reload(); }}
+              onNew={() => { void restartFlow(); }}
               onTravel={() => navigate({ to: "/galaxia", search: { identityId: savedIdentity.id } })}
             />
           )}

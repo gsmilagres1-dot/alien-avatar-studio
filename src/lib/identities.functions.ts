@@ -269,3 +269,47 @@ export const getActivePayment = createServerFn({ method: "GET" })
 
     return { payment: data, drafts: drafts ?? [] };
   });
+
+export const restartIdentityFlow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+
+    const { data: openPayments, error: openErr } = await supabaseAdmin
+      .from("payment_transactions")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "completed")
+      .eq("kind", "identity")
+      .gt("credits_remaining", 0);
+
+    if (openErr) throw new Error(openErr.message);
+
+    const ids = openPayments?.map((payment) => payment.id) ?? [];
+    if (ids.length > 0) {
+      const { error: closeErr } = await supabaseAdmin
+        .from("payment_transactions")
+        .update({ credits_remaining: 0 })
+        .in("id", ids);
+      if (closeErr) throw new Error(closeErr.message);
+    }
+
+    const { data: payment, error } = await supabaseAdmin
+      .from("payment_transactions")
+      .insert({
+        user_id: userId,
+        amount_cents: 0,
+        currency: "brl",
+        status: "completed",
+        credits_granted: 1,
+        credits_remaining: 1,
+        env: "sandbox",
+        kind: "identity",
+      })
+      .select("id, status, credits_remaining, created_at")
+      .single();
+
+    if (error || !payment) throw new Error(error?.message ?? "Não foi possível iniciar uma nova identidade");
+
+    return { payment, drafts: [] };
+  });
