@@ -28,29 +28,36 @@ function Criar() {
 
   const [step, setStep] = useState<Step>("intro");
   const [photo, setPhoto] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [birthdate, setBirthdate] = useState("");
-  const [gender, setGender] = useState<Gender>("undefined");
-  const [planet, setPlanet] = useState<string>("starseed");
-  const [raceMode, setRaceMode] = useState<"auto" | "manual">("auto");
+  const [name, setName] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("alien:name") ?? "" : ""));
+  const [birthdate, setBirthdate] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("alien:birthdate") ?? "" : ""));
+  const [gender, setGender] = useState<Gender>(() => (typeof window !== "undefined" ? ((localStorage.getItem("alien:gender") as Gender) ?? "undefined") : "undefined"));
+  const [planet, setPlanet] = useState<string>(() => (typeof window !== "undefined" ? localStorage.getItem("alien:planet") ?? "starseed" : "starseed"));
+  const [raceMode, setRaceMode] = useState<"auto" | "manual">(() => (typeof window !== "undefined" ? ((localStorage.getItem("alien:raceMode") as "auto" | "manual") ?? "auto") : "auto"));
   const [selectedDraft, setSelectedDraft] = useState<string | null>(null);
   const [genLoading, setGenLoading] = useState(false);
   const [savedIdentity, setSavedIdentity] = useState<AlienIdentity & { avatarUrl: string; id: string; shipImageUrl: string | null } | null>(null);
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
 
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:name", name); }, [name]);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:birthdate", birthdate); }, [birthdate]);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:gender", gender); }, [gender]);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:planet", planet); }, [planet]);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:raceMode", raceMode); }, [raceMode]);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const payment = active?.payment ?? null;
   const drafts = active?.drafts ?? [];
+  const hasForm = name.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(birthdate);
 
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
     if (isLoading || initialized) return;
-    if (payment && drafts.length > 0) setStep("drafts");
+    if (payment && drafts.length > 0 && hasForm) setStep("drafts");
     else if (payment) setStep("form");
     else setStep("intro");
     setInitialized(true);
-  }, [isLoading, payment, drafts.length, initialized]);
+  }, [isLoading, payment, drafts.length, initialized, hasForm]);
 
   function onPickFile(file?: File) {
     if (!file) return;
@@ -79,6 +86,11 @@ function Criar() {
 
   async function confirmFinal() {
     if (!selectedDraft || !payment) return;
+    if (!hasForm) {
+      toast.error("Preencha seu nome e data de nascimento antes de confirmar");
+      setStep("form");
+      return;
+    }
     setGenLoading(true);
     try {
       const r = await saveFn({ data: { paymentId: payment.id, draftId: selectedDraft, humanName: name, birthdate, gender, planetId: planet } });
