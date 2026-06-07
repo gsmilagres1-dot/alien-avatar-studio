@@ -86,6 +86,11 @@ function Criar() {
 
   async function confirmFinal() {
     if (!selectedDraft || !payment) return;
+    if (!hasForm) {
+      toast.error("Preencha seu nome e data de nascimento antes de confirmar");
+      setStep("form");
+      return;
+    }
     setGenLoading(true);
     try {
       const r = await saveFn({ data: { paymentId: payment.id, draftId: selectedDraft, humanName: name, birthdate, gender, planetId: planet } });
