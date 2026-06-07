@@ -201,8 +201,34 @@ function Galaxia() {
           <div className="font-display text-lg text-gradient-neon">{identity?.alien_name}</div>
           <div className="text-xs text-muted-foreground">Origem: {passport.origin_planet}</div>
         </div>
-        {identity?.ship_image_url && (
+        {identity?.ship_image_url ? (
           <img src={identity.ship_image_url} alt="Nave" className="w-20 h-20 rounded-xl object-cover border border-accent/40" />
+        ) : (
+          <details className="text-xs">
+            <summary className="cursor-pointer text-accent hover:underline">+ nave (opcional)</summary>
+            <div className="mt-2 w-56 space-y-2">
+              <div className="grid grid-cols-3 gap-1">
+                {SHIPS.map((s) => (
+                  <button key={s.id} onClick={() => setShipCategory(s.id)}
+                    className={`rounded-md border overflow-hidden text-left text-[10px] ${shipCategory === s.id ? "border-accent ring-1 ring-accent" : "border-border"}`}>
+                    <img src={SHIP_PREVIEWS[s.id]} alt={s.name} className="w-full aspect-square object-cover" />
+                    <div className="px-1 py-0.5">{s.name}</div>
+                  </button>
+                ))}
+              </div>
+              <button disabled={shipLoading} onClick={async () => {
+                setShipLoading(true);
+                try {
+                  await shipFn({ data: { identityId: identityId!, category: shipCategory } });
+                  toast.success("Nave pronta!");
+                  await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+                } catch (e) { toast.error((e as Error).message); }
+                finally { setShipLoading(false); }
+              }} className="w-full px-2 py-1.5 rounded-md bg-accent text-accent-foreground text-[11px] font-bold disabled:opacity-60">
+                {shipLoading ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : "Gerar nave"}
+              </button>
+            </div>
+          </details>
         )}
       </div>
 
