@@ -141,8 +141,9 @@ function Criar() {
     setGenLoading(true);
     try {
       const r = await saveFn({ data: { paymentId: payment.id, draftId: selectedDraft, humanName: name, birthdate, gender, planetId: planet } });
-      const id = generateAlienIdentity({ name, birthdate, planetId: planet as never, gender });
       const draftRow = availableDrafts.find((d) => d.id === selectedDraft) ?? drafts.find((d) => d.id === selectedDraft);
+      const finalPlanet = (draftRow?.prompt_seed as string | undefined) ?? planet;
+      const id = generateAlienIdentity({ name, birthdate, planetId: finalPlanet as never, gender });
       setSavedIdentity({ ...id, avatarUrl: draftRow?.avatar_url ?? "", id: r.identity.id, shipImageUrl: null });
       await qc.invalidateQueries({ queryKey: ["active-payment"] });
       await qc.invalidateQueries({ queryKey: ["identities"] });
