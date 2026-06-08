@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Camera, Rocket, Sparkles, Wallet, Share2 } from "lucide-react";
+import { Camera, Rocket, Sparkles, Wallet, Share2, Languages, Check } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -14,10 +15,40 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const [language, setLanguage] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("alien:language") ?? "pt-BR" : "pt-BR"));
+
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("alien:language", language);
+  }, [language]);
 
   return (
     <main className="relative z-10 min-h-screen px-4 py-12">
       <div className="max-w-3xl mx-auto text-center">
+        <div className="mb-5 flex justify-end">
+          <details className="relative">
+            <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-2 text-xs">
+              <Languages className="w-4 h-4 text-accent" /> Escolher idioma
+            </summary>
+            <div className="absolute right-0 mt-2 min-w-40 rounded-xl border border-border bg-background/95 p-2 shadow-2xl backdrop-blur">
+              {[
+                { value: "pt-BR", label: "Português" },
+                { value: "en", label: "English" },
+                { value: "es", label: "Español" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setLanguage(option.value)}
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${language === option.value ? "bg-accent/10 text-accent" : "hover:bg-accent/5"}`}
+                >
+                  {option.label}
+                  {language === option.value && <Check className="w-3.5 h-3.5" />}
+                </button>
+              ))}
+            </div>
+          </details>
+        </div>
+
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass mb-6">
           <Sparkles className="w-3.5 h-3.5 text-accent" />
           <span className="text-[11px] font-mono tracking-widest uppercase text-accent">Federação Galáctica · v2.0</span>
@@ -29,7 +60,7 @@ function Landing() {
           <span className="text-gradient-neon">alienígena</span>
         </h1>
         <p className="mt-6 text-muted-foreground max-w-md mx-auto">
-          Sua selfie + IA = identidade alien, passaporte cósmico e nave personalizada. Pronto pra imprimir e compartilhar.
+          Fluxo 100% grátis: criar identidade, liberar passaporte, escolher destino, escolher nave e jogar o quiz sem cobranças.
         </p>
 
         <div className="mt-8 inline-flex flex-col sm:flex-row gap-3 justify-center">
@@ -48,9 +79,9 @@ function Landing() {
         <div className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
           {[
             { i: Camera, t: "Sua selfie", d: "Foto vira avatar alien" },
-            { i: Wallet, t: "Identidade", d: "RG universal + passaporte" },
-            { i: Rocket, t: "Sua nave", d: "Esportiva, off-road ou corrida" },
-            { i: Share2, t: "Compartilhe", d: "Instagram, X, Threads..." },
+            { i: Wallet, t: "Passaporte", d: "Liberado grátis na viagem" },
+            { i: Rocket, t: "Destino + nave", d: "Escolha a rota e a nave" },
+            { i: Share2, t: "Quiz final", d: "Complete a viagem sem pagar" },
           ].map((x) => (
             <div key={x.t} className="glass rounded-xl p-4">
               <x.i className="w-5 h-5 text-accent" />
@@ -61,7 +92,7 @@ function Landing() {
         </div>
 
         <p className="mt-12 text-[11px] font-mono text-muted-foreground">
-          Grátis · 1 identidade final + até 3 opções de avatar pra escolher.
+          Grátis · até 3 opções por selfie e novas identidades sem cobrança.
         </p>
       </div>
     </main>

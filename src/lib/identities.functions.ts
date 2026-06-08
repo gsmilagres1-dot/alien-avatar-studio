@@ -68,7 +68,6 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
       .maybeSingle();
     if (payErr || !pay) throw new Error("Pagamento não encontrado");
     if (pay.status !== "completed") throw new Error("Pagamento ainda não confirmado");
-    if (pay.credits_remaining < 1) throw new Error("Esse pagamento já foi usado");
 
     // Count existing drafts for this payment (max 3)
     const { count } = await supabaseAdmin
@@ -94,9 +93,10 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
         user_id: userId,
         payment_id: data.paymentId,
         avatar_url: url,
+        prompt_seed: data.planetId,
         variant_index: variant + 1,
       })
-      .select("id, avatar_url, variant_index")
+      .select("id, avatar_url, variant_index, prompt_seed")
       .single();
     if (insErr) throw new Error(insErr.message);
 
@@ -124,20 +124,28 @@ export const saveIdentity = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     if (!pay || pay.status !== "completed") throw new Error("Pagamento inválido");
-    if (pay.credits_remaining < 1) throw new Error("Pagamento já consumido");
 
     const { data: draft } = await supabaseAdmin
       .from("avatar_drafts")
-      .select("id, avatar_url, user_id, payment_id")
+      .select("id, avatar_url, user_id, payment_id, prompt_seed")
       .eq("id", data.draftId)
       .eq("user_id", userId)
       .maybeSingle();
     if (!draft || draft.payment_id !== data.paymentId) throw new Error("Avatar inválido");
 
+    const { data: alreadyCreated } = await supabaseAdmin
+      .from("identities")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("payment_id", data.paymentId)
+      .eq("avatar_url", draft.avatar_url)
+      .maybeSingle();
+    if (alreadyCreated) throw new Error("Esse avatar já virou uma identidade");
+
     const id = generateAlienIdentity({
       name: data.humanName,
       birthdate: data.birthdate,
-      planetId: data.planetId as never,
+      planetId: (draft.prompt_seed || data.planetId) as never,
       gender: data.gender,
     });
 
@@ -149,7 +157,7 @@ export const saveIdentity = createServerFn({ method: "POST" })
         human_name: data.humanName,
         birthdate: data.birthdate,
         gender: data.gender,
-        planet_id: data.planetId,
+        planet_id: draft.prompt_seed || data.planetId,
         alien_name: id.alienName,
         species: id.species,
         id_number: id.idNumber,
@@ -161,11 +169,6 @@ export const saveIdentity = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (insErr) throw new Error(insErr.message);
-
-    await supabaseAdmin
-      .from("payment_transactions")
-      .update({ credits_remaining: 0 })
-      .eq("id", data.paymentId);
 
     return { identity: ident };
   });
@@ -234,13 +237,23 @@ export const getActivePayment = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .eq("status", "completed")
       .eq("kind", "identity")
-      .gt("credits_remaining", 0)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    // Modo grátis: auto-cria um "crédito" de identidade sem cobrança
-    if (!data) {
+    let drafts: { id: string; avatar_url: string; variant_index: number; created_at: string; prompt_seed: string | null }[] = [];
+    if (data) {
+      const { data: draftRows } = await supabaseAdmin
+        .from("avatar_drafts")
+        .select("id, avatar_url, variant_index, created_at, prompt_seed")
+        .eq("payment_id", data.id)
+        .eq("user_id", userId)
+        .order("variant_index", { ascending: true });
+      drafts = draftRows ?? [];
+    }
+
+    // Modo grátis: se não existir sessão recente utilizável, cria automaticamente
+    if (!data || (data.credits_remaining < 1 && drafts.length === 0)) {
       const ins = await supabaseAdmin
         .from("payment_transactions")
         .insert({
@@ -256,18 +269,20 @@ export const getActivePayment = createServerFn({ method: "GET" })
         .select("id, status, credits_remaining, created_at")
         .single();
       data = ins.data;
+      drafts = [];
     }
 
-    if (!data) return { payment: null, drafts: [] };
+    if (!data) {
+      return { payment: null, drafts: [], usedAvatarUrls: [] };
+    }
 
-    const { data: drafts } = await supabaseAdmin
-      .from("avatar_drafts")
-      .select("id, avatar_url, variant_index, created_at")
+    const { data: usedIdentities } = await supabaseAdmin
+      .from("identities")
+      .select("avatar_url")
       .eq("payment_id", data.id)
-      .eq("user_id", userId)
-      .order("variant_index", { ascending: true });
+      .eq("user_id", userId);
 
-    return { payment: data, drafts: drafts ?? [] };
+    return { payment: data, drafts, usedAvatarUrls: (usedIdentities ?? []).map((row) => row.avatar_url) };
   });
 
 export const restartIdentityFlow = createServerFn({ method: "POST" })

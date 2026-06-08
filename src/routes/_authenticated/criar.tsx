@@ -49,22 +49,30 @@ function Criar() {
   const fileRef = useRef<HTMLInputElement>(null);
   const payment = active?.payment ?? null;
   const drafts = active?.drafts ?? [];
+  const usedAvatarUrls = active?.usedAvatarUrls ?? [];
   const hasForm = name.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(birthdate);
+  const availableDrafts = drafts.filter((draft) => !usedAvatarUrls.includes(draft.avatar_url));
 
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
     if (isLoading || initialized) return;
-    if (payment && drafts.length > 0) setStep("drafts");
+    if (payment && availableDrafts.length > 0) setStep("drafts");
     else if (payment) setStep("form");
     else setStep("intro");
     setInitialized(true);
-  }, [isLoading, payment, drafts.length, initialized, hasForm]);
+  }, [isLoading, payment, availableDrafts.length, initialized, hasForm]);
 
   useEffect(() => {
-    if (step === "drafts" && !selectedDraft && drafts[0]) {
-      setSelectedDraft(drafts[0].id);
+    if (step === "drafts" && !selectedDraft && availableDrafts[0]) {
+      setSelectedDraft(availableDrafts[0].id);
     }
-  }, [step, selectedDraft, drafts]);
+  }, [step, selectedDraft, availableDrafts]);
+
+  useEffect(() => {
+    if (selectedDraft && !availableDrafts.some((draft) => draft.id === selectedDraft)) {
+      setSelectedDraft(availableDrafts[0]?.id ?? null);
+    }
+  }, [selectedDraft, availableDrafts]);
 
   function clearFormState() {
     setPhoto(null);
@@ -133,8 +141,9 @@ function Criar() {
     setGenLoading(true);
     try {
       const r = await saveFn({ data: { paymentId: payment.id, draftId: selectedDraft, humanName: name, birthdate, gender, planetId: planet } });
-      const id = generateAlienIdentity({ name, birthdate, planetId: planet as never, gender });
-      const draftRow = drafts.find((d) => d.id === selectedDraft);
+      const draftRow = availableDrafts.find((d) => d.id === selectedDraft) ?? drafts.find((d) => d.id === selectedDraft);
+      const finalPlanet = (draftRow?.prompt_seed as string | undefined) ?? planet;
+      const id = generateAlienIdentity({ name, birthdate, planetId: finalPlanet as never, gender });
       setSavedIdentity({ ...id, avatarUrl: draftRow?.avatar_url ?? "", id: r.identity.id, shipImageUrl: null });
       await qc.invalidateQueries({ queryKey: ["active-payment"] });
       await qc.invalidateQueries({ queryKey: ["identities"] });
@@ -159,6 +168,13 @@ function Criar() {
     }
   }
 
+  function createAnotherFromSamePhoto() {
+    setSavedIdentity(null);
+    setSelectedDraft(availableDrafts[0]?.id ?? null);
+    if (availableDrafts.length > 0) setStep("drafts");
+    else setStep("form");
+  }
+
   if (isLoading) {
     return <div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>;
   }
@@ -173,7 +189,7 @@ function Criar() {
             <section className="glass rounded-2xl p-8 text-center">
               <Sparkles className="w-10 h-10 text-accent mx-auto" />
               <h2 className="font-display text-2xl mt-3 text-gradient-neon">Criar nova identidade</h2>
-              <p className="text-sm text-muted-foreground mt-2">Grátis — até 3 opções de avatar, escolha 1 para virar a identidade final.</p>
+              <p className="text-sm text-muted-foreground mt-2">Fluxo grátis: 1 criar identidade, 2 fazer passaporte, 3 escolher destino, 4 escolher nave, 5 fazer quiz.</p>
               <button onClick={() => setStep("form")} className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon">
                 Começar
               </button>
@@ -297,9 +313,9 @@ function Criar() {
               </button>
 
               <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                {drafts.length > 0 && (
+                  {availableDrafts.length > 0 && (
                   <button onClick={() => setStep("drafts")} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full glass text-xs">
-                    <Check className="w-4 h-4" /> Ver avatares já gerados ({drafts.length}/3)
+                     <Check className="w-4 h-4" /> Ver opções prontas ({availableDrafts.length})
                   </button>
                 )}
                 <button onClick={restartFlow} disabled={genLoading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-accent/40 text-xs disabled:opacity-60">
@@ -312,10 +328,10 @@ function Criar() {
           {step === "drafts" && payment && (
             <section>
               <h2 className="font-display text-xl text-center mb-1 text-gradient-neon">Escolha seu avatar final</h2>
-              <p className="text-center text-xs text-muted-foreground mb-5">{drafts.length}/3 opções geradas — escolha uma para finalizar.</p>
+              <p className="text-center text-xs text-muted-foreground mb-5">{availableDrafts.length} opção(ões) disponíveis desta selfie — você pode criar até 3 versões sem tirar outra foto.</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-                {drafts.map((d) => (
+                {availableDrafts.map((d) => (
                   <button key={d.id} onClick={() => setSelectedDraft(d.id)} className={`relative rounded-xl overflow-hidden border-2 transition ${selectedDraft === d.id ? "border-accent shadow-neon" : "border-border"}`}>
                     <img src={d.avatar_url} alt={`Avatar ${d.variant_index}`} className="w-full aspect-square object-cover" />
                     {selectedDraft === d.id && (
@@ -336,9 +352,9 @@ function Criar() {
                 <button onClick={() => setStep("form")} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full glass">
                   <CalendarIcon className="w-4 h-4" /> {hasForm ? "Editar dados" : "Preencher dados"}
                 </button>
-                {drafts.length < 3 && (
+                {drafts.length < 3 && photo && (
                   <button onClick={() => setStep("form")} disabled={genLoading} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full glass">
-                    <RotateCcw className="w-4 h-4" /> Gerar mais 1 ({drafts.length}/3)
+                    <RotateCcw className="w-4 h-4" /> Gerar mais 1 com a mesma selfie ({drafts.length}/3)
                   </button>
                 )}
                 <button onClick={confirmFinal} disabled={!selectedDraft || genLoading} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon disabled:opacity-50">
@@ -361,7 +377,8 @@ function Criar() {
               setShipCategory={setShipCategory}
               shipLoading={shipLoading}
               onGenShip={genShip}
-              onNew={() => { void restartFlow(); }}
+              onNew={createAnotherFromSamePhoto}
+              canCreateAnother={availableDrafts.length > 0 || (drafts.length < 3 && !!photo)}
               onTravel={() => navigate({ to: "/galaxia", search: { identityId: savedIdentity.id } })}
             />
           )}
@@ -381,6 +398,7 @@ function FinalView(props: {
   shipLoading: boolean;
   onGenShip: () => void;
   onNew: () => void;
+  canCreateAnother: boolean;
   onTravel: () => void;
 }) {
   const url = typeof window !== "undefined" ? window.location.origin : "";
@@ -426,9 +444,11 @@ function FinalView(props: {
           <button onClick={() => window.print()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-xs">
             <Printer className="w-3.5 h-3.5" /> Imprimir crachá
           </button>
-          <button onClick={props.onNew} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-xs shadow-neon">
-            <Sparkles className="w-3.5 h-3.5" /> Criar outra (grátis)
-          </button>
+          {props.canCreateAnother && (
+            <button onClick={props.onNew} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-xs shadow-neon">
+              <Sparkles className="w-3.5 h-3.5" /> Gerar outra com a mesma selfie
+            </button>
+          )}
         </div>
       </div>
     </section>
