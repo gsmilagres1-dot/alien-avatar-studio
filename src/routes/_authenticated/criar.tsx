@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Printer } from "lucide-react";
+import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Printer, Languages } from "lucide-react";
 import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -39,32 +39,36 @@ function Criar() {
   const [savedIdentity, setSavedIdentity] = useState<AlienIdentity & { avatarUrl: string; id: string; shipImageUrl: string | null } | null>(null);
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
+  const [language, setLanguage] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("alien:language") ?? "pt-BR" : "pt-BR"));
 
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:name", name); }, [name]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:birthdate", birthdate); }, [birthdate]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:gender", gender); }, [gender]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:planet", planet); }, [planet]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:raceMode", raceMode); }, [raceMode]);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:language", language); }, [language]);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const payment = active?.payment ?? null;
   const drafts = active?.drafts ?? [];
+  const usedAvatarUrls = active?.usedAvatarUrls ?? [];
   const hasForm = name.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(birthdate);
+  const availableDrafts = drafts.filter((draft) => !usedAvatarUrls.includes(draft.avatar_url));
 
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
     if (isLoading || initialized) return;
-    if (payment && drafts.length > 0) setStep("drafts");
+    if (payment && availableDrafts.length > 0) setStep("drafts");
     else if (payment) setStep("form");
     else setStep("intro");
     setInitialized(true);
-  }, [isLoading, payment, drafts.length, initialized, hasForm]);
+  }, [isLoading, payment, availableDrafts.length, initialized, hasForm]);
 
   useEffect(() => {
-    if (step === "drafts" && !selectedDraft && drafts[0]) {
-      setSelectedDraft(drafts[0].id);
+    if (step === "drafts" && !selectedDraft && availableDrafts[0]) {
+      setSelectedDraft(availableDrafts[0].id);
     }
-  }, [step, selectedDraft, drafts]);
+  }, [step, selectedDraft, availableDrafts]);
 
   function clearFormState() {
     setPhoto(null);
@@ -134,7 +138,7 @@ function Criar() {
     try {
       const r = await saveFn({ data: { paymentId: payment.id, draftId: selectedDraft, humanName: name, birthdate, gender, planetId: planet } });
       const id = generateAlienIdentity({ name, birthdate, planetId: planet as never, gender });
-      const draftRow = drafts.find((d) => d.id === selectedDraft);
+      const draftRow = availableDrafts.find((d) => d.id === selectedDraft) ?? drafts.find((d) => d.id === selectedDraft);
       setSavedIdentity({ ...id, avatarUrl: draftRow?.avatar_url ?? "", id: r.identity.id, shipImageUrl: null });
       await qc.invalidateQueries({ queryKey: ["active-payment"] });
       await qc.invalidateQueries({ queryKey: ["identities"] });
@@ -169,11 +173,37 @@ function Criar() {
         <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => onPickFile(e.target.files?.[0])} />
 
         <div className="max-w-3xl mx-auto">
+          <div className="mb-4 flex justify-end">
+            <details className="relative">
+              <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-foreground">
+                <Languages className="w-4 h-4 text-accent" />
+                Escolher idioma
+              </summary>
+              <div className="absolute right-0 mt-2 min-w-40 rounded-xl border border-border bg-background/95 p-2 shadow-2xl backdrop-blur">
+                {[
+                  { value: "pt-BR", label: "Português" },
+                  { value: "en", label: "English" },
+                  { value: "es", label: "Español" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setLanguage(option.value)}
+                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${language === option.value ? "bg-accent/10 text-accent" : "hover:bg-accent/5"}`}
+                  >
+                    {option.label}
+                    {language === option.value && <Check className="w-3.5 h-3.5" />}
+                  </button>
+                ))}
+              </div>
+            </details>
+          </div>
+
           {step === "intro" && (
             <section className="glass rounded-2xl p-8 text-center">
               <Sparkles className="w-10 h-10 text-accent mx-auto" />
               <h2 className="font-display text-2xl mt-3 text-gradient-neon">Criar nova identidade</h2>
-              <p className="text-sm text-muted-foreground mt-2">Grátis — até 3 opções de avatar, escolha 1 para virar a identidade final.</p>
+              <p className="text-sm text-muted-foreground mt-2">Fluxo grátis: 1 criar identidade, 2 fazer passaporte, 3 escolher destino, 4 escolher nave, 5 fazer quiz.</p>
               <button onClick={() => setStep("form")} className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon">
                 Começar
               </button>
@@ -297,9 +327,9 @@ function Criar() {
               </button>
 
               <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                {drafts.length > 0 && (
+                  {availableDrafts.length > 0 && (
                   <button onClick={() => setStep("drafts")} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full glass text-xs">
-                    <Check className="w-4 h-4" /> Ver avatares já gerados ({drafts.length}/3)
+                     <Check className="w-4 h-4" /> Ver opções prontas ({availableDrafts.length})
                   </button>
                 )}
                 <button onClick={restartFlow} disabled={genLoading} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-accent/40 text-xs disabled:opacity-60">
@@ -312,10 +342,10 @@ function Criar() {
           {step === "drafts" && payment && (
             <section>
               <h2 className="font-display text-xl text-center mb-1 text-gradient-neon">Escolha seu avatar final</h2>
-              <p className="text-center text-xs text-muted-foreground mb-5">{drafts.length}/3 opções geradas — escolha uma para finalizar.</p>
+              <p className="text-center text-xs text-muted-foreground mb-5">{availableDrafts.length} opção(ões) disponíveis desta selfie — você pode criar até 3 versões sem tirar outra foto.</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-                {drafts.map((d) => (
+                {availableDrafts.map((d) => (
                   <button key={d.id} onClick={() => setSelectedDraft(d.id)} className={`relative rounded-xl overflow-hidden border-2 transition ${selectedDraft === d.id ? "border-accent shadow-neon" : "border-border"}`}>
                     <img src={d.avatar_url} alt={`Avatar ${d.variant_index}`} className="w-full aspect-square object-cover" />
                     {selectedDraft === d.id && (
@@ -336,9 +366,9 @@ function Criar() {
                 <button onClick={() => setStep("form")} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full glass">
                   <CalendarIcon className="w-4 h-4" /> {hasForm ? "Editar dados" : "Preencher dados"}
                 </button>
-                {drafts.length < 3 && (
+                {drafts.length < 3 && photo && (
                   <button onClick={() => setStep("form")} disabled={genLoading} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full glass">
-                    <RotateCcw className="w-4 h-4" /> Gerar mais 1 ({drafts.length}/3)
+                    <RotateCcw className="w-4 h-4" /> Gerar mais 1 com a mesma selfie ({drafts.length}/3)
                   </button>
                 )}
                 <button onClick={confirmFinal} disabled={!selectedDraft || genLoading} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon disabled:opacity-50">
