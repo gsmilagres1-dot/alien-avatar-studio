@@ -194,7 +194,22 @@ function Galaxia() {
   // Main journey panel
   return (
     <main className="px-4 py-8 max-w-3xl mx-auto">
-      <div className="glass rounded-2xl p-5 mb-5 flex items-center gap-4">
+      <div className="glass rounded-2xl p-5 mb-5">
+        <div className="mb-4 grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+          {[
+            "1 · Identidade",
+            "2 · Passaporte",
+            "3 · Destino",
+            "4 · Nave",
+            "5 · Quiz",
+          ].map((item, index) => (
+            <div key={item} className={`rounded-full px-3 py-2 text-center border ${index < 2 ? "border-accent/40 bg-accent/10 text-accent" : "border-border bg-input/40"}`}>
+              {item}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-4">
         {identity?.avatar_url && <img src={identity.avatar_url} alt="" className="w-16 h-16 rounded-xl object-cover" />}
         <div className="flex-1">
           <div className="text-xs text-muted-foreground">Passaporte {passport.passport_number}</div>
@@ -230,6 +245,7 @@ function Galaxia() {
             </div>
           </details>
         )}
+        </div>
       </div>
 
       {/* Progress */}
@@ -276,8 +292,8 @@ function Galaxia() {
       {/* Destination picker */}
       {!currentDest && (
         <div className="glass rounded-2xl p-5">
-          <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Escolha seu próximo destino</h2>
-          <p className="text-xs text-muted-foreground mt-1">Selecione um planeta, sol ou lua para tentar o quiz da viagem. Tudo grátis.</p>
+          <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Etapa 3 · Escolha seu destino</h2>
+          <p className="text-xs text-muted-foreground mt-1">Passaporte liberado. Agora escolha o destino, depois sua nave e então comece o quiz. Tudo grátis.</p>
 
           {remaining.length === 0 ? (
             <div className="mt-5 text-center">
@@ -331,9 +347,9 @@ function Galaxia() {
             {KIND_LABEL[currentDest.kind]} · Dificuldade {currentDest.level}/5
           </div>
           <h2 className="font-display text-2xl text-gradient-neon flex items-center gap-2 mt-1">
-            <MapPin className="w-5 h-5" /> {currentDest.name}
+            <MapPin className="w-5 h-5" /> Etapas 4 e 5 · {currentDest.name}
           </h2>
-          <div className="text-xs text-muted-foreground mt-1">Transporte: {currentDest.transport}</div>
+          <div className="text-xs text-muted-foreground mt-1">Transporte: {currentDest.transport} · escolha ou gere sua nave antes do quiz se quiser personalizar a viagem.</div>
           <div className="text-xs mt-3">Precisa de ≥ 80% no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
 
           <div className="mt-5 flex flex-col sm:flex-row gap-2">
