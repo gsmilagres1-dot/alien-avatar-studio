@@ -70,6 +70,12 @@ function Criar() {
     }
   }, [step, selectedDraft, availableDrafts]);
 
+  useEffect(() => {
+    if (selectedDraft && !availableDrafts.some((draft) => draft.id === selectedDraft)) {
+      setSelectedDraft(availableDrafts[0]?.id ?? null);
+    }
+  }, [selectedDraft, availableDrafts]);
+
   function clearFormState() {
     setPhoto(null);
     setName("");
@@ -161,6 +167,13 @@ function Criar() {
     } finally {
       setShipLoading(false);
     }
+  }
+
+  function createAnotherFromSamePhoto() {
+    setSavedIdentity(null);
+    setSelectedDraft(availableDrafts[0]?.id ?? null);
+    if (availableDrafts.length > 0) setStep("drafts");
+    else setStep("form");
   }
 
   if (isLoading) {
@@ -391,7 +404,8 @@ function Criar() {
               setShipCategory={setShipCategory}
               shipLoading={shipLoading}
               onGenShip={genShip}
-              onNew={() => { void restartFlow(); }}
+              onNew={createAnotherFromSamePhoto}
+              canCreateAnother={availableDrafts.length > 0 || (drafts.length < 3 && !!photo)}
               onTravel={() => navigate({ to: "/galaxia", search: { identityId: savedIdentity.id } })}
             />
           )}
@@ -411,6 +425,7 @@ function FinalView(props: {
   shipLoading: boolean;
   onGenShip: () => void;
   onNew: () => void;
+  canCreateAnother: boolean;
   onTravel: () => void;
 }) {
   const url = typeof window !== "undefined" ? window.location.origin : "";
@@ -456,9 +471,11 @@ function FinalView(props: {
           <button onClick={() => window.print()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-xs">
             <Printer className="w-3.5 h-3.5" /> Imprimir crachá
           </button>
-          <button onClick={props.onNew} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-xs shadow-neon">
-            <Sparkles className="w-3.5 h-3.5" /> Criar outra (grátis)
-          </button>
+          {props.canCreateAnother && (
+            <button onClick={props.onNew} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-xs shadow-neon">
+              <Sparkles className="w-3.5 h-3.5" /> Gerar outra com a mesma selfie
+            </button>
+          )}
         </div>
       </div>
     </section>
