@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2, Sun, Moon, Globe2, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
@@ -62,6 +62,12 @@ function Galaxia() {
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null } | null>(null);
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
+  const [journeyStep, setJourneyStep] = useState<"passport" | "destination" | "ship">("passport");
+
+  useEffect(() => {
+    if (chosenDestId) setJourneyStep("ship");
+    else setJourneyStep("passport");
+  }, [chosenDestId]);
 
   if (idsLoading) return <Loader />;
 
@@ -203,7 +209,7 @@ function Galaxia() {
             "4 · Nave",
             "5 · Quiz",
           ].map((item, index) => (
-            <div key={item} className={`rounded-full px-3 py-2 text-center border ${index < 2 ? "border-accent/40 bg-accent/10 text-accent" : "border-border bg-input/40"}`}>
+            <div key={item} className={`rounded-full px-3 py-2 text-center border ${index < (journeyStep === "passport" ? 2 : journeyStep === "destination" ? 3 : 4) ? "border-accent/40 bg-accent/10 text-accent" : "border-border bg-input/40"}`}>
               {item}
             </div>
           ))}
@@ -290,7 +296,24 @@ function Galaxia() {
       )}
 
       {/* Destination picker */}
-      {!currentDest && (
+      {!currentDest && journeyStep === "passport" && (
+        <div className="glass rounded-2xl p-5">
+          <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><Stamp className="w-5 h-5" /> Etapa 2 · Fazer passaporte</h2>
+          <p className="text-xs text-muted-foreground mt-1">Seu passaporte galáctico já está liberado gratuitamente para esta identidade.</p>
+
+          <div className="mt-4 rounded-xl border border-accent/30 bg-accent/5 p-4">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Passaporte emitido</div>
+            <div className="mt-1 font-display text-lg">{passport.passport_number}</div>
+            <div className="text-xs text-muted-foreground">Origem: {passport.origin_planet}</div>
+          </div>
+
+          <button onClick={() => setJourneyStep("destination")} className="mt-5 w-full px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
+            Continuar para escolher destino
+          </button>
+        </div>
+      )}
+
+      {!currentDest && journeyStep === "destination" && (
         <div className="glass rounded-2xl p-5">
           <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Etapa 3 · Escolha seu destino</h2>
           <p className="text-xs text-muted-foreground mt-1">Passaporte liberado. Agora escolha o destino, depois sua nave e então comece o quiz. Tudo grátis.</p>
@@ -349,8 +372,48 @@ function Galaxia() {
           <h2 className="font-display text-2xl text-gradient-neon flex items-center gap-2 mt-1">
             <MapPin className="w-5 h-5" /> Etapas 4 e 5 · {currentDest.name}
           </h2>
-          <div className="text-xs text-muted-foreground mt-1">Transporte: {currentDest.transport} · escolha ou gere sua nave antes do quiz se quiser personalizar a viagem.</div>
-          <div className="text-xs mt-3">Precisa de ≥ 80% no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+          <div className="text-xs text-muted-foreground mt-1">Transporte: {currentDest.transport}</div>
+
+          <div className="mt-5 rounded-2xl border border-accent/20 bg-accent/5 p-4">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Etapa 4 · Escolher nave</div>
+            {identity?.ship_image_url ? (
+              <div className="mt-3 grid gap-3 sm:grid-cols-[120px_1fr] items-center">
+                <img src={identity.ship_image_url} alt="Nave escolhida" className="w-full rounded-xl object-cover border border-accent/30" />
+                <div>
+                  <div className="font-display text-base">Nave pronta para embarque</div>
+                  <div className="text-xs text-muted-foreground">Você já escolheu a nave {identity.ship_category} para esta viagem.</div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {SHIPS.map((s) => (
+                    <button key={s.id} onClick={() => setShipCategory(s.id)}
+                      className={`rounded-lg border overflow-hidden text-left ${shipCategory === s.id ? "border-accent ring-1 ring-accent" : "border-border bg-input/40"}`}>
+                      <img src={SHIP_PREVIEWS[s.id]} alt={s.name} className="w-full aspect-square object-cover" />
+                      <div className="p-2">
+                        <div className="font-display text-xs">{s.name}</div>
+                        <div className="text-[10px] text-muted-foreground">{s.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <button disabled={shipLoading} onClick={async () => {
+                  setShipLoading(true);
+                  try {
+                    await shipFn({ data: { identityId: identityId!, category: shipCategory } });
+                    toast.success("Nave pronta!");
+                    await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+                  } catch (e) { toast.error((e as Error).message); }
+                  finally { setShipLoading(false); }
+                }} className="mt-4 w-full px-4 py-3 rounded-full bg-accent text-accent-foreground font-bold text-sm disabled:opacity-60">
+                  {shipLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Gerar nave grátis"}
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 80% no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
 
           <div className="mt-5 flex flex-col sm:flex-row gap-2">
             <button disabled={quizLoading} onClick={async () => {
