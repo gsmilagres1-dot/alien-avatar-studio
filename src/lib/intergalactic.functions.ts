@@ -13,9 +13,44 @@ import {
 
 interface QuizQuestion { q: string; choices: string[]; answer: number }
 
+const FALLBACK_QUIZ_BANK: QuizQuestion[] = [
+  { q: "Qual planeta do Sistema Solar é conhecido como Planeta Vermelho?", choices: ["Vênus", "Marte", "Júpiter", "Mercúrio"], answer: 1 },
+  { q: "Qual é a estrela no centro do nosso Sistema Solar?", choices: ["Betelgeuse", "Sírius", "Sol", "Alpha Centauri A"], answer: 2 },
+  { q: "Qual satélite natural orbita a Terra?", choices: ["Europa", "Lua", "Titã", "Fobos"], answer: 1 },
+  { q: "Qual planeta é famoso por seus anéis visíveis?", choices: ["Saturno", "Netuno", "Marte", "Urano"], answer: 0 },
+  { q: "Qual planeta é o maior do Sistema Solar?", choices: ["Terra", "Júpiter", "Saturno", "Netuno"], answer: 1 },
+  { q: "Como se chama a galáxia onde está o Sistema Solar?", choices: ["Andrômeda", "Via Láctea", "Nebulosa de Órion", "Sombrero"], answer: 1 },
+  { q: "Qual planeta fica mais perto do Sol?", choices: ["Mercúrio", "Vênus", "Terra", "Marte"], answer: 0 },
+  { q: "Plutão é mais conhecido hoje como quê?", choices: ["Lua", "Cometa", "Planeta anão", "Asteroide"], answer: 2 },
+  { q: "Qual destas opções é uma lua de Júpiter?", choices: ["Europa", "Vênus", "Mercúrio", "Plutão"], answer: 0 },
+  { q: "O Sol é classificado como quê?", choices: ["Planeta", "Lua", "Estrela", "Galáxia"], answer: 2 },
+  { q: "Qual planeta é conhecido por ser muito quente e ter atmosfera densa?", choices: ["Marte", "Vênus", "Urano", "Netuno"], answer: 1 },
+  { q: "Qual planeta é conhecido por seus ventos e por sua cor azul intensa?", choices: ["Netuno", "Marte", "Mercúrio", "Saturno"], answer: 0 },
+];
+
+function buildFallbackQuiz(level: number, destinationName: string): QuizQuestion[] {
+  const themed: QuizQuestion = {
+    q: `Antes de pousar em ${destinationName}, qual item é essencial para começar uma viagem espacial segura?`,
+    choices: ["Passaporte da viagem", "Guarda-chuva comum", "Patins", "Bola de praia"],
+    answer: 0,
+  };
+
+  const seed = `${destinationName}-${level}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 33 + seed.charCodeAt(i)) >>> 0;
+
+  const ordered = [...FALLBACK_QUIZ_BANK].sort((a, b) => {
+    const ah = (hash ^ a.q.length) >>> 0;
+    const bh = (hash ^ b.q.length) >>> 0;
+    return ah - bh || a.q.localeCompare(b.q);
+  });
+
+  return [themed, ...ordered.slice(0, QUESTIONS_PER_QUIZ - 1)];
+}
+
 async function generateQuizWithAI(level: number, destinationName: string): Promise<QuizQuestion[]> {
   const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("LOVABLE_API_KEY ausente");
+  if (!key) return buildFallbackQuiz(level, destinationName);
   const prompt = `Gere ${QUESTIONS_PER_QUIZ} perguntas DIVERTIDAS e LEVES de múltipla escolha em PT-BR, nível ${level}/5 de dificuldade, ambientadas na viagem ao destino "${destinationName}". Cada pergunta deve ter uma resposta que qualquer pessoa possa confirmar com uma busca rápida no Google — use fatos populares, curiosidades famosas e referências bem conhecidas. Misture temas POP e ACESSÍVEIS. Tom: descontraído, como um quiz de bar. Responda APENAS com JSON válido: {"questions":[{"q":"...","choices":["a","b","c","d"],"answer":0}]} onde "answer" é o índice (0-3) da correta. Sem texto fora do JSON.`;
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -28,17 +63,14 @@ async function generateQuizWithAI(level: number, destinationName: string): Promi
     }),
   });
   if (!res.ok) {
-    const t = await res.text();
-    if (res.status === 429) throw new Error("Muitos pedidos à IA — aguarde");
-    if (res.status === 402) throw new Error("Créditos de IA esgotados");
-    throw new Error(`Falha IA (${res.status}): ${t.slice(0, 200)}`);
+    return buildFallbackQuiz(level, destinationName);
   }
   const j = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   const content = j.choices?.[0]?.message?.content ?? "{}";
   let parsed: unknown;
-  try { parsed = JSON.parse(content); } catch { throw new Error("Resposta da IA inválida"); }
+  try { parsed = JSON.parse(content); } catch { return buildFallbackQuiz(level, destinationName); }
   const arr = (parsed as { questions?: QuizQuestion[] }).questions ?? [];
-  if (!Array.isArray(arr) || arr.length < QUESTIONS_PER_QUIZ) throw new Error("IA não retornou perguntas suficientes");
+  if (!Array.isArray(arr) || arr.length < QUESTIONS_PER_QUIZ) return buildFallbackQuiz(level, destinationName);
   return arr.slice(0, QUESTIONS_PER_QUIZ).map((q) => ({
     q: String(q.q),
     choices: q.choices.slice(0, 4).map(String),
