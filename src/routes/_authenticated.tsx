@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
-import { Sparkles, Rocket, Images, Globe2, Languages, Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Sparkles, Rocket, Images, Globe2 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
@@ -8,11 +8,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthLayout() {
   const { auth } = Route.useRouteContext();
-  const [language, setLanguage] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("alien:language") ?? "pt-BR" : "pt-BR"));
 
-  useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("alien:language", language);
-  }, [language]);
 
   if (auth.loading || !auth.isAuthenticated) {
     return (
