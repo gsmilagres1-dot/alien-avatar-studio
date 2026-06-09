@@ -14,6 +14,7 @@ import {
 interface QuizQuestion { q: string; choices: string[]; answer: number }
 
 const FALLBACK_QUIZ_BANK: QuizQuestion[] = [
+  // Astronomia básica
   { q: "Qual planeta do Sistema Solar é conhecido como Planeta Vermelho?", choices: ["Vênus", "Marte", "Júpiter", "Mercúrio"], answer: 1 },
   { q: "Qual é a estrela no centro do nosso Sistema Solar?", choices: ["Betelgeuse", "Sírius", "Sol", "Alpha Centauri A"], answer: 2 },
   { q: "Qual satélite natural orbita a Terra?", choices: ["Europa", "Lua", "Titã", "Fobos"], answer: 1 },
@@ -26,6 +27,33 @@ const FALLBACK_QUIZ_BANK: QuizQuestion[] = [
   { q: "O Sol é classificado como quê?", choices: ["Planeta", "Lua", "Estrela", "Galáxia"], answer: 2 },
   { q: "Qual planeta é conhecido por ser muito quente e ter atmosfera densa?", choices: ["Marte", "Vênus", "Urano", "Netuno"], answer: 1 },
   { q: "Qual planeta é conhecido por seus ventos e por sua cor azul intensa?", choices: ["Netuno", "Marte", "Mercúrio", "Saturno"], answer: 0 },
+
+  // Filmes / desenhos / alienígenas pop
+  { q: "No filme E.T., o que o alienígena quer fazer o tempo todo?", choices: ["Comer pizza", "Telefonar para casa", "Voltar para a escola", "Pilotar uma nave"], answer: 1 },
+  { q: "Qual é o nome do cachorro da família Jetsons?", choices: ["Rex", "Astro", "Snoopy", "Pluto"], answer: 1 },
+  { q: "Em Star Wars, qual é a frase mais famosa de Darth Vader sobre Luke?", choices: ["Que a Força esteja com você", "Eu sou seu pai", "Não há tentar, faça", "Estes não são os droides"], answer: 1 },
+  { q: "Em Star Wars, qual a espécie do mestre Yoda?", choices: ["Wookiee", "Ewok", "Desconhecida", "Hutt"], answer: 2 },
+  { q: "Em Avatar (2009), como se chama a lua onde vivem os Na'vi?", choices: ["Pandora", "Krypton", "Tatooine", "Arrakis"], answer: 0 },
+  { q: "De que cor é a pele dos Na'vi em Avatar?", choices: ["Verde", "Azul", "Roxa", "Cinza"], answer: 1 },
+  { q: "Qual é o nome do alienígena peludo da série ALF?", choices: ["Gordon Shumway", "Mork", "Paul", "Roger"], answer: 0 },
+  { q: "Em ALF, qual era a comida favorita do ALF (que ele nunca podia comer)?", choices: ["Pizza", "Gato", "Hambúrguer", "Sorvete"], answer: 1 },
+  { q: "No filme Predador (1987), quem enfrenta o caçador alienígena na selva?", choices: ["Sylvester Stallone", "Arnold Schwarzenegger", "Bruce Willis", "Jean-Claude Van Damme"], answer: 1 },
+  { q: "Em O Exterminador do Futuro, qual a frase clássica do T-800?", choices: ["Hasta la vista, baby", "Show me the money", "May the Force be with you", "To infinity and beyond"], answer: 0 },
+  { q: "Em O Exterminador do Futuro 2, qual é o modelo do robô vilão líquido?", choices: ["T-800", "T-1000", "T-X", "T-900"], answer: 1 },
+  { q: "Quem dirigiu O Exterminador do Futuro e Avatar?", choices: ["Steven Spielberg", "James Cameron", "George Lucas", "Ridley Scott"], answer: 1 },
+  { q: "Em Perdido em Marte (2015), com Matt Damon, qual planta o astronauta cultiva em Marte?", choices: ["Tomate", "Batata", "Milho", "Alface"], answer: 1 },
+  { q: "Os Jetsons vivem em que tipo de cenário?", choices: ["Caverna pré-histórica", "Cidade futurista nas nuvens", "Planeta marciano", "Submarino"], answer: 1 },
+  { q: "Qual é o nome da robô empregada doméstica dos Jetsons?", choices: ["Rosie", "Wall-E", "C-3PO", "Bender"], answer: 0 },
+  { q: "Em Star Wars, qual nave é pilotada por Han Solo e Chewbacca?", choices: ["Millennium Falcon", "X-Wing", "Estrela da Morte", "Tie Fighter"], answer: 0 },
+  { q: "Qual é o planeta natal de Luke Skywalker em Star Wars?", choices: ["Naboo", "Tatooine", "Endor", "Hoth"], answer: 1 },
+  { q: "Em Homens de Preto, o que os agentes usam para apagar a memória de testemunhas?", choices: ["Laser", "Neuralizador", "Soro da verdade", "Hipnose"], answer: 1 },
+  { q: "Qual destes filmes NÃO é sobre alienígenas?", choices: ["E.T.", "Predador", "Titanic", "Independence Day"], answer: 2 },
+  { q: "Em Toy Story, qual brinquedo acha que é um astronauta de verdade?", choices: ["Woody", "Buzz Lightyear", "Jessie", "Rex"], answer: 1 },
+  { q: "Qual é a frase de Buzz Lightyear em Toy Story?", choices: ["Ao infinito e além!", "Eu voltarei", "Que a Força esteja com você", "Telefonar para casa"], answer: 0 },
+  { q: "Em Star Wars, como se chama a arma laser dos Jedi?", choices: ["Blaster", "Sabre de luz", "Phaser", "Bastão de força"], answer: 1 },
+  { q: "Qual desenho mostra uma família vivendo no futuro com carros voadores?", choices: ["Os Flintstones", "Os Jetsons", "Scooby-Doo", "Bob Esponja"], answer: 1 },
+  { q: "Em E.T., qual doce o menino usa para atrair o alienígena?", choices: ["M&M's", "Reese's Pieces", "Skittles", "Bis"], answer: 1 },
+  { q: "Qual destes é um clássico filme de ficção ambientado em Marte?", choices: ["Perdido em Marte", "Titanic", "Rocky", "O Rei Leão"], answer: 0 },
 ];
 
 function buildFallbackQuiz(level: number, destinationName: string): QuizQuestion[] {
