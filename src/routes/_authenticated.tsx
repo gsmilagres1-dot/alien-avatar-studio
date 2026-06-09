@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
-import { Sparkles, Rocket, Images, Globe2, Languages, Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Sparkles, Rocket, Images, Globe2 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
@@ -8,11 +8,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthLayout() {
   const { auth } = Route.useRouteContext();
-  const [language, setLanguage] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("alien:language") ?? "pt-BR" : "pt-BR"));
 
-  useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("alien:language", language);
-  }, [language]);
 
   if (auth.loading || !auth.isAuthenticated) {
     return (
@@ -42,28 +38,8 @@ function AuthLayout() {
             <Link to="/galeria" className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
               <Images className="w-3.5 h-3.5" /> Galeria
             </Link>
-            <details className="relative">
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-accent/10">
-                <Languages className="w-3.5 h-3.5" /> Idioma
-              </summary>
-              <div className="absolute right-0 mt-2 min-w-40 rounded-xl border border-border bg-background/95 p-2 shadow-2xl backdrop-blur">
-                {[
-                  { value: "pt-BR", label: "Português" },
-                  { value: "en", label: "English" },
-                  { value: "es", label: "Español" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setLanguage(option.value)}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${language === option.value ? "bg-accent/10 text-accent" : "hover:bg-accent/5"}`}
-                  >
-                    {option.label}
-                    {language === option.value && <Check className="w-3.5 h-3.5" />}
-                  </button>
-                ))}
-              </div>
-            </details>
+            <LanguageSwitcher compact />
+
           </div>
         </div>
       </nav>
