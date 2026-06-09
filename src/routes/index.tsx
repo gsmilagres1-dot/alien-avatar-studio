@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Camera, Rocket, Sparkles, Wallet, Share2, Languages, Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Camera, Rocket, Sparkles, Wallet, Share2 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,39 +15,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const [language, setLanguage] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("alien:language") ?? "pt-BR" : "pt-BR"));
-
-  useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("alien:language", language);
-  }, [language]);
-
   return (
     <main className="relative z-10 min-h-screen px-4 py-12">
       <div className="max-w-3xl mx-auto text-center">
         <div className="mb-5 flex justify-end">
-          <details className="relative">
-            <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-2 text-xs">
-              <Languages className="w-4 h-4 text-accent" /> Escolher idioma
-            </summary>
-            <div className="absolute right-0 mt-2 min-w-40 rounded-xl border border-border bg-background/95 p-2 shadow-2xl backdrop-blur">
-              {[
-                { value: "pt-BR", label: "Português" },
-                { value: "en", label: "English" },
-                { value: "es", label: "Español" },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setLanguage(option.value)}
-                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${language === option.value ? "bg-accent/10 text-accent" : "hover:bg-accent/5"}`}
-                >
-                  {option.label}
-                  {language === option.value && <Check className="w-3.5 h-3.5" />}
-                </button>
-              ))}
-            </div>
-          </details>
+          <LanguageSwitcher />
         </div>
+
 
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass mb-6">
           <Sparkles className="w-3.5 h-3.5 text-accent" />
