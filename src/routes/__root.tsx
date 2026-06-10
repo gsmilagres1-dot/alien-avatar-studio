@@ -103,6 +103,7 @@ function RootComponent() {
       <AuthBridge />
       <TranslationSync />
       <Outlet />
+      <Soundtrack />
       <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
