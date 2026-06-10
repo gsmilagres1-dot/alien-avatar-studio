@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Languages, Check, Search } from "lucide-react";
+import { setLang, syncPageTranslation } from "@/lib/translator";
 
-// Lista completa dos idiomas suportados pelo Google Tradutor
 const LANGUAGES: { code: string; label: string }[] = [
   { code: "pt", label: "Português" },
   { code: "en", label: "English" },
@@ -85,73 +85,19 @@ const LANGUAGES: { code: string; label: string }[] = [
   { code: "la", label: "Latina" },
 ];
 
-const COOKIE_NAME = "googtrans";
-const PAGE_LANG = "pt";
-
-function setCookie(name: string, value: string) {
-  // Set on current host + parent domain (Google Translate needs this)
-  document.cookie = `${name}=${value};path=/`;
-  const host = window.location.hostname;
-  if (host.includes(".")) {
-    const parent = host.replace(/^[^.]+\./, ".");
-    document.cookie = `${name}=${value};path=/;domain=${parent}`;
-  }
-}
-
 function readCurrentLang(): string {
-  if (typeof document === "undefined") return PAGE_LANG;
-  const m = document.cookie.match(/googtrans=\/[^/]+\/([^;]+)/);
-  return m?.[1] ?? PAGE_LANG;
-}
-
-function ensureGoogleTranslateLoaded() {
-  if (typeof window === "undefined") return;
-  // Hidden mount point
-  if (!document.getElementById("google_translate_element")) {
-    const div = document.createElement("div");
-    div.id = "google_translate_element";
-    div.style.display = "none";
-    document.body.appendChild(div);
-  }
-  // Hide the Google top banner
-  if (!document.getElementById("gt-style-override")) {
-    const style = document.createElement("style");
-    style.id = "gt-style-override";
-    style.textContent = `
-      .goog-te-banner-frame.skiptranslate, .goog-te-gadget { display: none !important; }
-      body { top: 0 !important; }
-      .goog-tooltip, .goog-tooltip:hover { display: none !important; }
-      .goog-text-highlight { background: none !important; box-shadow: none !important; }
-    `;
-    document.head.appendChild(style);
-  }
-  const w = window as unknown as {
-    googleTranslateElementInit?: () => void;
-    google?: { translate?: { TranslateElement?: new (opts: object, el: string) => void } };
-  };
-  if (!w.googleTranslateElementInit) {
-    w.googleTranslateElementInit = () => {
-      const TE = w.google?.translate?.TranslateElement;
-      if (TE) new TE({ pageLanguage: PAGE_LANG, autoDisplay: false }, "google_translate_element");
-    };
-  }
-  if (!document.querySelector('script[data-gt-loader="1"]')) {
-    const s = document.createElement("script");
-    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-    s.async = true;
-    s.dataset.gtLoader = "1";
-    document.body.appendChild(s);
-  }
+  if (typeof localStorage === "undefined") return "pt";
+  return localStorage.getItem("app_lang") || "pt";
 }
 
 export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
-  const [current, setCurrent] = useState<string>(PAGE_LANG);
+  const [current, setCurrent] = useState<string>("pt");
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
+  const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    ensureGoogleTranslateLoaded();
     setCurrent(readCurrentLang());
   }, []);
 
@@ -164,16 +110,22 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
 
-  const pick = (code: string) => {
-    setCookie(COOKIE_NAME, `/${PAGE_LANG}/${code}`);
+  const pick = async (code: string) => {
+    setLang(code);
     setCurrent(code);
     setOpen(false);
-    // Reload to let Google Translate re-apply across the whole page
-    window.location.reload();
+    setLoading(true);
+    try {
+      await syncPageTranslation();
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filtered = LANGUAGES.filter((l) =>
-    l.label.toLowerCase().includes(filter.toLowerCase()) || l.code.includes(filter.toLowerCase())
+  const filtered = LANGUAGES.filter(
+    (l) =>
+      l.label.toLowerCase().includes(filter.toLowerCase()) ||
+      l.code.toLowerCase().includes(filter.toLowerCase())
   );
 
   const label = LANGUAGES.find((l) => l.code === current)?.label ?? "Idioma";
@@ -190,7 +142,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
         }
       >
         <Languages className={compact ? "w-3.5 h-3.5" : "w-4 h-4 text-accent"} />
-        <span>{label}</span>
+        <span>{loading ? "…" : label}</span>
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-64 max-h-80 overflow-hidden rounded-xl border border-border bg-background/95 shadow-2xl backdrop-blur z-50 flex flex-col">
@@ -210,14 +162,18 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
                 key={option.code}
                 type="button"
                 onClick={() => pick(option.code)}
-                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${current === option.code ? "bg-accent/10 text-accent" : "hover:bg-accent/5"}`}
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${
+                  current === option.code ? "bg-accent/10 text-accent" : "hover:bg-accent/5"
+                }`}
               >
                 <span>{option.label}</span>
                 {current === option.code && <Check className="w-3.5 h-3.5" />}
               </button>
             ))}
             {filtered.length === 0 && (
-              <div className="px-3 py-4 text-center text-xs text-muted-foreground">Nada encontrado</div>
+              <div className="px-3 py-4 text-center text-xs text-muted-foreground">
+                Nada encontrado
+              </div>
             )}
           </div>
         </div>
