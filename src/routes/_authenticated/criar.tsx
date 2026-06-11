@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Printer } from "lucide-react";
+import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Printer, ImageIcon } from "lucide-react";
 import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -47,6 +47,7 @@ function Criar() {
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:raceMode", raceMode); }, [raceMode]);
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const payment = active?.payment ?? null;
   const drafts = active?.drafts ?? [];
   const usedAvatarUrls = active?.usedAvatarUrls ?? [];
@@ -182,7 +183,8 @@ function Criar() {
   return (
     <>
       <main className="relative z-10 px-4 py-6 sm:py-10">
-        <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => onPickFile(e.target.files?.[0])} />
+        <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => { onPickFile(e.target.files?.[0]); e.target.value = ""; }} />
+        <input ref={galleryRef} type="file" accept="image/*" hidden onChange={(e) => { onPickFile(e.target.files?.[0]); e.target.value = ""; }} />
 
         <div className="max-w-3xl mx-auto">
           {step === "intro" && (
@@ -209,9 +211,14 @@ function Criar() {
                     <Camera className="w-6 h-6 text-muted-foreground" />
                   </div>
                 )}
-                <button onClick={() => fileRef.current?.click()} className="text-sm text-accent underline">
-                  {photo ? "trocar foto" : "tirar/enviar foto"}
-                </button>
+                <div className="flex flex-col gap-1.5">
+                  <button onClick={() => fileRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5" /> {photo ? "Tirar outra selfie" : "Tirar selfie agora"}
+                  </button>
+                  <button onClick={() => galleryRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5" /> {photo ? "Escolher outra da galeria" : "Escolher da galeria"}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-4">
