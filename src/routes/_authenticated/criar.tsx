@@ -47,6 +47,7 @@ function Criar() {
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:raceMode", raceMode); }, [raceMode]);
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const payment = active?.payment ?? null;
   const drafts = active?.drafts ?? [];
   const usedAvatarUrls = active?.usedAvatarUrls ?? [];
