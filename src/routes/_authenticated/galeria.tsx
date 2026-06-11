@@ -5,6 +5,7 @@ import { deleteIdentity } from "@/lib/identities.functions";
 import { listIdentitiesWithJourneys } from "@/lib/gallery.functions";
 import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { ShareProfileImage } from "@/components/ShareProfileImage";
 
 export const Route = createFileRoute("/_authenticated/galeria")({ component: Galeria });
 
@@ -74,12 +75,13 @@ function Galeria() {
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between">
+                <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
                   <button
                     onClick={() => navigate({ to: "/galaxia", search: { identityId: i.id } })}
                     className="text-xs text-accent hover:underline inline-flex items-center gap-1">
-                    <Rocket className="w-3 h-3" /> {active ? "Continuar viagem" : journey ? "Ver viagem" : "Começar viagem"}
+                    <Rocket className="w-3 h-3" /> {active ? "Continuar" : journey ? "Ver viagem" : "Viajar"}
                   </button>
+                  <ShareProfileImage identity={i} />
                   <button onClick={() => remove(i.id)} className="inline-flex items-center gap-1.5 text-xs text-destructive hover:underline">
                     <Trash2 className="w-3 h-3" /> Apagar
                   </button>

@@ -1,6 +1,16 @@
 import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
-import { Sparkles, Rocket, Images, Globe2 } from "lucide-react";
+import { Sparkles, Rocket, Images, Globe2, Home, Share2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { toast } from "sonner";
+
+async function shareApp() {
+  const url = typeof window !== "undefined" ? window.location.origin : "";
+  const text = "Vire um alien! Crie sua identidade galáctica grátis 👽🚀";
+  if (typeof navigator !== "undefined" && (navigator as any).share) {
+    try { await (navigator as any).share({ title: "Identidade Alien", text, url }); return; } catch {}
+  }
+  try { await navigator.clipboard.writeText(`${text} ${url}`); toast.success("Link copiado!"); } catch {}
+}
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
@@ -28,12 +38,18 @@ function AuthLayout() {
             <Sparkles className="w-4 h-4 text-accent" />
             <span className="text-gradient-neon">Identidade Alien</span>
           </Link>
-          <div className="flex items-center gap-2 text-xs">
-            <Link to="/criar" className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
+          <div className="flex items-center gap-1 text-xs">
+            <Link to="/" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5" title="Página inicial">
+              <Home className="w-3.5 h-3.5" />
+            </Link>
+            <button onClick={shareApp} className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5" title="Compartilhar app">
+              <Share2 className="w-3.5 h-3.5" />
+            </button>
+            <Link to="/criar" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
               <Rocket className="w-3.5 h-3.5" /> Criar
             </Link>
-            <Link to="/galaxia" className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
-              <Globe2 className="w-3.5 h-3.5" /> Galáxia
+            <Link to="/galaxia" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
+              <Globe2 className="w-3.5 h-3.5" /> Viagem
             </Link>
             <Link to="/galeria" className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
               <Images className="w-3.5 h-3.5" /> Galeria
