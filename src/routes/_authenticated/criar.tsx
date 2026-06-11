@@ -211,9 +211,14 @@ function Criar() {
                     <Camera className="w-6 h-6 text-muted-foreground" />
                   </div>
                 )}
-                <button onClick={() => fileRef.current?.click()} className="text-sm text-accent underline">
-                  {photo ? "trocar foto" : "tirar/enviar foto"}
-                </button>
+                <div className="flex flex-col gap-1.5">
+                  <button onClick={() => fileRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5" /> {photo ? "Tirar outra selfie" : "Tirar selfie agora"}
+                  </button>
+                  <button onClick={() => galleryRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5" /> {photo ? "Escolher outra da galeria" : "Escolher da galeria"}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-4">
