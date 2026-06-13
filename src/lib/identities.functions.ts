@@ -228,9 +228,16 @@ export const generateShipImage = createServerFn({ method: "POST" })
       bytes = await generateImage(prompt);
     } catch (err) {
       fallbackReason = (err as Error).message;
+      if (!isAiImageUnavailable(fallbackReason)) throw err;
       console.warn("AI ship falhou, usando versão padrão:", fallbackReason);
-      const filePath = `src/assets/ship-${data.category}.jpg`;
-      bytes = fs.readFileSync(filePath);
+      const url = FALLBACK_SHIP_IMAGES[data.category];
+
+      await supabaseAdmin
+        .from("identities")
+        .update({ ship_category: data.category, ship_image_url: url })
+        .eq("id", data.identityId);
+
+      return { shipImageUrl: url, category: data.category, fallback: fallbackReason };
     }
     
     const url = await uploadImage(userId, "ship", bytes);
