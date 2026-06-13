@@ -1,11 +1,28 @@
-import fs from "node:fs";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, getRace, raceFromBirthdate, RACES, SHIPS } from "@/lib/alien";
+import shipEsportiva from "@/assets/ship-esportiva.jpg";
+import shipOffroad from "@/assets/ship-offroad.jpg";
+import shipCorrida from "@/assets/ship-corrida.jpg";
 
 const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
+
+const FALLBACK_SHIP_IMAGES = {
+  esportiva: shipEsportiva,
+  offroad: shipOffroad,
+  corrida: shipCorrida,
+} satisfies Record<"esportiva" | "offroad" | "corrida", string>;
+
+function isAiImageUnavailable(message: string) {
+  return (
+    message === "Créditos de IA esgotados" ||
+    message === "Muitos pedidos à IA — espere um momento" ||
+    message === "IA não retornou imagem" ||
+    message.startsWith("Falha na IA (")
+  );
+}
 
 async function generateImage(prompt: string, refImageDataUrl?: string): Promise<Buffer> {
   const key = process.env.LOVABLE_API_KEY;
