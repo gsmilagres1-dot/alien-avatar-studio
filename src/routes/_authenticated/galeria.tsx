@@ -54,6 +54,13 @@ function Galeria() {
             <div key={i.id} className="glass rounded-2xl overflow-hidden">
               <div className="relative">
                 <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover" />
+                <button
+                  onClick={() => remove(i.id)}
+                  aria-label="Apagar avatar"
+                  title="Apagar avatar"
+                  className="absolute top-2 right-2 inline-flex items-center justify-center w-9 h-9 rounded-full bg-destructive/90 text-destructive-foreground shadow-lg hover:bg-destructive transition active:scale-95">
+                  <Trash2 className="w-4 h-4" />
+                </button>
                 {i.ship_image_url && (
                   <img src={i.ship_image_url} alt="Nave" className="absolute bottom-2 right-2 w-20 h-20 rounded-xl object-cover border-2 border-accent shadow-neon" />
                 )}
