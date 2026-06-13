@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -203,7 +204,18 @@ export const generateShipImage = createServerFn({ method: "POST" })
 
     const race = getRace(ident.planet_id);
     const prompt = buildShipPrompt(data.category, race.origin);
-    const bytes = await generateImage(prompt);
+    
+    let bytes: Buffer;
+    let fallbackReason: string | null = null;
+    try {
+      bytes = await generateImage(prompt);
+    } catch (err) {
+      fallbackReason = (err as Error).message;
+      console.warn("AI ship falhou, usando versão padrão:", fallbackReason);
+      const filePath = `src/assets/ship-${data.category}.jpg`;
+      bytes = fs.readFileSync(filePath);
+    }
+    
     const url = await uploadImage(userId, "ship", bytes);
 
     await supabaseAdmin
@@ -211,8 +223,8 @@ export const generateShipImage = createServerFn({ method: "POST" })
       .update({ ship_category: data.category, ship_image_url: url })
       .eq("id", data.identityId);
 
-    return { shipImageUrl: url, category: data.category };
-  });
+    return { shipImageUrl: url, category: data.category, fallback: fallbackReason };
+});
 
 export const listMyIdentities = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

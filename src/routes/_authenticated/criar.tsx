@@ -168,6 +168,11 @@ function Criar() {
     try {
       const r = await shipFn({ data: { identityId: savedIdentity.id, category: shipCategory } });
       setSavedIdentity({ ...savedIdentity, shipImageUrl: r.shipImageUrl });
+      if (r?.fallback) {
+        toast.warning("Modo teste: créditos de IA esgotados. Usamos uma nave padrão para sua jornada.", { duration: 6000 });
+      } else {
+        toast.success("Nave espacial gerada!");
+      }
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
