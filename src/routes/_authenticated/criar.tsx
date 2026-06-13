@@ -122,8 +122,13 @@ function Criar() {
     if (drafts.length >= 3) return toast.error("Limite de 3 avatares");
     setGenLoading(true);
     try {
-      await draftFn({ data: { photoDataUrl: photo, planetId: planet, gender, paymentId: payment.id } });
+      const res = await draftFn({ data: { photoDataUrl: photo, planetId: planet, gender, paymentId: payment.id } });
       await qc.invalidateQueries({ queryKey: ["active-payment"] });
+      if (res?.fallback) {
+        toast.warning("Modo teste: sem créditos de IA, usamos sua foto original como avatar. Adicione créditos para gerar a forma alien transformada.", { duration: 6000 });
+      } else {
+        toast.success("Avatar alien gerado!");
+      }
       setStep("drafts");
     } catch (e) {
       toast.error((e as Error).message);
@@ -131,6 +136,7 @@ function Criar() {
       setGenLoading(false);
     }
   }
+
 
   async function confirmFinal() {
     if (!selectedDraft || !payment) return;
