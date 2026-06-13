@@ -81,12 +81,14 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
     // Modo grátis: tenta IA; se falhar (créditos/limite), usa a própria foto como avatar.
     let bytes: Buffer;
     let kind = "avatar";
+    let fallbackReason: string | null = null;
     try {
       const race = getRace(data.planetId);
       const prompt = buildAvatarPrompt({ race, gender: data.gender, variant });
       bytes = await generateImage(prompt, data.photoDataUrl);
     } catch (err) {
-      console.warn("AI avatar falhou, usando selfie original:", (err as Error).message);
+      fallbackReason = (err as Error).message;
+      console.warn("AI avatar falhou, usando selfie original:", fallbackReason);
       const match = data.photoDataUrl.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,(.+)$/);
       if (!match) throw err;
       bytes = Buffer.from(match[1], "base64");
@@ -107,8 +109,9 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
       .single();
     if (insErr) throw new Error(insErr.message);
 
-    return { draft };
+    return { draft, fallback: fallbackReason };
   });
+
 
 const saveInput = z.object({
   paymentId: z.string().uuid(),
