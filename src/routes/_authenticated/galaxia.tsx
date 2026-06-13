@@ -262,8 +262,12 @@ function Galaxia() {
               <button disabled={shipLoading} onClick={async () => {
                 setShipLoading(true);
                 try {
-                  await shipFn({ data: { identityId: identityId!, category: shipCategory } });
-                  toast.success("Nave pronta!");
+                  const r = await shipFn({ data: { identityId: identityId!, category: shipCategory } });
+                  if (r?.fallback) {
+                    toast.warning("Modo teste: créditos de IA esgotados. Usamos uma nave padrão.", { duration: 6000 });
+                  } else {
+                    toast.success("Nave pronta!");
+                  }
                   await qc.invalidateQueries({ queryKey: ["journey", identityId] });
                 } catch (e) { toast.error((e as Error).message); }
                 finally { setShipLoading(false); }
@@ -423,8 +427,12 @@ function Galaxia() {
                 <button disabled={shipLoading} onClick={async () => {
                   setShipLoading(true);
                   try {
-                    await shipFn({ data: { identityId: identityId!, category: shipCategory } });
+                    const r = await shipFn({ data: { identityId: identityId!, category: shipCategory } });
+                  if (r?.fallback) {
+                    toast.warning("Modo teste: créditos de IA esgotados. Usamos uma nave padrão.", { duration: 6000 });
+                  } else {
                     toast.success("Nave pronta!");
+                  }
                     await qc.invalidateQueries({ queryKey: ["journey", identityId] });
                   } catch (e) { toast.error((e as Error).message); }
                   finally { setShipLoading(false); }

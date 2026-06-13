@@ -3,8 +3,26 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, getRace, raceFromBirthdate, RACES, SHIPS } from "@/lib/alien";
+import shipEsportiva from "@/assets/ship-esportiva.jpg";
+import shipOffroad from "@/assets/ship-offroad.jpg";
+import shipCorrida from "@/assets/ship-corrida.jpg";
 
 const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
+
+const FALLBACK_SHIP_IMAGES = {
+  esportiva: shipEsportiva,
+  offroad: shipOffroad,
+  corrida: shipCorrida,
+} satisfies Record<"esportiva" | "offroad" | "corrida", string>;
+
+function isAiImageUnavailable(message: string) {
+  return (
+    message === "Créditos de IA esgotados" ||
+    message === "Muitos pedidos à IA — espere um momento" ||
+    message === "IA não retornou imagem" ||
+    message.startsWith("Falha na IA (")
+  );
+}
 
 async function generateImage(prompt: string, refImageDataUrl?: string): Promise<Buffer> {
   const key = process.env.LOVABLE_API_KEY;
@@ -203,7 +221,25 @@ export const generateShipImage = createServerFn({ method: "POST" })
 
     const race = getRace(ident.planet_id);
     const prompt = buildShipPrompt(data.category, race.origin);
-    const bytes = await generateImage(prompt);
+    
+    let bytes: Buffer;
+    let fallbackReason: string | null = null;
+    try {
+      bytes = await generateImage(prompt);
+    } catch (err) {
+      fallbackReason = (err as Error).message;
+      if (!isAiImageUnavailable(fallbackReason)) throw err;
+      console.warn("AI ship falhou, usando versão padrão:", fallbackReason);
+      const url = FALLBACK_SHIP_IMAGES[data.category];
+
+      await supabaseAdmin
+        .from("identities")
+        .update({ ship_category: data.category, ship_image_url: url })
+        .eq("id", data.identityId);
+
+      return { shipImageUrl: url, category: data.category, fallback: fallbackReason };
+    }
+    
     const url = await uploadImage(userId, "ship", bytes);
 
     await supabaseAdmin
@@ -211,8 +247,8 @@ export const generateShipImage = createServerFn({ method: "POST" })
       .update({ ship_category: data.category, ship_image_url: url })
       .eq("id", data.identityId);
 
-    return { shipImageUrl: url, category: data.category };
-  });
+    return { shipImageUrl: url, category: data.category, fallback: fallbackReason };
+});
 
 export const listMyIdentities = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
