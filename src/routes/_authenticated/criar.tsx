@@ -216,7 +216,7 @@ function Criar() {
 
               <div className="flex items-center gap-4 mb-5">
                 {photo ? (
-                  <img src={photo} alt="" className="w-20 h-20 rounded-xl object-cover border border-accent/40 shadow-neon" />
+                  <img src={photo} alt="" className="w-20 h-20 rounded-xl object-cover object-top border border-accent/40 shadow-neon" />
                 ) : (
                   <div className="w-20 h-20 rounded-xl bg-input grid place-items-center">
                     <Camera className="w-6 h-6 text-muted-foreground" />
