@@ -96,7 +96,7 @@ function Galaxia() {
           {list.map((i) => (
             <button key={i.id} onClick={() => navigate({ to: "/galaxia", search: { identityId: i.id } })}
               className="glass rounded-2xl overflow-hidden text-left hover:ring-2 hover:ring-accent transition">
-              <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover" />
+              <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover object-top" />
               <div className="p-4">
                 <div className="font-display text-lg text-gradient-neon">{i.alien_name}</div>
                 <div className="text-xs text-muted-foreground">{i.species}</div>
