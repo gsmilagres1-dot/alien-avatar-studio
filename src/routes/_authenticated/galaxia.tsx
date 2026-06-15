@@ -238,7 +238,7 @@ function Galaxia() {
         </div>
 
         <div className="flex items-center gap-4">
-        {identity?.avatar_url && <img src={identity.avatar_url} alt="" className="w-16 h-16 rounded-xl object-cover" />}
+        {identity?.avatar_url && <img src={identity.avatar_url} alt="" className="w-16 h-16 rounded-xl object-cover object-top" />}
         <div className="flex-1">
           <div className="text-xs text-muted-foreground">Passaporte {passport.passport_number}</div>
           <div className="font-display text-lg text-gradient-neon">{identity?.alien_name}</div>
