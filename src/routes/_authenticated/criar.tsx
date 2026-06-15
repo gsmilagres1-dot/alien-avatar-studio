@@ -29,22 +29,38 @@ function Criar() {
 
   const [step, setStep] = useState<Step>("intro");
   const [photo, setPhoto] = useState<string | null>(null);
-  const [name, setName] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("alien:name") ?? "" : ""));
-  const [birthdate, setBirthdate] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("alien:birthdate") ?? "" : ""));
-  const [gender, setGender] = useState<Gender>(() => (typeof window !== "undefined" ? ((localStorage.getItem("alien:gender") as Gender) ?? "undefined") : "undefined"));
-  const [planet, setPlanet] = useState<string>(() => (typeof window !== "undefined" ? localStorage.getItem("alien:planet") ?? "starseed" : "starseed"));
-  const [raceMode, setRaceMode] = useState<"auto" | "manual">(() => (typeof window !== "undefined" ? ((localStorage.getItem("alien:raceMode") as "auto" | "manual") ?? "auto") : "auto"));
+  const [name, setName] = useState("");
+  const [birthdate, setBirthdate] = useState("");
+  const [gender, setGender] = useState<Gender>("undefined");
+  const [planet, setPlanet] = useState<string>("starseed");
+  const [raceMode, setRaceMode] = useState<"auto" | "manual">("auto");
   const [selectedDraft, setSelectedDraft] = useState<string | null>(null);
   const [genLoading, setGenLoading] = useState(false);
   const [savedIdentity, setSavedIdentity] = useState<AlienIdentity & { avatarUrl: string; id: string; shipImageUrl: string | null } | null>(null);
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setName(localStorage.getItem("alien:name") ?? "");
+    setBirthdate(localStorage.getItem("alien:birthdate") ?? "");
+    setGender((localStorage.getItem("alien:gender") as Gender) ?? "undefined");
+    setPlanet(localStorage.getItem("alien:planet") ?? "starseed");
+    setRaceMode((localStorage.getItem("alien:raceMode") as "auto" | "manual") ?? "auto");
+    setPrefsLoaded(true);
+  }, []);
 
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:name", name); }, [name]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:birthdate", birthdate); }, [birthdate]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:gender", gender); }, [gender]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:planet", planet); }, [planet]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:raceMode", raceMode); }, [raceMode]);
+  useEffect(() => {
+    if (raceMode === "auto" && /^\d{4}-\d{2}-\d{2}$/.test(birthdate)) {
+      setPlanet(raceFromBirthdate(birthdate).id);
+    }
+  }, [raceMode, birthdate]);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
@@ -56,12 +72,12 @@ function Criar() {
 
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
-    if (isLoading || initialized) return;
+    if (isLoading || initialized || !prefsLoaded) return;
     if (payment && availableDrafts.length > 0) setStep("drafts");
     else if (payment) setStep("form");
     else setStep("intro");
     setInitialized(true);
-  }, [isLoading, payment, availableDrafts.length, initialized, hasForm]);
+  }, [isLoading, payment, availableDrafts.length, initialized, prefsLoaded]);
 
   useEffect(() => {
     if (step === "drafts" && !selectedDraft && availableDrafts[0]) {
@@ -74,6 +90,13 @@ function Criar() {
       setSelectedDraft(availableDrafts[0]?.id ?? null);
     }
   }, [selectedDraft, availableDrafts]);
+
+  useEffect(() => {
+    if (!payment) {
+      setSavedIdentity(null);
+      setSelectedDraft(null);
+    }
+  }, [payment?.id]);
 
   function clearFormState() {
     setPhoto(null);
@@ -96,6 +119,7 @@ function Criar() {
     setGenLoading(true);
     try {
       clearFormState();
+      setSavedIdentity(null);
       await restartFn();
       await qc.invalidateQueries({ queryKey: ["active-payment"] });
       setStep("form");
@@ -270,7 +294,6 @@ function Criar() {
                 {raceMode === "auto" && (
                   birthdate ? (() => {
                     const race = raceFromBirthdate(birthdate);
-                    if (planet !== race.id) setTimeout(() => setPlanet(race.id), 0);
                     return (
                       <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 shadow-neon">
                         <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Sua origem cósmica revelada</div>

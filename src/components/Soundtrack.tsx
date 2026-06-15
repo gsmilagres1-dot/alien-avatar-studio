@@ -16,11 +16,14 @@ const STORAGE_KEY = "soundtrack:muted";
 export function Soundtrack() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [muted, setMuted] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem(STORAGE_KEY) === "1";
-  });
+  const [muted, setMuted] = useState(true);
   const [started, setStarted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+    setMuted(window.localStorage.getItem(STORAGE_KEY) === "1");
+  }, []);
 
   // Pick the active track based on the current route.
   const track: TrackKey = pathname.startsWith("/galaxia") ? "stars" : "adventure";
@@ -80,6 +83,7 @@ export function Soundtrack() {
       <audio ref={audioRef} preload="none" />
       <button
         type="button"
+        suppressHydrationWarning
         onClick={() => setMuted((m) => !m)}
         aria-label={muted ? "Ativar trilha sonora" : "Silenciar trilha sonora"}
         title={muted ? "Ativar trilha sonora" : "Silenciar trilha sonora"}
@@ -88,7 +92,7 @@ export function Soundtrack() {
         {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-accent" />}
         <Music className="w-3.5 h-3.5 opacity-70" />
         <span className="font-mono uppercase tracking-widest">
-          {track === "stars" ? "Estrelas" : "Aventura"}
+          {hydrated && track === "stars" ? "Estrelas" : "Aventura"}
         </span>
       </button>
     </>
