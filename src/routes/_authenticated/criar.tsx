@@ -351,7 +351,7 @@ function Criar() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
                 {availableDrafts.map((d) => (
                   <button key={d.id} onClick={() => setSelectedDraft(d.id)} className={`relative rounded-xl overflow-hidden border-2 transition ${selectedDraft === d.id ? "border-accent shadow-neon" : "border-border"}`}>
-                    <img src={d.avatar_url} alt={`Avatar ${d.variant_index}`} className="w-full aspect-square object-cover" />
+                    <img src={d.avatar_url} alt={`Avatar ${d.variant_index}`} className="w-full aspect-square object-cover object-top" />
                     {selectedDraft === d.id && (
                       <div className="absolute top-2 right-2 bg-accent text-accent-foreground rounded-full p-1.5"><Check className="w-3 h-3" /></div>
                     )}
