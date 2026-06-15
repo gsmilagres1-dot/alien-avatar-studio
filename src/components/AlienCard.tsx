@@ -56,7 +56,7 @@ export function AlienCard({
             <img
               src={avatarUrl}
               alt="Avatar alienígena"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
             />
           </div>
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-accent text-accent-foreground text-[9px] font-mono font-bold">
