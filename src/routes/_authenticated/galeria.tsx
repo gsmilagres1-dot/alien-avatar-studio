@@ -21,7 +21,10 @@ function Galeria() {
     if (!confirm("Apagar essa identidade e sua viagem?")) return;
     try {
       await del({ data: { id } });
-      await qc.invalidateQueries({ queryKey: ["identities-with-journeys"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["identities-with-journeys"] }),
+        qc.invalidateQueries({ queryKey: ["identities"] }),
+      ]);
       toast.success("Removida");
     } catch (e) { toast.error((e as Error).message); }
   }
@@ -55,6 +58,7 @@ function Galeria() {
               <div className="relative">
                 <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover object-top" />
                 <button
+                    type="button"
                   onClick={() => remove(i.id)}
                   aria-label="Apagar avatar"
                   title="Apagar avatar"
@@ -84,12 +88,13 @@ function Galeria() {
 
                 <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
                   <button
+                    type="button"
                     onClick={() => navigate({ to: "/galaxia", search: { identityId: i.id } })}
                     className="text-xs text-accent hover:underline inline-flex items-center gap-1">
                     <Rocket className="w-3 h-3" /> {active ? "Continuar" : journey ? "Ver viagem" : "Viajar"}
                   </button>
                   <ShareProfileImage identity={i} />
-                  <button onClick={() => remove(i.id)} className="inline-flex items-center gap-1.5 text-xs text-destructive hover:underline">
+                  <button type="button" onClick={() => remove(i.id)} className="inline-flex items-center gap-1.5 text-xs text-destructive hover:underline">
                     <Trash2 className="w-3 h-3" /> Apagar
                   </button>
                 </div>

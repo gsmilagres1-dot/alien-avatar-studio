@@ -64,6 +64,13 @@ async function uploadImage(userId: string, kind: string, bytes: Buffer): Promise
   return data.publicUrl;
 }
 
+function storagePathFromPublicUrl(publicUrl: string) {
+  const marker = "/storage/v1/object/public/alien-avatars/";
+  const idx = publicUrl.indexOf(marker);
+  if (idx === -1) return null;
+  return decodeURIComponent(publicUrl.slice(idx + marker.length));
+}
+
 const draftInput = z.object({
   photoDataUrl: z.string().startsWith("data:image/").max(15_000_000),
   planetId: z.string().min(1).max(32),
@@ -268,8 +275,27 @@ export const deleteIdentity = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const { data: identity, error: readErr } = await supabaseAdmin
+      .from("identities")
+      .select("id, avatar_url, ship_image_url")
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!identity) throw new Error("Identidade não encontrada");
+
     const { error } = await supabaseAdmin.from("identities").delete().eq("id", data.id).eq("user_id", userId);
     if (error) throw new Error(error.message);
+
+    const paths = [identity.avatar_url, identity.ship_image_url]
+      .filter((value): value is string => Boolean(value))
+      .map(storagePathFromPublicUrl)
+      .filter((value): value is string => Boolean(value));
+
+    if (paths.length > 0) {
+      await supabaseAdmin.storage.from("alien-avatars").remove(paths);
+    }
+
     return { ok: true };
   });
 

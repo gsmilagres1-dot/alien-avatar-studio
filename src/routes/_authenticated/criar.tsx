@@ -56,6 +56,11 @@ function Criar() {
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:gender", gender); }, [gender]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:planet", planet); }, [planet]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("alien:raceMode", raceMode); }, [raceMode]);
+  useEffect(() => {
+    if (raceMode === "auto" && /^\d{4}-\d{2}-\d{2}$/.test(birthdate)) {
+      setPlanet(raceFromBirthdate(birthdate).id);
+    }
+  }, [raceMode, birthdate]);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
@@ -281,9 +286,6 @@ function Criar() {
                 {raceMode === "auto" && (
                   birthdate ? (() => {
                     const race = raceFromBirthdate(birthdate);
-                    if (planet !== race.id) {
-                      queueMicrotask(() => setPlanet(race.id));
-                    }
                     return (
                       <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 shadow-neon">
                         <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Sua origem cósmica revelada</div>
