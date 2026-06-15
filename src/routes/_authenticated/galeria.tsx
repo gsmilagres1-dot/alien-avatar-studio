@@ -53,7 +53,7 @@ function Galeria() {
           return (
             <div key={i.id} className="glass rounded-2xl overflow-hidden">
               <div className="relative">
-                <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover" />
+                <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover object-top" />
                 <button
                   onClick={() => remove(i.id)}
                   aria-label="Apagar avatar"
