@@ -91,6 +91,13 @@ function Criar() {
     }
   }, [selectedDraft, availableDrafts]);
 
+  useEffect(() => {
+    if (!payment) {
+      setSavedIdentity(null);
+      setSelectedDraft(null);
+    }
+  }, [payment?.id]);
+
   function clearFormState() {
     setPhoto(null);
     setName("");
@@ -112,6 +119,7 @@ function Criar() {
     setGenLoading(true);
     try {
       clearFormState();
+      setSavedIdentity(null);
       await restartFn();
       await qc.invalidateQueries({ queryKey: ["active-payment"] });
       setStep("form");

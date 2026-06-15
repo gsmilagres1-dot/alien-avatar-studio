@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { deleteIdentity } from "@/lib/identities.functions";
 import { listIdentitiesWithJourneys } from "@/lib/gallery.functions";
 import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin } from "lucide-react";
@@ -14,11 +15,13 @@ function Galeria() {
   const list = useServerFn(listIdentitiesWithJourneys);
   const del = useServerFn(deleteIdentity);
   const qc = useQueryClient();
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ["identities-with-journeys"], queryFn: () => list() });
 
   async function remove(id: string) {
     if (!confirm("Apagar essa identidade e sua viagem?")) return;
+    setRemovingId(id);
     try {
       await del({ data: { id } });
       await Promise.all([
@@ -27,6 +30,7 @@ function Galeria() {
       ]);
       toast.success("Removida");
     } catch (e) { toast.error((e as Error).message); }
+    finally { setRemovingId(null); }
   }
 
   return (
@@ -62,8 +66,9 @@ function Galeria() {
                   onClick={() => remove(i.id)}
                   aria-label="Apagar avatar"
                   title="Apagar avatar"
+                    disabled={removingId === i.id}
                   className="absolute top-2 right-2 inline-flex items-center justify-center w-9 h-9 rounded-full bg-destructive/90 text-destructive-foreground shadow-lg hover:bg-destructive transition active:scale-95">
-                  <Trash2 className="w-4 h-4" />
+                  {removingId === i.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 </button>
                 {i.ship_image_url && (
                   <img src={i.ship_image_url} alt="Nave" className="absolute bottom-2 right-2 w-20 h-20 rounded-xl object-cover border-2 border-accent shadow-neon" />
@@ -94,8 +99,8 @@ function Galeria() {
                     <Rocket className="w-3 h-3" /> {active ? "Continuar" : journey ? "Ver viagem" : "Viajar"}
                   </button>
                   <ShareProfileImage identity={i} />
-                  <button type="button" onClick={() => remove(i.id)} className="inline-flex items-center gap-1.5 text-xs text-destructive hover:underline">
-                    <Trash2 className="w-3 h-3" /> Apagar
+                  <button type="button" disabled={removingId === i.id} onClick={() => remove(i.id)} className="inline-flex items-center gap-1.5 text-xs text-destructive hover:underline disabled:opacity-50">
+                    {removingId === i.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />} Apagar
                   </button>
                 </div>
               </div>
