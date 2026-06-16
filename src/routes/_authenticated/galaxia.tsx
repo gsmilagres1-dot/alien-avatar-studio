@@ -96,7 +96,7 @@ function Galaxia() {
           {list.map((i) => (
             <button key={i.id} onClick={() => navigate({ to: "/galaxia", search: { identityId: i.id } })}
               className="glass rounded-2xl overflow-hidden text-left hover:ring-2 hover:ring-accent transition">
-              <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover object-top" />
+              <img src={i.avatar_url} alt={i.alien_name} className="w-full aspect-square object-cover object-[center_25%]" />
               <div className="p-4">
                 <div className="font-display text-lg text-gradient-neon">{i.alien_name}</div>
                 <div className="text-xs text-muted-foreground">{i.species}</div>
@@ -238,7 +238,7 @@ function Galaxia() {
         </div>
 
         <div className="flex items-center gap-4">
-        {identity?.avatar_url && <img src={identity.avatar_url} alt="" className="w-16 h-16 rounded-xl object-cover object-top" />}
+        {identity?.avatar_url && <img src={identity.avatar_url} alt="" className="w-16 h-16 rounded-xl object-cover object-[center_25%]" />}
         <div className="flex-1">
           <div className="text-xs text-muted-foreground">Passaporte {passport.passport_number}</div>
           <div className="font-display text-lg text-gradient-neon">{identity?.alien_name}</div>
