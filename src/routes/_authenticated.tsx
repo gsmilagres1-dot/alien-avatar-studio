@@ -33,29 +33,28 @@ function AuthLayout() {
   return (
     <div className="min-h-screen">
       <nav className="sticky top-0 z-30 glass border-b border-accent/20">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/criar" className="flex items-center gap-2 font-display font-bold">
-            <Sparkles className="w-4 h-4 text-accent" />
-            <span className="text-gradient-neon">Identidade Alien</span>
+        <div className="max-w-5xl mx-auto px-3 h-14 flex items-center justify-between gap-2">
+          <Link to="/criar" className="flex items-center gap-1.5 font-display font-bold shrink-0 whitespace-nowrap">
+            <Sparkles className="w-4 h-4 text-accent shrink-0" />
+            <span className="text-gradient-neon hidden sm:inline">Identidade Alien</span>
           </Link>
-          <div className="flex items-center gap-1 text-xs">
-            <Link to="/" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5" title="Página inicial">
+          <div className="flex items-center gap-0.5 text-xs whitespace-nowrap">
+            <Link to="/" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center" title="Página inicial">
               <Home className="w-3.5 h-3.5" />
             </Link>
-            <button onClick={shareApp} className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5" title="Compartilhar app">
+            <button onClick={shareApp} className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center" title="Compartilhar app">
               <Share2 className="w-3.5 h-3.5" />
             </button>
-            <Link to="/criar" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
-              <Rocket className="w-3.5 h-3.5" /> Criar
+            <Link to="/criar" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
+              <Rocket className="w-3.5 h-3.5" /> <span>Criar</span>
             </Link>
-            <Link to="/galaxia" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
-              <Globe2 className="w-3.5 h-3.5" /> Viagem
+            <Link to="/galaxia" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
+              <Globe2 className="w-3.5 h-3.5" /> <span>Viagem</span>
             </Link>
-            <Link to="/galeria" className="px-3 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1.5">
-              <Images className="w-3.5 h-3.5" /> Galeria
+            <Link to="/galeria" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
+              <Images className="w-3.5 h-3.5" /> <span>Galeria</span>
             </Link>
             <LanguageSwitcher compact />
-
           </div>
         </div>
       </nav>
