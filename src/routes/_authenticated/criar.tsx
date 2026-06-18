@@ -269,15 +269,54 @@ function Criar() {
             <section className="glass rounded-2xl p-5 sm:p-7">
               <h2 className="font-display text-xl mb-4 text-gradient-neon">Seus dados terráqueos</h2>
 
-              <div className="flex items-center gap-4 mb-5">
-                {photo ? (
-                  <img src={photo} alt="" className="w-20 h-20 rounded-xl object-cover object-[center_25%] border border-accent/40 shadow-neon" />
-                ) : (
-                  <div className="w-20 h-20 rounded-xl bg-input grid place-items-center">
-                    <Camera className="w-6 h-6 text-muted-foreground" />
+              <div className="flex flex-col sm:flex-row gap-4 mb-5">
+                <div className="relative w-full sm:w-48 aspect-square rounded-xl overflow-hidden border border-accent/40 shadow-neon bg-input/60 shrink-0">
+                  {photo ? (
+                    <img src={photo} alt="Sua selfie enquadrada" className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 grid place-items-center text-muted-foreground">
+                      <Camera className="w-8 h-8" />
+                    </div>
+                  )}
+                  {/* Overlay de enquadramento 4x4 */}
+                  <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none">
+                    {/* Grade 4x4 */}
+                    {[25, 50, 75].map((v) => (
+                      <g key={v}>
+                        <line x1={v} y1="0" x2={v} y2="100" stroke="oklch(0.95 0.05 180)" strokeOpacity="0.25" strokeWidth="0.3" />
+                        <line x1="0" y1={v} x2="100" y2={v} stroke="oklch(0.95 0.05 180)" strokeOpacity="0.25" strokeWidth="0.3" />
+                      </g>
+                    ))}
+                    {/* Silhueta guia (cabeça + pescoço) */}
+                    <ellipse cx="50" cy="42" rx="22" ry="28" fill="none" stroke="oklch(0.85 0.24 155)" strokeOpacity="0.9" strokeWidth="0.6" strokeDasharray="2 1.5" />
+                    <path d="M 38 70 Q 38 84 50 86 Q 62 84 62 70" fill="none" stroke="oklch(0.85 0.24 155)" strokeOpacity="0.9" strokeWidth="0.6" strokeDasharray="2 1.5" />
+                    {/* Cantos de mira */}
+                    {[
+                      [4, 4, 12, 4, 4, 12],
+                      [96, 4, 88, 4, 96, 12],
+                      [4, 96, 12, 96, 4, 88],
+                      [96, 96, 88, 96, 96, 88],
+                    ].map((c, i) => (
+                      <polyline key={i} points={`${c[0]},${c[1]} ${c[2]},${c[3]} ${c[0]},${c[1]} ${c[4]},${c[5]}`} fill="none" stroke="oklch(0.85 0.24 155)" strokeWidth="0.8" />
+                    ))}
+                  </svg>
+                  {/* Labels de zona */}
+                  <div className="absolute inset-0 pointer-events-none flex flex-col">
+                    <div className="h-[18%] flex items-end justify-center pb-0.5">
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-accent/90 bg-cosmos/60 px-1.5 py-0.5 rounded">Cabelo</span>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center">
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-accent/90 bg-cosmos/60 px-1.5 py-0.5 rounded">Rosto</span>
+                    </div>
+                    <div className="h-[18%] flex items-start justify-center pt-0.5">
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-accent/90 bg-cosmos/60 px-1.5 py-0.5 rounded">Pescoço</span>
+                    </div>
                   </div>
-                )}
-                <div className="flex flex-col gap-1.5">
+                </div>
+                <div className="flex flex-col gap-2 justify-center min-w-0">
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Enquadre como uma foto 4x4: cabelo no topo, rosto no centro, pescoço na base. Mantenha o rosto dentro do oval pontilhado.
+                  </p>
                   <button onClick={() => fileRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
                     <Camera className="w-3.5 h-3.5" /> {photo ? "Tirar outra selfie" : "Tirar selfie agora"}
                   </button>
