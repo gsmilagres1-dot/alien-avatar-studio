@@ -131,11 +131,42 @@ function Criar() {
     }
   }
 
+  function cropToPortrait(dataUrl: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        // Enquadramento estilo foto 3x4/4x4: quadrado, centralizado horizontalmente,
+        // deslocado para cima para garantir que cabelo, rosto e pescoço apareçam.
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        // Bias para o topo: pega 10% acima do centro vertical para incluir cabelo
+        const sy = Math.max(0, (img.height - side) / 2 - side * 0.1);
+        const size = 1024;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas indisponível"));
+        ctx.drawImage(img, sx, sy, side, Math.min(side, img.height - sy), 0, 0, size, size);
+        resolve(canvas.toDataURL("image/jpeg", 0.92));
+      };
+      img.onerror = () => reject(new Error("Falha ao ler imagem"));
+      img.src = dataUrl;
+    });
+  }
+
   function onPickFile(file?: File) {
     if (!file) return;
     if (file.size > 8 * 1024 * 1024) return toast.error("Imagem > 8MB");
     const r = new FileReader();
-    r.onload = () => setPhoto(r.result as string);
+    r.onload = async () => {
+      try {
+        const cropped = await cropToPortrait(r.result as string);
+        setPhoto(cropped);
+      } catch {
+        setPhoto(r.result as string);
+      }
+    };
     r.readAsDataURL(file);
   }
 
