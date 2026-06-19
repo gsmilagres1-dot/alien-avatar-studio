@@ -231,16 +231,90 @@ function Criar() {
     if (file.size > 8 * 1024 * 1024) return toast.error("Imagem > 8MB");
     const r = new FileReader();
     r.onload = async () => {
-      try {
-        const { url, faceFound } = await cropToPortrait(r.result as string);
-        setPhoto(url);
-        if (faceFound) toast.success("Rosto detectado e enquadrado");
-        else toast.message("Rosto não detectado — usando enquadramento central. Centralize o rosto e tente novamente.");
-      } catch {
-        setPhoto(r.result as string);
-      }
+      const dataUrl = r.result as string;
+      const img = new Image();
+      img.onload = async () => {
+        setImgSize({ w: img.width, h: img.height });
+        setRawPhoto(dataUrl);
+        // Try auto-detect to set initial frame
+        let initial = { scale: 1, ox: 0, oy: 0 };
+        const face = await detectFaceBox(img);
+        if (face) {
+          const size = 1024;
+          const base = size / Math.min(img.width, img.height);
+          // target side in source pixels ~ 2.6x face height, then derive scale
+          const targetSide = Math.max(face.width, face.height) * 2.6;
+          const scale = Math.max(1, Math.min(4, Math.min(img.width, img.height) / targetSide));
+          const drawW = img.width * base * scale;
+          const drawH = img.height * base * scale;
+          const fcx = face.x + face.width / 2;
+          const fcy = face.y + face.height / 2;
+          // We want fcy (in source) to land at 42% of canvas, fcx at 50%.
+          // canvas pos = (sourcePos * base * scale) + dx, where dx = (size-drawW)/2 + ox*size
+          const desiredDx = size * 0.5 - fcx * base * scale;
+          const desiredDy = size * 0.42 - fcy * base * scale;
+          const ox = (desiredDx - (size - drawW) / 2) / size;
+          const oy = (desiredDy - (size - drawH) / 2) / size;
+          initial = clampFrame({ scale, ox, oy }, img.width, img.height);
+          toast.success("Rosto detectado — ajuste com arrastar / toque duplo");
+        } else {
+          toast.message("Arraste para enquadrar e toque duas vezes para aproximar");
+        }
+        setFrame(initial);
+      };
+      img.onerror = () => { setRawPhoto(dataUrl); setImgSize(null); };
+      img.src = dataUrl;
     };
     r.readAsDataURL(file);
+  }
+
+  function onFramerPointerDown(e: React.PointerEvent) {
+    if (!imgSize) return;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    dragRef.current = { x: e.clientX, y: e.clientY, ox: frame.ox, oy: frame.oy };
+  }
+  function onFramerPointerMove(e: React.PointerEvent) {
+    if (!dragRef.current || !imgSize || !framerRef.current) return;
+    const rect = framerRef.current.getBoundingClientRect();
+    const dx = (e.clientX - dragRef.current.x) / rect.width;
+    const dy = (e.clientY - dragRef.current.y) / rect.height;
+    setFrame((f) => clampFrame({ scale: f.scale, ox: dragRef.current!.ox + dx, oy: dragRef.current!.oy + dy }, imgSize.w, imgSize.h));
+  }
+  function onFramerPointerUp() { dragRef.current = null; }
+
+  function cycleZoom() {
+    if (!imgSize) return;
+    const steps = [1, 1.5, 2, 2.5, 3];
+    setFrame((f) => {
+      const idx = steps.findIndex((s) => Math.abs(s - f.scale) < 0.05);
+      const next = steps[(idx + 1) % steps.length] ?? 1;
+      return clampFrame({ ...f, scale: next }, imgSize.w, imgSize.h);
+    });
+  }
+
+  function onFramerTouchEnd(e: React.TouchEvent) {
+    if (e.touches.length === 0) {
+      const now = Date.now();
+      if (now - lastTapRef.current < 300) { cycleZoom(); lastTapRef.current = 0; }
+      else lastTapRef.current = now;
+      pinchRef.current = null;
+    }
+  }
+  function onFramerTouchMove(e: React.TouchEvent) {
+    if (e.touches.length === 2 && imgSize) {
+      const a = e.touches[0], b = e.touches[1];
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      if (!pinchRef.current) pinchRef.current = { dist, scale: frame.scale };
+      else {
+        const next = pinchRef.current.scale * (dist / pinchRef.current.dist);
+        setFrame((f) => clampFrame({ ...f, scale: next }, imgSize.w, imgSize.h));
+      }
+    }
+  }
+  function onFramerDoubleClick() { cycleZoom(); }
+  function onFramerWheel(e: React.WheelEvent) {
+    if (!imgSize) return;
+    setFrame((f) => clampFrame({ ...f, scale: f.scale * (e.deltaY < 0 ? 1.1 : 0.9) }, imgSize.w, imgSize.h));
   }
 
   async function genDraft() {
