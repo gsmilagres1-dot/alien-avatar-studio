@@ -190,8 +190,10 @@ function Criar() {
     const r = new FileReader();
     r.onload = async () => {
       try {
-        const cropped = await cropToPortrait(r.result as string);
-        setPhoto(cropped);
+        const { url, faceFound } = await cropToPortrait(r.result as string);
+        setPhoto(url);
+        if (faceFound) toast.success("Rosto detectado e enquadrado");
+        else toast.message("Rosto não detectado — usando enquadramento central. Centralize o rosto e tente novamente.");
       } catch {
         setPhoto(r.result as string);
       }
