@@ -29,6 +29,9 @@ function Criar() {
 
   const [step, setStep] = useState<Step>("intro");
   const [photo, setPhoto] = useState<string | null>(null);
+  const [rawPhoto, setRawPhoto] = useState<string | null>(null);
+  const [imgSize, setImgSize] = useState<{ w: number; h: number } | null>(null);
+  const [frame, setFrame] = useState<{ scale: number; ox: number; oy: number }>({ scale: 1, ox: 0, oy: 0 });
   const [name, setName] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [gender, setGender] = useState<Gender>("undefined");
@@ -40,6 +43,45 @@ function Criar() {
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
+  const framerRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+  const lastTapRef = useRef<number>(0);
+  const pinchRef = useRef<{ dist: number; scale: number } | null>(null);
+
+  function clampFrame(f: { scale: number; ox: number; oy: number }, natW: number, natH: number) {
+    const base = 1024 / Math.min(natW, natH);
+    const drawW = natW * base * f.scale;
+    const drawH = natH * base * f.scale;
+    const maxOx = Math.max(0, (drawW - 1024) / 2048);
+    const maxOy = Math.max(0, (drawH - 1024) / 2048);
+    return {
+      scale: Math.min(4, Math.max(1, f.scale)),
+      ox: Math.min(maxOx, Math.max(-maxOx, f.ox)),
+      oy: Math.min(maxOy, Math.max(-maxOy, f.oy)),
+    };
+  }
+
+  // Bake current raw + frame into the photo dataURL used by AI
+  useEffect(() => {
+    if (!rawPhoto || !imgSize) return;
+    const img = new Image();
+    img.onload = () => {
+      const size = 1024;
+      const canvas = document.createElement("canvas");
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const base = size / Math.min(img.width, img.height);
+      const drawW = img.width * base * frame.scale;
+      const drawH = img.height * base * frame.scale;
+      const dx = (size - drawW) / 2 + frame.ox * size;
+      const dy = (size - drawH) / 2 + frame.oy * size;
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, dx, dy, drawW, drawH);
+      setPhoto(canvas.toDataURL("image/jpeg", 0.92));
+    };
+    img.src = rawPhoto;
+  }, [rawPhoto, frame, imgSize]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
