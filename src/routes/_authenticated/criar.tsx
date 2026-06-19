@@ -142,6 +142,9 @@ function Criar() {
 
   function clearFormState() {
     setPhoto(null);
+    setRawPhoto(null);
+    setImgSize(null);
+    setFrame({ scale: 1, ox: 0, oy: 0 });
     setName("");
     setBirthdate("");
     setGender("undefined");
