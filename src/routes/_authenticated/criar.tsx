@@ -417,9 +417,26 @@ function Criar() {
               <h2 className="font-display text-xl mb-4 text-gradient-neon">Seus dados terráqueos</h2>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-5">
-                <div className="relative w-full sm:w-48 aspect-square rounded-xl overflow-hidden border border-accent/40 shadow-neon bg-input/60 shrink-0">
-                  {photo ? (
-                    <img src={photo} alt="Sua selfie enquadrada" className="absolute inset-0 w-full h-full object-cover" />
+                <div
+                  ref={framerRef}
+                  className="relative w-full sm:w-48 aspect-square rounded-xl overflow-hidden border border-accent/40 shadow-neon bg-input/60 shrink-0 touch-none select-none cursor-grab active:cursor-grabbing"
+                  onPointerDown={onFramerPointerDown}
+                  onPointerMove={onFramerPointerMove}
+                  onPointerUp={onFramerPointerUp}
+                  onPointerCancel={onFramerPointerUp}
+                  onDoubleClick={onFramerDoubleClick}
+                  onTouchMove={onFramerTouchMove}
+                  onTouchEnd={onFramerTouchEnd}
+                  onWheel={onFramerWheel}
+                >
+                  {rawPhoto ? (
+                    <img
+                      src={rawPhoto}
+                      alt="Sua selfie"
+                      draggable={false}
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none will-change-transform"
+                      style={{ transform: `translate(${frame.ox * 100}%, ${frame.oy * 100}%) scale(${frame.scale})`, transformOrigin: "center center" }}
+                    />
                   ) : (
                     <div className="absolute inset-0 grid place-items-center text-muted-foreground">
                       <Camera className="w-8 h-8" />
@@ -427,17 +444,14 @@ function Criar() {
                   )}
                   {/* Overlay de enquadramento 4x4 */}
                   <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none">
-                    {/* Grade 4x4 */}
                     {[25, 50, 75].map((v) => (
                       <g key={v}>
                         <line x1={v} y1="0" x2={v} y2="100" stroke="oklch(0.95 0.05 180)" strokeOpacity="0.25" strokeWidth="0.3" />
                         <line x1="0" y1={v} x2="100" y2={v} stroke="oklch(0.95 0.05 180)" strokeOpacity="0.25" strokeWidth="0.3" />
                       </g>
                     ))}
-                    {/* Silhueta guia (cabeça + pescoço) */}
                     <ellipse cx="50" cy="42" rx="22" ry="28" fill="none" stroke="oklch(0.85 0.24 155)" strokeOpacity="0.9" strokeWidth="0.6" strokeDasharray="2 1.5" />
                     <path d="M 38 70 Q 38 84 50 86 Q 62 84 62 70" fill="none" stroke="oklch(0.85 0.24 155)" strokeOpacity="0.9" strokeWidth="0.6" strokeDasharray="2 1.5" />
-                    {/* Cantos de mira */}
                     {[
                       [4, 4, 12, 4, 4, 12],
                       [96, 4, 88, 4, 96, 12],
@@ -447,28 +461,26 @@ function Criar() {
                       <polyline key={i} points={`${c[0]},${c[1]} ${c[2]},${c[3]} ${c[0]},${c[1]} ${c[4]},${c[5]}`} fill="none" stroke="oklch(0.85 0.24 155)" strokeWidth="0.8" />
                     ))}
                   </svg>
-                  {/* Labels de zona */}
-                  <div className="absolute inset-0 pointer-events-none flex flex-col">
-                    <div className="h-[18%] flex items-end justify-center pb-0.5">
-                      <span className="text-[9px] font-mono uppercase tracking-widest text-accent/90 bg-cosmos/60 px-1.5 py-0.5 rounded">Cabelo</span>
+                  {rawPhoto && (
+                    <div className="absolute bottom-1 right-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-cosmos/70 text-accent pointer-events-none">
+                      {frame.scale.toFixed(1)}x
                     </div>
-                    <div className="flex-1 flex items-center justify-center">
-                      <span className="text-[9px] font-mono uppercase tracking-widest text-accent/90 bg-cosmos/60 px-1.5 py-0.5 rounded">Rosto</span>
-                    </div>
-                    <div className="h-[18%] flex items-start justify-center pt-0.5">
-                      <span className="text-[9px] font-mono uppercase tracking-widest text-accent/90 bg-cosmos/60 px-1.5 py-0.5 rounded">Pescoço</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2 justify-center min-w-0">
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    Enquadre como uma foto 4x4: cabelo no topo, rosto no centro, pescoço na base. Mantenha o rosto dentro do oval pontilhado.
+                    Arraste para mover • toque duplo para aproximar/afastar • pinça (2 dedos) para zoom contínuo. Encaixe cabelo, rosto e pescoço no quadro.
                   </p>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => imgSize && setFrame((f) => clampFrame({ ...f, scale: Math.max(1, f.scale - 0.25) }, imgSize.w, imgSize.h))} className="text-xs px-2 py-1 rounded border border-accent/40 text-accent">−</button>
+                    <button type="button" onClick={() => imgSize && setFrame((f) => clampFrame({ ...f, scale: Math.min(4, f.scale + 0.25) }, imgSize.w, imgSize.h))} className="text-xs px-2 py-1 rounded border border-accent/40 text-accent">+</button>
+                    <button type="button" onClick={() => imgSize && setFrame(clampFrame({ scale: 1, ox: 0, oy: 0 }, imgSize.w, imgSize.h))} className="text-xs px-2 py-1 rounded border border-accent/40 text-accent">Reset</button>
+                  </div>
                   <button onClick={() => fileRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
-                    <Camera className="w-3.5 h-3.5" /> {photo ? "Tirar outra selfie" : "Tirar selfie agora"}
+                    <Camera className="w-3.5 h-3.5" /> {rawPhoto ? "Tirar outra selfie" : "Tirar selfie agora"}
                   </button>
                   <button onClick={() => galleryRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5" /> {photo ? "Escolher outra da galeria" : "Escolher da galeria"}
+                    <ImageIcon className="w-3.5 h-3.5" /> {rawPhoto ? "Escolher outra da galeria" : "Escolher da galeria"}
                   </button>
                 </div>
               </div>
