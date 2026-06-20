@@ -131,72 +131,13 @@ function Criar() {
     }
   }
 
-  async function detectFaceBox(img: HTMLImageElement): Promise<{ x: number; y: number; width: number; height: number } | null> {
-    try {
-      const FD = (window as unknown as { FaceDetector?: new (opts?: { fastMode?: boolean; maxDetectedFaces?: number }) => { detect: (src: CanvasImageSource) => Promise<Array<{ boundingBox: DOMRectReadOnly }>> } }).FaceDetector;
-      if (!FD) return null;
-      const detector = new FD({ fastMode: true, maxDetectedFaces: 1 });
-      const faces = await detector.detect(img);
-      if (!faces.length) return null;
-      const f = faces.sort((a, b) => b.boundingBox.width * b.boundingBox.height - a.boundingBox.width * a.boundingBox.height)[0];
-      const b = f.boundingBox;
-      return { x: b.x, y: b.y, width: b.width, height: b.height };
-    } catch {
-      return null;
-    }
-  }
-
-  function cropToPortrait(dataUrl: string): Promise<{ url: string; faceFound: boolean }> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = async () => {
-        const size = 1024;
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("Canvas indisponível"));
-
-        const face = await detectFaceBox(img);
-        let sx: number, sy: number, side: number;
-
-        if (face) {
-          const fcx = face.x + face.width / 2;
-          const fcy = face.y + face.height / 2;
-          // Quadrado ~2.6x a altura do rosto, com espaço p/ cabelo acima e pescoço abaixo
-          side = Math.min(img.width, img.height, Math.max(face.width, face.height) * 2.6);
-          sx = fcx - side / 2;
-          // Rosto fica a ~42% do topo (sobra cabelo acima, rosto+pescoço abaixo)
-          sy = fcy - side * 0.42;
-          sx = Math.max(0, Math.min(img.width - side, sx));
-          sy = Math.max(0, Math.min(img.height - side, sy));
-        } else {
-          side = Math.min(img.width, img.height);
-          sx = (img.width - side) / 2;
-          sy = Math.max(0, (img.height - side) / 2 - side * 0.1);
-        }
-
-        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
-        resolve({ url: canvas.toDataURL("image/jpeg", 0.92), faceFound: !!face });
-      };
-      img.onerror = () => reject(new Error("Falha ao ler imagem"));
-      img.src = dataUrl;
-    });
-  }
-
   function onPickFile(file?: File) {
     if (!file) return;
     if (file.size > 8 * 1024 * 1024) return toast.error("Imagem > 8MB");
     const r = new FileReader();
-    r.onload = async () => {
-      try {
-        const { url, faceFound } = await cropToPortrait(r.result as string);
-        setPhoto(url);
-        if (faceFound) toast.success("Rosto detectado e enquadrado");
-        else toast.message("Rosto não detectado — usando enquadramento central. Centralize o rosto e tente novamente.");
-      } catch {
-        setPhoto(r.result as string);
-      }
+    r.onload = () => {
+      setPhoto(r.result as string);
+      toast.success("Selfie carregada — se não gostar, tire outra");
     };
     r.readAsDataURL(file);
   }
@@ -301,52 +242,18 @@ function Criar() {
               <h2 className="font-display text-xl mb-4 text-gradient-neon">Seus dados terráqueos</h2>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-5">
-                <div className="relative w-full sm:w-48 aspect-square rounded-xl overflow-hidden border border-accent/40 shadow-neon bg-input/60 shrink-0">
+                <div className="relative w-full sm:w-56 rounded-xl overflow-hidden border border-accent/40 shadow-neon bg-input/60 shrink-0">
                   {photo ? (
-                    <img src={photo} alt="Sua selfie enquadrada" className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={photo} alt="Sua selfie" className="block w-full h-auto" />
                   ) : (
-                    <div className="absolute inset-0 grid place-items-center text-muted-foreground">
+                    <div className="aspect-square grid place-items-center text-muted-foreground">
                       <Camera className="w-8 h-8" />
                     </div>
                   )}
-                  {/* Overlay de enquadramento 4x4 */}
-                  <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none">
-                    {/* Grade 4x4 */}
-                    {[25, 50, 75].map((v) => (
-                      <g key={v}>
-                        <line x1={v} y1="0" x2={v} y2="100" stroke="oklch(0.95 0.05 180)" strokeOpacity="0.25" strokeWidth="0.3" />
-                        <line x1="0" y1={v} x2="100" y2={v} stroke="oklch(0.95 0.05 180)" strokeOpacity="0.25" strokeWidth="0.3" />
-                      </g>
-                    ))}
-                    {/* Silhueta guia (cabeça + pescoço) */}
-                    <ellipse cx="50" cy="42" rx="22" ry="28" fill="none" stroke="oklch(0.85 0.24 155)" strokeOpacity="0.9" strokeWidth="0.6" strokeDasharray="2 1.5" />
-                    <path d="M 38 70 Q 38 84 50 86 Q 62 84 62 70" fill="none" stroke="oklch(0.85 0.24 155)" strokeOpacity="0.9" strokeWidth="0.6" strokeDasharray="2 1.5" />
-                    {/* Cantos de mira */}
-                    {[
-                      [4, 4, 12, 4, 4, 12],
-                      [96, 4, 88, 4, 96, 12],
-                      [4, 96, 12, 96, 4, 88],
-                      [96, 96, 88, 96, 96, 88],
-                    ].map((c, i) => (
-                      <polyline key={i} points={`${c[0]},${c[1]} ${c[2]},${c[3]} ${c[0]},${c[1]} ${c[4]},${c[5]}`} fill="none" stroke="oklch(0.85 0.24 155)" strokeWidth="0.8" />
-                    ))}
-                  </svg>
-                  {/* Labels de zona */}
-                  <div className="absolute inset-0 pointer-events-none flex flex-col">
-                    <div className="h-[18%] flex items-end justify-center pb-0.5">
-                      <span className="text-[9px] font-mono uppercase tracking-widest text-accent/90 bg-cosmos/60 px-1.5 py-0.5 rounded">Cabelo</span>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center">
-                      <span className="text-[9px] font-mono uppercase tracking-widest text-accent/90 bg-cosmos/60 px-1.5 py-0.5 rounded">Rosto</span>
-                    </div>
-                    <div className="h-[18%] flex items-start justify-center pt-0.5">
-                      <span className="text-[9px] font-mono uppercase tracking-widest text-accent/90 bg-cosmos/60 px-1.5 py-0.5 rounded">Pescoço</span>
-                    </div>
-                  </div>
                 </div>
                 <div className="flex flex-col gap-2 justify-center min-w-0">
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    Enquadre como uma foto 4x4: cabelo no topo, rosto no centro, pescoço na base. Mantenha o rosto dentro do oval pontilhado.
+                    Sua selfie será usada inteira: cabelo, rosto, ombros, tronco, roupas e acessórios (óculos, brincos, colares, bonés) entrarão no avatar alien. Se não gostar, tire outra.
                   </p>
                   <button onClick={() => fileRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
                     <Camera className="w-3.5 h-3.5" /> {photo ? "Tirar outra selfie" : "Tirar selfie agora"}
