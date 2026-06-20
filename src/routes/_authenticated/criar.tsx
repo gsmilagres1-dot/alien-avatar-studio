@@ -131,72 +131,13 @@ function Criar() {
     }
   }
 
-  async function detectFaceBox(img: HTMLImageElement): Promise<{ x: number; y: number; width: number; height: number } | null> {
-    try {
-      const FD = (window as unknown as { FaceDetector?: new (opts?: { fastMode?: boolean; maxDetectedFaces?: number }) => { detect: (src: CanvasImageSource) => Promise<Array<{ boundingBox: DOMRectReadOnly }>> } }).FaceDetector;
-      if (!FD) return null;
-      const detector = new FD({ fastMode: true, maxDetectedFaces: 1 });
-      const faces = await detector.detect(img);
-      if (!faces.length) return null;
-      const f = faces.sort((a, b) => b.boundingBox.width * b.boundingBox.height - a.boundingBox.width * a.boundingBox.height)[0];
-      const b = f.boundingBox;
-      return { x: b.x, y: b.y, width: b.width, height: b.height };
-    } catch {
-      return null;
-    }
-  }
-
-  function cropToPortrait(dataUrl: string): Promise<{ url: string; faceFound: boolean }> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = async () => {
-        const size = 1024;
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("Canvas indisponível"));
-
-        const face = await detectFaceBox(img);
-        let sx: number, sy: number, side: number;
-
-        if (face) {
-          const fcx = face.x + face.width / 2;
-          const fcy = face.y + face.height / 2;
-          // Quadrado ~2.6x a altura do rosto, com espaço p/ cabelo acima e pescoço abaixo
-          side = Math.min(img.width, img.height, Math.max(face.width, face.height) * 2.6);
-          sx = fcx - side / 2;
-          // Rosto fica a ~42% do topo (sobra cabelo acima, rosto+pescoço abaixo)
-          sy = fcy - side * 0.42;
-          sx = Math.max(0, Math.min(img.width - side, sx));
-          sy = Math.max(0, Math.min(img.height - side, sy));
-        } else {
-          side = Math.min(img.width, img.height);
-          sx = (img.width - side) / 2;
-          sy = Math.max(0, (img.height - side) / 2 - side * 0.1);
-        }
-
-        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
-        resolve({ url: canvas.toDataURL("image/jpeg", 0.92), faceFound: !!face });
-      };
-      img.onerror = () => reject(new Error("Falha ao ler imagem"));
-      img.src = dataUrl;
-    });
-  }
-
   function onPickFile(file?: File) {
     if (!file) return;
     if (file.size > 8 * 1024 * 1024) return toast.error("Imagem > 8MB");
     const r = new FileReader();
-    r.onload = async () => {
-      try {
-        const { url, faceFound } = await cropToPortrait(r.result as string);
-        setPhoto(url);
-        if (faceFound) toast.success("Rosto detectado e enquadrado");
-        else toast.message("Rosto não detectado — usando enquadramento central. Centralize o rosto e tente novamente.");
-      } catch {
-        setPhoto(r.result as string);
-      }
+    r.onload = () => {
+      setPhoto(r.result as string);
+      toast.success("Selfie carregada — se não gostar, tire outra");
     };
     r.readAsDataURL(file);
   }
