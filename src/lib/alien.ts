@@ -195,7 +195,7 @@ export function buildAvatarPrompt(opts: {
     "with iridescent skin sheen and glowing iris",
   ][opts.variant % 3];
 
-  return `Cinematic portrait reimagining the uploaded human photo as a ${race.name} (${race.species}) alien from ${race.origin}. ${visual}. ${genderHint}. ${variantTwist}. CRITICAL: keep the original facial structure, pose, hairstyle silhouette and identity recognizable — transform the human into this alien race rather than replacing the face. Realistic photographic portrait, cinematic movie poster quality, cosmic nebula background with purple and neon green stardust. Focus on face and shoulders. No text, no watermark.`;
+  return `Cinematic reimagining of the uploaded human photo as a ${race.name} (${race.species}) alien from ${race.origin}. ${visual}. ${genderHint}. ${variantTwist}. CRITICAL: preserve the ENTIRE composition of the source selfie exactly as framed — same crop, same pose, same camera angle. Keep ALL visible elements intact and morph them into the alien aesthetic: hair, hairstyle and hair color, shoulders, chest, torso, abdomen and any visible body parts, plus every accessory and clothing item present in the photo (earrings, necklaces, glasses, caps, hats, shirts, jackets, jewelry, makeup, tattoos). Do NOT crop, do NOT zoom in on the face, do NOT remove or replace accessories or clothing — only transform the human skin, eyes and facial features into this alien race while keeping identity recognizable. Realistic photographic quality, cinematic movie-poster lighting, cosmic nebula background with purple and neon green stardust. No text, no watermark.`;
 }
 
 export function buildShipPrompt(category: "esportiva" | "offroad" | "corrida", planet: string) {
