@@ -53,9 +53,8 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
   return a;
 }
 
-function buildFallbackQuiz(destinationId: string, attemptSeed: number): QuizQuestion[] {
-  return buildQuizFromBank(destinationId, attemptSeed);
-}
+
+
 
 
 async function ensureJourney(userId: string, identityId: string) {
