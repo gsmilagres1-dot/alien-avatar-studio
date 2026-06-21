@@ -6,6 +6,12 @@ import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, getRace, rac
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
+import raceStarseed from "@/assets/race-starseed.jpg";
+import raceNordico from "@/assets/race-nordico.jpg";
+import raceGrey from "@/assets/race-grey.jpg";
+import raceReptiliano from "@/assets/race-reptiliano.jpg";
+import raceDraconiano from "@/assets/race-draconiano.jpg";
+import raceInsectoide from "@/assets/race-insectoide.jpg";
 
 const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
 
@@ -14,6 +20,15 @@ const FALLBACK_SHIP_IMAGES = {
   offroad: shipOffroad,
   corrida: shipCorrida,
 } satisfies Record<"esportiva" | "offroad" | "corrida", string>;
+
+const FALLBACK_RACE_IMAGES: Record<string, string> = {
+  starseed: raceStarseed,
+  nordico: raceNordico,
+  grey: raceGrey,
+  reptiliano: raceReptiliano,
+  draconiano: raceDraconiano,
+  insectoide: raceInsectoide,
+};
 
 function isAiImageUnavailable(message: string) {
   return (
