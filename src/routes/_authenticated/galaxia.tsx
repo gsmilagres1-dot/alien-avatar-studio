@@ -211,6 +211,7 @@ function Galaxia() {
                     {picked === q.answer ? "✔ Resposta correta!" : `❌ Resposta correta: ${q.choices[q.answer]}`}
                   </div>
                 )}
+                </div>
               </div>
             );
           })}
