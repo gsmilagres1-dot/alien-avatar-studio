@@ -117,9 +117,18 @@ export const startQuiz = createServerFn({ method: "POST" })
       .from("visas").select("id").eq("journey_id", journey.id).eq("destination_id", dest.id).maybeSingle();
     if (already) throw new Error("Você já visitou esse destino");
 
-    const questions = await generateQuizWithAI(dest.level, dest.name);
+    // Seed varia conforme tentativa: cada chance pode sortear perguntas diferentes do pool.
+    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}`);
+    const questions = buildQuizFromBank(dest.id, seed);
+    if (questions.length === 0) throw new Error("Banco de perguntas indisponível para este destino");
     return { questions, level: dest.level, destination: dest, attemptsUsed: journey.attempts_used };
   });
+
+function hashSeed(s: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
 
 export const submitQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
