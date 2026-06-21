@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Printer, ImageIcon } from "lucide-react";
+import techScanBtn from "@/assets/tech-scan-btn.png";
 import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
