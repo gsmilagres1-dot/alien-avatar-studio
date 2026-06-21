@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Printer, ImageIcon } from "lucide-react";
+import techScanBtn from "@/assets/tech-scan-btn.png";
 import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -255,12 +256,15 @@ function Criar() {
                   <p className="text-[11px] text-muted-foreground leading-snug">
                     Sua selfie será usada inteira: cabelo, rosto, ombros, tronco, roupas e acessórios (óculos, brincos, colares, bonés) entrarão no avatar alien. Se não gostar, tire outra.
                   </p>
-                  <button onClick={() => fileRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
-                    <Camera className="w-3.5 h-3.5" /> {photo ? "Tirar outra selfie" : "Tirar selfie agora"}
-                  </button>
-                  <button onClick={() => galleryRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5" /> {photo ? "Escolher outra da galeria" : "Escolher da galeria"}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => fileRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5" /> {photo ? "Tirar outra selfie" : "Tirar selfie agora"}
+                    </button>
+                    <img src={techScanBtn} alt="Scanner tech" className="w-8 h-8 shrink-0 animate-pulse" loading="lazy" />
+                    <button onClick={() => galleryRef.current?.click()} className="text-sm text-accent underline inline-flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5" /> {photo ? "Escolher outra da galeria" : "Escolher da galeria"}
+                    </button>
+                  </div>
                 </div>
               </div>
 
