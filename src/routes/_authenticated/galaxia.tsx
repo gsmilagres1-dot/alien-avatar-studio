@@ -25,7 +25,8 @@ export const Route = createFileRoute("/_authenticated/galaxia")({
   component: Galaxia,
 });
 
-interface Question { q: string; choices: string[]; answer: number }
+interface Question { q: string; choices: string[]; answer: number; level?: number }
+const LEVEL_LABEL: Record<number, string> = { 1: "Fácil", 2: "Médio", 3: "Difícil" };
 
 function KindIcon({ kind, className }: { kind: Destination["kind"]; className?: string }) {
   if (kind === "sun") return <Sun className={className} />;
