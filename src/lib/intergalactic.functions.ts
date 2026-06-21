@@ -134,7 +134,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     journeyId: z.string().uuid(),
     destinationId: z.string().min(1).max(64),
-    questions: z.array(z.object({ q: z.string(), choices: z.array(z.string()), answer: z.number() })).length(QUESTIONS_PER_QUIZ),
+    questions: z.array(z.object({ q: z.string(), choices: z.array(z.string()), answer: z.number(), level: z.number().optional() })).length(QUESTIONS_PER_QUIZ),
     answers: z.array(z.number().min(0).max(3)).length(QUESTIONS_PER_QUIZ),
   }).parse(d))
   .handler(async ({ data, context }) => {
