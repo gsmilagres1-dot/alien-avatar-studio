@@ -39,7 +39,10 @@ export const FATAL_DESTINATIONS = [
 
 export const MAX_QUIZ_ATTEMPTS = 3;
 export const QUIZ_PASS_RATIO = 0.8;
-export const QUESTIONS_PER_QUIZ = 5;
+// 3 níveis de dificuldade x 5 perguntas = 15 perguntas distintas por tentativa.
+export const QUESTIONS_PER_LEVEL = 5;
+export const QUIZ_LEVELS = 3;
+export const QUESTIONS_PER_QUIZ = QUESTIONS_PER_LEVEL * QUIZ_LEVELS; // 15
 
 export function getDestination(id: string): Destination | undefined {
   return DESTINATIONS.find((d) => d.id === id);

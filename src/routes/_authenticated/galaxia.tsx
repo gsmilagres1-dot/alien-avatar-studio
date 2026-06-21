@@ -25,7 +25,8 @@ export const Route = createFileRoute("/_authenticated/galaxia")({
   component: Galaxia,
 });
 
-interface Question { q: string; choices: string[]; answer: number }
+interface Question { q: string; choices: string[]; answer: number; level?: number }
+const LEVEL_LABEL: Record<number, string> = { 1: "Fácil", 2: "Médio", 3: "Difícil" };
 
 function KindIcon({ kind, className }: { kind: Destination["kind"]; className?: string }) {
   if (kind === "sun") return <Sun className={className} />;
@@ -161,14 +162,26 @@ function Galaxia() {
     const allAnswered = answers.length === quiz.questions.length && answers.every((a) => a !== undefined);
     return (
       <main className="px-4 py-6 max-w-2xl mx-auto">
-        <div className="text-xs text-muted-foreground mb-2">Dificuldade nível {quiz.level} · {quiz.destinationName}</div>
-        <h1 className="font-display text-xl text-gradient-neon mb-4">Quiz da viagem</h1>
+        <div className="text-xs text-muted-foreground mb-2">Quiz da viagem · {quiz.destinationName}</div>
+        <h1 className="font-display text-xl text-gradient-neon mb-1">15 perguntas · 3 níveis de dificuldade</h1>
+        <p className="text-xs text-muted-foreground mb-4">Acerte 80% (12/15) para embarcar. Você tem {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s) nesta viagem.</p>
         <div className="space-y-5">
           {quiz.questions.map((q, qi) => {
             const picked = answers[qi];
             const locked = picked !== undefined;
+            const prev = qi > 0 ? quiz.questions[qi - 1].level : undefined;
+            const showHeader = q.level && q.level !== prev;
             return (
-              <div key={qi} className="glass rounded-xl p-4">
+              <div key={qi}>
+                {showHeader && (
+                  <div className="mt-4 mb-2 flex items-center gap-2">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${q.level === 1 ? "bg-green-500/20 text-green-400" : q.level === 2 ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
+                      Nível {q.level} · {LEVEL_LABEL[q.level!]}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">5 perguntas</span>
+                  </div>
+                )}
+                <div className="glass rounded-xl p-4">
                 <div className="text-sm font-medium mb-3">{qi + 1}. {q.q}</div>
                 <div className="space-y-2">
                   {q.choices.map((c, ci) => {
@@ -198,6 +211,7 @@ function Galaxia() {
                     {picked === q.answer ? "✔ Resposta correta!" : `❌ Resposta correta: ${q.choices[q.answer]}`}
                   </div>
                 )}
+                </div>
               </div>
             );
           })}
@@ -297,7 +311,7 @@ function Galaxia() {
             <div className="flex items-start gap-3">
               <Check className="w-6 h-6 text-accent mt-0.5" />
               <div>
-                <div className="font-display text-lg">Passou! {lastResult.score}/5</div>
+                <div className="font-display text-lg">Passou! {lastResult.score}/{15}</div>
                 <div className="text-xs text-muted-foreground">Agora é só embarcar (grátis).</div>
               </div>
             </div>
@@ -305,7 +319,7 @@ function Galaxia() {
             <div className="flex items-start gap-3">
               <Skull className="w-6 h-6 text-destructive mt-0.5" />
               <div>
-                <div className="font-display text-lg">Fim de linha · {lastResult.score}/5</div>
+                <div className="font-display text-lg">Fim de linha · {lastResult.score}/{15}</div>
                 <div className="text-xs text-muted-foreground">3 tentativas usadas. Você foi parar em <b>{lastResult.fatal.name}</b> ({lastResult.fatal.transport}).</div>
               </div>
             </div>
@@ -313,7 +327,7 @@ function Galaxia() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-6 h-6 text-orange-400 mt-0.5" />
               <div>
-                <div className="font-display text-lg">Reprovou · {lastResult.score}/5</div>
+                <div className="font-display text-lg">Reprovou · {lastResult.score}/{15}</div>
                 <div className="text-xs text-muted-foreground">{lastResult.attemptsLeft} tentativa(s) grátis restante(s).</div>
               </div>
             </div>
