@@ -53,40 +53,10 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
   return a;
 }
 
-function buildFallbackQuiz(_level: number, destinationId: string): QuizQuestion[] {
-  return buildQuizFromBank(destinationId, Math.floor(Date.now() / 1000));
+function buildFallbackQuiz(destinationId: string, attemptSeed: number): QuizQuestion[] {
+  return buildQuizFromBank(destinationId, attemptSeed);
 }
 
-
-async function generateQuizWithAI(level: number, destinationName: string): Promise<QuizQuestion[]> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) return buildFallbackQuiz(level, destinationName);
-  const prompt = `Gere ${QUESTIONS_PER_QUIZ} perguntas DIVERTIDAS e LEVES de múltipla escolha em PT-BR, nível ${level}/5 de dificuldade, ambientadas na viagem ao destino "${destinationName}". Cada pergunta deve ter uma resposta que qualquer pessoa possa confirmar com uma busca rápida no Google — use fatos populares, curiosidades famosas e referências bem conhecidas. Misture temas POP e ACESSÍVEIS. Tom: descontraído, como um quiz de bar. Responda APENAS com JSON válido: {"questions":[{"q":"...","choices":["a","b","c","d"],"answer":0}]} onde "answer" é o índice (0-3) da correta. Sem texto fora do JSON.`;
-
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    }),
-  });
-  if (!res.ok) {
-    return buildFallbackQuiz(level, destinationName);
-  }
-  const j = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  const content = j.choices?.[0]?.message?.content ?? "{}";
-  let parsed: unknown;
-  try { parsed = JSON.parse(content); } catch { return buildFallbackQuiz(level, destinationName); }
-  const arr = (parsed as { questions?: QuizQuestion[] }).questions ?? [];
-  if (!Array.isArray(arr) || arr.length < QUESTIONS_PER_QUIZ) return buildFallbackQuiz(level, destinationName);
-  return arr.slice(0, QUESTIONS_PER_QUIZ).map((q) => ({
-    q: String(q.q),
-    choices: q.choices.slice(0, 4).map(String),
-    answer: Math.max(0, Math.min(3, Number(q.answer) | 0)),
-  }));
-}
 
 async function ensureJourney(userId: string, identityId: string) {
   const { data: existing } = await supabaseAdmin
