@@ -12,7 +12,7 @@ import {
   getDestination,
   pickFatalDestination,
 } from "@/lib/intergalactic";
-import { getBankForDestination, type BankQuestion } from "@/lib/intergalactic-questions";
+import { getBankForDestination } from "@/lib/intergalactic-questions";
 
 interface QuizQuestion { q: string; choices: string[]; answer: number; level?: number }
 
