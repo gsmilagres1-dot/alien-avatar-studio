@@ -311,7 +311,7 @@ function Galaxia() {
             <div className="flex items-start gap-3">
               <Check className="w-6 h-6 text-accent mt-0.5" />
               <div>
-                <div className="font-display text-lg">Passou! {lastResult.score}/5</div>
+                <div className="font-display text-lg">Passou! {lastResult.score}/{15}</div>
                 <div className="text-xs text-muted-foreground">Agora é só embarcar (grátis).</div>
               </div>
             </div>
@@ -319,7 +319,7 @@ function Galaxia() {
             <div className="flex items-start gap-3">
               <Skull className="w-6 h-6 text-destructive mt-0.5" />
               <div>
-                <div className="font-display text-lg">Fim de linha · {lastResult.score}/5</div>
+                <div className="font-display text-lg">Fim de linha · {lastResult.score}/{15}</div>
                 <div className="text-xs text-muted-foreground">3 tentativas usadas. Você foi parar em <b>{lastResult.fatal.name}</b> ({lastResult.fatal.transport}).</div>
               </div>
             </div>
@@ -327,7 +327,7 @@ function Galaxia() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-6 h-6 text-orange-400 mt-0.5" />
               <div>
-                <div className="font-display text-lg">Reprovou · {lastResult.score}/5</div>
+                <div className="font-display text-lg">Reprovou · {lastResult.score}/{15}</div>
                 <div className="text-xs text-muted-foreground">{lastResult.attemptsLeft} tentativa(s) grátis restante(s).</div>
               </div>
             </div>
