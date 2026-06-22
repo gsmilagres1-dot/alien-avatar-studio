@@ -13,8 +13,10 @@ export const listIdentitiesWithJourneys = createServerFn({ method: "GET" })
     const { data: visas } = await supabaseAdmin
       .from("visas").select("*").eq("user_id", userId).order("issued_at");
     const byIdent = new Map((journeys ?? []).map((j) => [j.identity_id, j]));
-    const visasByJourney = new Map<string, NonNullable<typeof visas>>();
+    type Visa = NonNullable<typeof visas>[number];
+    const visasByJourney = new Map<string, Visa[]>();
     for (const v of visas ?? []) {
+      if (!v.journey_id) continue;
       const arr = visasByJourney.get(v.journey_id) ?? [];
       arr.push(v);
       visasByJourney.set(v.journey_id, arr);
