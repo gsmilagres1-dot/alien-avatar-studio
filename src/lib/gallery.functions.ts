@@ -10,8 +10,20 @@ export const listIdentitiesWithJourneys = createServerFn({ method: "GET" })
       .from("identities").select("*").eq("user_id", userId).order("created_at", { ascending: false });
     const { data: journeys } = await supabaseAdmin
       .from("journeys").select("*").eq("user_id", userId);
+    const { data: visas } = await supabaseAdmin
+      .from("visas").select("*").eq("user_id", userId).order("issued_at");
     const byIdent = new Map((journeys ?? []).map((j) => [j.identity_id, j]));
+    const visasByJourney = new Map<string, NonNullable<typeof visas>>();
+    for (const v of visas ?? []) {
+      const arr = visasByJourney.get(v.journey_id) ?? [];
+      arr.push(v);
+      visasByJourney.set(v.journey_id, arr);
+    }
     return {
-      items: (identities ?? []).map((i) => ({ identity: i, journey: byIdent.get(i.id) ?? null })),
+      items: (identities ?? []).map((i) => {
+        const journey = byIdent.get(i.id) ?? null;
+        const vs = journey ? (visasByJourney.get(journey.id) ?? []) : [];
+        return { identity: i, journey, visas: vs };
+      }),
     };
   });
