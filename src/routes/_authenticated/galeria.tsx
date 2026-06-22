@@ -54,7 +54,7 @@ function Galeria() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data?.items.map(({ identity: i, journey }) => {
+        {data?.items.map(({ identity: i, journey, visas }) => {
           const fatal = journey?.final_destination_kind === "fatal";
           const active = journey?.status === "active";
           const done = journey?.status === "completed";
