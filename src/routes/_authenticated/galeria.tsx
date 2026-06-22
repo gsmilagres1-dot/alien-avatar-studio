@@ -7,6 +7,7 @@ import { listIdentitiesWithJourneys } from "@/lib/gallery.functions";
 import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
+import { DestinationBadge } from "@/components/DestinationBadge";
 
 export const Route = createFileRoute("/_authenticated/galeria")({ component: Galeria });
 
