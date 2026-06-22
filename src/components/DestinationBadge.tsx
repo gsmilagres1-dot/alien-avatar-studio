@@ -1,3 +1,4 @@
+import type * as React from "react";
 import { getDestination, type DestinationKind } from "@/lib/intergalactic";
 
 interface Props {
