@@ -7,6 +7,7 @@ import { listIdentitiesWithJourneys } from "@/lib/gallery.functions";
 import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
+import { DestinationBadge } from "@/components/DestinationBadge";
 
 export const Route = createFileRoute("/_authenticated/galeria")({ component: Galeria });
 
@@ -53,7 +54,7 @@ function Galeria() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data?.items.map(({ identity: i, journey }) => {
+        {data?.items.map(({ identity: i, journey, visas }) => {
           const fatal = journey?.final_destination_kind === "fatal";
           const active = journey?.status === "active";
           const done = journey?.status === "completed";
@@ -90,6 +91,24 @@ function Galeria() {
                     {!journey && <>Sem viagem iniciada</>}
                   </div>
                 </div>
+
+                {visas.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-accent/20 bg-black/30 p-2">
+                    <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-mono mb-1.5 px-1">
+                      Selos · {visas.length} destino{visas.length > 1 ? "s" : ""}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 justify-center">
+                      {visas.map((v) => (
+                        <DestinationBadge
+                          key={v.id}
+                          destinationId={v.destination_id}
+                          destinationName={v.destination_name}
+                          size={44}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
                   <button

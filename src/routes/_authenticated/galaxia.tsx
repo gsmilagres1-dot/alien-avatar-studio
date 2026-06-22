@@ -8,6 +8,7 @@ import { listMyIdentities, generateShipImage } from "@/lib/identities.functions"
 import { getJourneyState, startQuiz, submitQuiz, claimVisa, completeJourney } from "@/lib/intergalactic.functions";
 import { DESTINATIONS, getDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, type Destination } from "@/lib/intergalactic";
 import { SHIPS } from "@/lib/alien";
+import { DestinationBadge } from "@/components/DestinationBadge";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
@@ -132,12 +133,20 @@ function Galaxia() {
             <span className="font-bold text-gradient-neon">{journey.final_destination_name}</span>
           </p>
           {visas.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-1.5 justify-center">
-              {visas.map((v) => (
-                <span key={v.id} className="glass px-2.5 py-1 rounded-full text-[10px]">
-                  <Stamp className="w-3 h-3 inline mr-1" /> {v.destination_name}
-                </span>
-              ))}
+            <div className="mt-6">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
+                Selos conquistados · painel da nave
+              </div>
+              <div className="flex flex-wrap gap-3 justify-center rounded-2xl border border-accent/30 bg-black/30 p-4">
+                {visas.map((v) => (
+                  <DestinationBadge
+                    key={v.id}
+                    destinationId={v.destination_id}
+                    destinationName={v.destination_name}
+                    size={64}
+                  />
+                ))}
+              </div>
             </div>
           )}
           <div className="mt-6 flex flex-col gap-2">
@@ -490,12 +499,20 @@ function Galaxia() {
 
       {visas.length > 0 && (
         <div className="mt-6">
-          <div className="text-xs text-muted-foreground mb-2">Vistos conquistados</div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+              Painel · Selos de embarque conquistados
+            </div>
+            <div className="text-[10px] font-mono text-accent">{visas.length}/{DESTINATIONS.length}</div>
+          </div>
+          <div className="flex flex-wrap gap-3 justify-center rounded-2xl border border-accent/30 bg-gradient-to-b from-black/40 to-accent/5 p-4 shadow-inner">
             {visas.map((v) => (
-              <span key={v.id} className="glass px-3 py-1.5 rounded-full text-xs">
-                <Stamp className="w-3 h-3 inline mr-1" /> {v.destination_name}
-              </span>
+              <DestinationBadge
+                key={v.id}
+                destinationId={v.destination_id}
+                destinationName={v.destination_name}
+                size={68}
+              />
             ))}
           </div>
         </div>
