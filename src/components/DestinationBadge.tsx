@@ -150,7 +150,7 @@ function JaggedStarShape({ gradId, rimId }: ShapeProps) {
   );
 }
 
-const SHAPE: Record<DestinationKind, (p: ShapeProps) => JSX.Element> = {
+const SHAPE: Record<DestinationKind, (p: ShapeProps) => React.ReactElement> = {
   sun: SunShape,
   planet: HexShape,
   moon: ShieldShape,
