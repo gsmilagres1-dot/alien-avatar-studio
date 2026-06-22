@@ -8,6 +8,7 @@ import { listMyIdentities, generateShipImage } from "@/lib/identities.functions"
 import { getJourneyState, startQuiz, submitQuiz, claimVisa, completeJourney } from "@/lib/intergalactic.functions";
 import { DESTINATIONS, getDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, type Destination } from "@/lib/intergalactic";
 import { SHIPS } from "@/lib/alien";
+import { DestinationBadge } from "@/components/DestinationBadge";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
