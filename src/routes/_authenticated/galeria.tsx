@@ -92,6 +92,24 @@ function Galeria() {
                   </div>
                 </div>
 
+                {visas.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-accent/20 bg-black/30 p-2">
+                    <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-mono mb-1.5 px-1">
+                      Selos · {visas.length} destino{visas.length > 1 ? "s" : ""}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 justify-center">
+                      {visas.map((v) => (
+                        <DestinationBadge
+                          key={v.id}
+                          destinationId={v.destination_id}
+                          destinationName={v.destination_name}
+                          size={44}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
                   <button
                     type="button"
