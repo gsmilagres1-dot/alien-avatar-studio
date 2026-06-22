@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Camera, Rocket, Sparkles, Wallet, Share2 } from "lucide-react";
+import { Camera, Rocket, Sparkles, Wallet, Share2, Stamp, MapPin, Cpu, Radar, Satellite } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/")({
@@ -14,6 +14,45 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
+interface Task {
+  step: string;
+  icon: typeof Camera;
+  title: string;
+  desc: string;
+  metal: "silver" | "gold" | "copper" | "plasma";
+  hint: string;
+}
+
+const TASKS: Task[] = [
+  { step: "01", icon: Camera,   title: "Tirar selfie",     desc: "Foto vira avatar alien por IA",           metal: "silver", hint: "MOD · CAM-Δ7" },
+  { step: "02", icon: Stamp,    title: "Fazer passaporte", desc: "Documento galáctico liberado grátis",     metal: "gold",   hint: "MOD · DOC-Ω" },
+  { step: "03", icon: Rocket,   title: "Escolher nave",    desc: "Esportiva, off-road ou pod racer",        metal: "copper", hint: "MOD · NAV-3" },
+  { step: "04", icon: MapPin,   title: "Escolher destino", desc: "10 planetas · 3 sois · 2 luas",           metal: "plasma", hint: "MOD · MAP-∞" },
+];
+
+const METAL_FRAME: Record<Task["metal"], { ring: string; chip: string; accent: string }> = {
+  silver: {
+    ring: "from-[#f4f6fa] via-[#9aa3b2] to-[#3b4250]",
+    chip: "from-[#e8ecf3] to-[#8a93a3]",
+    accent: "text-slate-200",
+  },
+  gold: {
+    ring: "from-[#fff3c2] via-[#d4ad4a] to-[#5a3d0a]",
+    chip: "from-[#ffe9a3] to-[#a07a1f]",
+    accent: "text-amber-200",
+  },
+  copper: {
+    ring: "from-[#f8d8b6] via-[#c08050] to-[#4a2510]",
+    chip: "from-[#f4cfa4] to-[#9a5a2c]",
+    accent: "text-orange-200",
+  },
+  plasma: {
+    ring: "from-[#c9f0ff] via-[#7a4dd0] to-[#1a0a3a]",
+    chip: "from-[#b0e8ff] to-[#5a32a6]",
+    accent: "text-cyan-200",
+  },
+};
+
 function Landing() {
   return (
     <main className="relative z-10 min-h-screen px-4 py-12">
@@ -21,7 +60,6 @@ function Landing() {
         <div className="mb-5 flex justify-end">
           <LanguageSwitcher />
         </div>
-
 
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass mb-6">
           <Sparkles className="w-3.5 h-3.5 text-accent" />
@@ -50,19 +88,64 @@ function Landing() {
           </Link>
         </div>
 
-        <div className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
-          {[
-            { i: Camera, t: "Sua selfie", d: "Foto vira avatar alien" },
-            { i: Wallet, t: "Passaporte", d: "Liberado grátis na viagem" },
-            { i: Rocket, t: "Destino + nave", d: "Escolha a rota e a nave" },
-            { i: Share2, t: "Quiz final", d: "Complete a viagem sem pagar" },
-          ].map((x) => (
-            <div key={x.t} className="glass rounded-xl p-4">
-              <x.i className="w-5 h-5 text-accent" />
-              <div className="font-display text-sm mt-2">{x.t}</div>
-              <div className="text-[11px] text-muted-foreground">{x.d}</div>
+        {/* Painel de bordo */}
+        <div className="mt-14">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-accent">
+              <Cpu className="w-3 h-3" /> Painel da nave · check-in pré-voo
             </div>
-          ))}
+            <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
+              <Radar className="w-3 h-3 animate-pulse" /> ONLINE
+              <Satellite className="w-3 h-3" /> SYNC
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+            {TASKS.map((t) => {
+              const m = METAL_FRAME[t.metal];
+              return (
+                <div
+                  key={t.title}
+                  className={`relative rounded-2xl p-[2px] bg-gradient-to-br ${m.ring} shadow-[0_4px_18px_rgba(0,0,0,0.5)]`}
+                >
+                  <div className="rounded-2xl bg-gradient-to-b from-black/85 via-black/70 to-black/85 p-3 backdrop-blur-sm h-full">
+                    {/* Top chip row */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span
+                        className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-gradient-to-b ${m.chip} text-black tracking-widest`}
+                      >
+                        {t.step}
+                      </span>
+                      <span className="text-[8px] font-mono text-muted-foreground tracking-widest">{t.hint}</span>
+                    </div>
+
+                    {/* Icon disc with metal ring */}
+                    <div className={`relative mx-auto mb-2 w-12 h-12 rounded-full p-[2px] bg-gradient-to-br ${m.ring}`}>
+                      <div className="w-full h-full rounded-full bg-black/80 flex items-center justify-center">
+                        <t.icon className={`w-5 h-5 ${m.accent}`} />
+                      </div>
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
+                    </div>
+
+                    <div className="font-display text-sm text-center text-foreground">{t.title}</div>
+                    <div className="text-[10px] text-muted-foreground text-center mt-0.5 leading-tight">{t.desc}</div>
+
+                    {/* bottom rivets */}
+                    <div className="mt-2 flex items-center justify-between px-1">
+                      <span className="w-1 h-1 rounded-full bg-white/30" />
+                      <span className="h-px flex-1 mx-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                      <span className="w-1 h-1 rounded-full bg-white/30" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 flex items-center justify-between px-1 text-[9px] font-mono text-muted-foreground tracking-widest">
+            <span>SYS · pronto p/ embarque</span>
+            <span>SELOS · ouro · prata · cobre</span>
+          </div>
         </div>
 
         <p className="mt-12 text-[11px] font-mono text-muted-foreground">
