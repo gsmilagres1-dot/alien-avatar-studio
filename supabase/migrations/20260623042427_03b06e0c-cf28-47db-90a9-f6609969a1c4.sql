@@ -1,0 +1,1 @@
+ALTER TABLE public.visas ADD COLUMN IF NOT EXISTS tier text NOT NULL DEFAULT 'bronze' CHECK (tier IN ('bronze','silver','gold'));
