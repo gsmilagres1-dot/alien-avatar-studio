@@ -149,6 +149,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
 
     const score = data.answers.reduce((acc, a, i) => acc + (a === data.questions[i].answer ? 1 : 0), 0);
     const passed = score / QUESTIONS_PER_QUIZ >= QUIZ_PASS_RATIO;
+    const tier = passed ? tierFromScore(score, QUESTIONS_PER_QUIZ) : null;
 
     await supabaseAdmin.from("quiz_attempts").insert({
       user_id: userId, journey_id: journey.id, level: dest.level,
@@ -157,7 +158,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
 
     if (passed) {
       await supabaseAdmin.from("journeys").update({ attempts_used: 0 }).eq("id", journey.id);
-      return { passed: true, score, attemptsLeft: MAX_QUIZ_ATTEMPTS, fatal: null };
+      return { passed: true, score, attemptsLeft: MAX_QUIZ_ATTEMPTS, fatal: null, tier };
     }
 
     const newAttempts = journey.attempts_used + 1;
