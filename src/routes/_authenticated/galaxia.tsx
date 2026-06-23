@@ -61,7 +61,7 @@ function Galaxia() {
   const [quiz, setQuiz] = useState<{ questions: Question[]; level: number; destinationId: string; destinationName: string } | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
   const [quizLoading, setQuizLoading] = useState(false);
-  const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null } | null>(null);
+  const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null; tier: "bronze" | "silver" | "gold" | null } | null>(null);
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
   const [journeyStep, setJourneyStep] = useState<"passport" | "destination" | "ship">("passport");
@@ -143,6 +143,7 @@ function Galaxia() {
                     key={v.id}
                     destinationId={v.destination_id}
                     destinationName={v.destination_name}
+                    tier={(v.tier ?? "bronze") as "bronze" | "silver" | "gold"}
                     size={64}
                   />
                 ))}
@@ -319,10 +320,20 @@ function Galaxia() {
           {lastResult.passed ? (
             <div className="flex items-start gap-3">
               <Check className="w-6 h-6 text-accent mt-0.5" />
-              <div>
+              <div className="flex-1">
                 <div className="font-display text-lg">Passou! {lastResult.score}/{15}</div>
-                <div className="text-xs text-muted-foreground">Agora é só embarcar (grátis).</div>
+                <div className="text-xs text-muted-foreground">
+                  Emblema conquistado: <b className="uppercase">{lastResult.tier === "gold" ? "Ouro (100%)" : lastResult.tier === "silver" ? "Prata (80–90%)" : "Bronze (70%)"}</b>. Embarque agora (grátis) para gravar o selo.
+                </div>
               </div>
+              {currentDest && lastResult.tier && (
+                <DestinationBadge
+                  destinationId={currentDest.id}
+                  destinationName={currentDest.name}
+                  tier={lastResult.tier}
+                  size={56}
+                />
+              )}
             </div>
           ) : lastResult.fatal ? (
             <div className="flex items-start gap-3">
@@ -481,16 +492,16 @@ function Galaxia() {
               className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
               {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
             </button>
-            {lastResult?.passed && (
+            {lastResult?.passed && lastResult.tier && (
               <button onClick={async () => {
                 try {
-                  await claimVisaFn({ data: { journeyId: journey.id, destinationId: currentDest.id } });
-                  toast.success(`Visto emitido para ${currentDest.name}!`);
+                  await claimVisaFn({ data: { journeyId: journey.id, destinationId: currentDest.id, tier: lastResult.tier! } });
+                  toast.success(`Visto ${lastResult.tier === "gold" ? "OURO" : lastResult.tier === "silver" ? "PRATA" : "BRONZE"} emitido para ${currentDest.name}!`);
                   setChosenDestId(null); setLastResult(null);
                   await qc.invalidateQueries({ queryKey: ["journey", identityId] });
                 } catch (e) { toast.error((e as Error).message); }
               }} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
-                Embarcar (grátis) <ArrowRight className="w-3.5 h-3.5 inline" />
+                Embarcar com selo {lastResult.tier === "gold" ? "OURO" : lastResult.tier === "silver" ? "PRATA" : "BRONZE"} <ArrowRight className="w-3.5 h-3.5 inline" />
               </button>
             )}
           </div>
@@ -511,6 +522,7 @@ function Galaxia() {
                 key={v.id}
                 destinationId={v.destination_id}
                 destinationName={v.destination_name}
+                tier={(v.tier ?? "bronze") as "bronze" | "silver" | "gold"}
                 size={68}
               />
             ))}
