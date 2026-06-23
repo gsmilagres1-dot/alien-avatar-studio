@@ -103,6 +103,7 @@ function Galeria() {
                           key={v.id}
                           destinationId={v.destination_id}
                           destinationName={v.destination_name}
+                          tier={(v.tier ?? "bronze") as "bronze" | "silver" | "gold"}
                           size={44}
                         />
                       ))}

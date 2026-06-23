@@ -11,6 +11,7 @@ import {
   QUIZ_PASS_RATIO,
   getDestination,
   pickFatalDestination,
+  tierFromScore,
 } from "@/lib/intergalactic";
 import { getBankForDestination } from "@/lib/intergalactic-questions";
 
@@ -148,6 +149,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
 
     const score = data.answers.reduce((acc, a, i) => acc + (a === data.questions[i].answer ? 1 : 0), 0);
     const passed = score / QUESTIONS_PER_QUIZ >= QUIZ_PASS_RATIO;
+    const tier = passed ? tierFromScore(score, QUESTIONS_PER_QUIZ) : null;
 
     await supabaseAdmin.from("quiz_attempts").insert({
       user_id: userId, journey_id: journey.id, level: dest.level,
@@ -156,7 +158,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
 
     if (passed) {
       await supabaseAdmin.from("journeys").update({ attempts_used: 0 }).eq("id", journey.id);
-      return { passed: true, score, attemptsLeft: MAX_QUIZ_ATTEMPTS, fatal: null };
+      return { passed: true, score, attemptsLeft: MAX_QUIZ_ATTEMPTS, fatal: null, tier };
     }
 
     const newAttempts = journey.attempts_used + 1;
@@ -169,10 +171,10 @@ export const submitQuiz = createServerFn({ method: "POST" })
         final_destination_kind: "fatal",
         completed_at: new Date().toISOString(),
       }).eq("id", journey.id);
-      return { passed: false, score, attemptsLeft: 0, fatal };
+      return { passed: false, score, attemptsLeft: 0, fatal, tier: null };
     }
     await supabaseAdmin.from("journeys").update({ attempts_used: newAttempts }).eq("id", journey.id);
-    return { passed: false, score, attemptsLeft: MAX_QUIZ_ATTEMPTS - newAttempts, fatal: null };
+    return { passed: false, score, attemptsLeft: MAX_QUIZ_ATTEMPTS - newAttempts, fatal: null, tier: null };
   });
 
 export const claimVisa = createServerFn({ method: "POST" })
@@ -180,6 +182,7 @@ export const claimVisa = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     journeyId: z.string().uuid(),
     destinationId: z.string().min(1).max(64),
+    tier: z.enum(["bronze", "silver", "gold"]).default("bronze"),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
@@ -193,6 +196,7 @@ export const claimVisa = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("visas").insert({
       user_id: userId, journey_id: journey.id, destination_id: dest.id,
       destination_name: dest.name, transport: dest.transport, kind: "normal",
+      tier: data.tier,
     });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
 

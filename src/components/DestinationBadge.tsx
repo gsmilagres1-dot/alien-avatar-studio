@@ -1,33 +1,33 @@
 import type * as React from "react";
-import { getDestination, type DestinationKind } from "@/lib/intergalactic";
+import { getDestination, type DestinationKind, type BadgeTier } from "@/lib/intergalactic";
 
 interface Props {
   destinationId: string;
   destinationName: string;
   kind?: DestinationKind;
+  tier?: BadgeTier | null;
   size?: number; // px, default 64
 }
 
 /**
- * Selo metálico conquistado por destino. Forma e cor variam por tipo:
- * - sun     → estrela em ouro
- * - planet  → hexágono em prata
- * - moon    → escudo em cobre/bronze
- * - fatal   → estrela jagged em chumbo/vermelho
+ * Selo metálico conquistado por destino.
+ * - Forma depende do tipo de destino (sol/planeta/lua/fatal).
+ * - Paleta metálica depende do `tier` (bronze / silver / gold) conquistado no quiz.
+ *   Quando `tier` não é informado, cai para a paleta padrão do tipo.
  */
-export function DestinationBadge({ destinationId, destinationName, kind, size = 64 }: Props) {
+export function DestinationBadge({ destinationId, destinationName, kind, tier, size = 64 }: Props) {
   const dest = getDestination(destinationId);
   const k: DestinationKind = kind ?? dest?.kind ?? "planet";
-  const palette = METAL[k];
+  const palette = tier ? TIER_METAL[tier] : METAL[k];
   const Shape = SHAPE[k];
-  const gradId = `g-${destinationId}`;
-  const rimId = `r-${destinationId}`;
+  const gradId = `g-${destinationId}-${tier ?? k}`;
+  const rimId = `r-${destinationId}-${tier ?? k}`;
 
   return (
     <div
       className="relative inline-flex flex-col items-center group"
       style={{ width: size + 18 }}
-      title={destinationName}
+      title={`${destinationName}${tier ? ` · ${TIER_LABEL[tier]}` : ""}`}
     >
       <svg
         viewBox="0 0 100 100"
@@ -70,12 +70,20 @@ export function DestinationBadge({ destinationId, destinationName, kind, size = 
           opacity="0.7"
           style={{ fontFamily: "ui-monospace, monospace", letterSpacing: "1px" }}
         >
-          VISTO · OK
+          {tier ? TIER_LABEL[tier].toUpperCase() : "VISTO · OK"}
         </text>
       </svg>
       <span className="mt-1 text-[9px] font-mono uppercase tracking-widest text-muted-foreground text-center leading-tight">
         {destinationName}
       </span>
+      {tier && (
+        <span
+          className="mt-0.5 text-[8px] font-mono uppercase tracking-widest leading-none"
+          style={{ color: palette.mid }}
+        >
+          {TIER_LABEL[tier]}
+        </span>
+      )}
     </div>
   );
 }
@@ -85,11 +93,25 @@ function short(name: string) {
   return n.length > 10 ? n.slice(0, 9) + "·" : n;
 }
 
-const METAL: Record<DestinationKind, { light: string; mid: string; shine: string; dark: string; engrave: string }> = {
+interface Palette { light: string; mid: string; shine: string; dark: string; engrave: string }
+
+const METAL: Record<DestinationKind, Palette> = {
   sun:    { light: "#fff3c2", mid: "#e6c067", shine: "#fff7d6", dark: "#7a5418", engrave: "#3a2606" },
   planet: { light: "#f4f6fa", mid: "#b8bec8", shine: "#ffffff", dark: "#4a5160", engrave: "#1f2430" },
   moon:   { light: "#f3d7b3", mid: "#c89164", shine: "#ffe6c8", dark: "#5b3211", engrave: "#2a1607" },
   fatal:  { light: "#d8a8a8", mid: "#7a3030", shine: "#f0c8c8", dark: "#2a0808", engrave: "#150202" },
+};
+
+const TIER_METAL: Record<BadgeTier, Palette> = {
+  gold:   { light: "#fff3c2", mid: "#e6c067", shine: "#fff7d6", dark: "#7a5418", engrave: "#3a2606" },
+  silver: { light: "#f4f6fa", mid: "#b8bec8", shine: "#ffffff", dark: "#4a5160", engrave: "#1f2430" },
+  bronze: { light: "#f3d7b3", mid: "#c89164", shine: "#ffe6c8", dark: "#5b3211", engrave: "#2a1607" },
+};
+
+const TIER_LABEL: Record<BadgeTier, string> = {
+  gold: "Ouro · 100%",
+  silver: "Prata · 80–90%",
+  bronze: "Bronze · 70%",
 };
 
 interface ShapeProps { gradId: string; rimId: string }
@@ -105,7 +127,6 @@ function HexShape({ gradId, rimId }: ShapeProps) {
 }
 
 function SunShape({ gradId, rimId }: ShapeProps) {
-  // Starburst
   const pts: string[] = [];
   const cx = 50, cy = 50;
   const rOuter = 48, rInner = 36;

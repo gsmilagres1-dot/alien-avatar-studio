@@ -44,6 +44,20 @@ export const QUESTIONS_PER_LEVEL = 5;
 export const QUIZ_LEVELS = 3;
 export const QUESTIONS_PER_QUIZ = QUESTIONS_PER_LEVEL * QUIZ_LEVELS; // 15
 
+export type BadgeTier = "bronze" | "silver" | "gold";
+
+/** Tier do emblema conforme acerto no quiz (15 perguntas).
+ *  - 70%–79% → bronze
+ *  - 80%–90% → prata
+ *  - 91%–100% → ouro
+ */
+export function tierFromScore(score: number, total: number = QUESTIONS_PER_QUIZ): BadgeTier {
+  const pct = (score / total) * 100;
+  if (pct >= 91) return "gold";
+  if (pct >= 80) return "silver";
+  return "bronze";
+}
+
 export function getDestination(id: string): Destination | undefined {
   return DESTINATIONS.find((d) => d.id === id);
 }

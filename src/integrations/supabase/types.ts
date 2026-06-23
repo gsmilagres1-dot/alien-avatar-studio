@@ -336,6 +336,7 @@ export type Database = {
           kind: string
           payment_id: string | null
           status: string
+          tier: string
           transport: string
           user_id: string
         }
@@ -349,6 +350,7 @@ export type Database = {
           kind?: string
           payment_id?: string | null
           status?: string
+          tier?: string
           transport: string
           user_id: string
         }
@@ -362,6 +364,7 @@ export type Database = {
           kind?: string
           payment_id?: string | null
           status?: string
+          tier?: string
           transport?: string
           user_id?: string
         }
