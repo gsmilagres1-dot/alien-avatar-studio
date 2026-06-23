@@ -173,7 +173,7 @@ function Galaxia() {
       <main className="px-4 py-6 max-w-2xl mx-auto">
         <div className="text-xs text-muted-foreground mb-2">Quiz da viagem · {quiz.destinationName}</div>
         <h1 className="font-display text-xl text-gradient-neon mb-1">15 perguntas · 3 níveis de dificuldade</h1>
-        <p className="text-xs text-muted-foreground mb-4">Acerte 80% (12/15) para embarcar. Você tem {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s) nesta viagem.</p>
+        <p className="text-xs text-muted-foreground mb-4">Acerte 70% (11/15) para embarcar. Você tem {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s) nesta viagem.</p>
         <div className="space-y-5">
           {quiz.questions.map((q, qi) => {
             const picked = answers[qi];
@@ -466,7 +466,7 @@ function Galaxia() {
             )}
           </div>
 
-          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 80% no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 70% no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
 
           <div className="mt-5 flex flex-col sm:flex-row gap-2">
             <button disabled={quizLoading} onClick={async () => {

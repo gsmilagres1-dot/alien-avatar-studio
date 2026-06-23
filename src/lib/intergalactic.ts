@@ -38,7 +38,7 @@ export const FATAL_DESTINATIONS = [
 ] as const;
 
 export const MAX_QUIZ_ATTEMPTS = 3;
-export const QUIZ_PASS_RATIO = 0.8;
+export const QUIZ_PASS_RATIO = 0.7;
 // 3 níveis de dificuldade x 5 perguntas = 15 perguntas distintas por tentativa.
 export const QUESTIONS_PER_LEVEL = 5;
 export const QUIZ_LEVELS = 3;
