@@ -11,6 +11,7 @@ import {
   QUIZ_PASS_RATIO,
   getDestination,
   pickFatalDestination,
+  tierFromScore,
 } from "@/lib/intergalactic";
 import { getBankForDestination } from "@/lib/intergalactic-questions";
 
