@@ -9,6 +9,7 @@ import { getJourneyState, startQuiz, submitQuiz, claimVisa, completeJourney } fr
 import { DESTINATIONS, getDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, type Destination } from "@/lib/intergalactic";
 import { SHIPS } from "@/lib/alien";
 import { DestinationBadge } from "@/components/DestinationBadge";
+import { TeleporterPrize } from "@/components/TeleporterPrize";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
@@ -132,6 +133,11 @@ function Galaxia() {
             {identity?.alien_name} {fatal ? "acabou em" : "chegou em"}{" "}
             <span className="font-bold text-gradient-neon">{journey.final_destination_name}</span>
           </p>
+          {!fatal && visas.length >= DESTINATIONS.length && (
+            <div className="mt-6">
+              <TeleporterPrize visitedCount={visas.length} totalCount={DESTINATIONS.length} variant="reward" />
+            </div>
+          )}
           {visas.length > 0 && (
             <div className="mt-6">
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
@@ -144,7 +150,7 @@ function Galaxia() {
                     destinationId={v.destination_id}
                     destinationName={v.destination_name}
                     tier={(v.tier ?? "bronze") as "bronze" | "silver" | "gold"}
-                    size={64}
+                    size={80}
                   />
                 ))}
               </div>
@@ -331,7 +337,7 @@ function Galaxia() {
                   destinationId={currentDest.id}
                   destinationName={currentDest.name}
                   tier={lastResult.tier}
-                  size={56}
+                  size={88}
                 />
               )}
             </div>
@@ -375,6 +381,7 @@ function Galaxia() {
 
       {!currentDest && journeyStep === "destination" && (
         <div className="glass rounded-2xl p-5">
+          <TeleporterPrize visitedCount={visas.length} totalCount={DESTINATIONS.length} variant="banner" />
           <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Etapa 3 · Escolha seu destino</h2>
           <p className="text-xs text-muted-foreground mt-1">Passaporte liberado. Agora escolha o destino, depois sua nave e então comece o quiz. Tudo grátis.</p>
 
@@ -523,10 +530,15 @@ function Galaxia() {
                 destinationId={v.destination_id}
                 destinationName={v.destination_name}
                 tier={(v.tier ?? "bronze") as "bronze" | "silver" | "gold"}
-                size={68}
+                size={84}
               />
             ))}
           </div>
+          {visas.length >= DESTINATIONS.length && (
+            <div className="mt-5">
+              <TeleporterPrize visitedCount={visas.length} totalCount={DESTINATIONS.length} variant="reward" />
+            </div>
+          )}
         </div>
       )}
     </main>
