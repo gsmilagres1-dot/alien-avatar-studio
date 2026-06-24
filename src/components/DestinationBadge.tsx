@@ -34,6 +34,17 @@ const TIER_GLOW: Record<BadgeTier, string> = {
   bronze: "drop-shadow(0 0 10px rgba(200,145,100,0.45))",
 };
 
+/** Posição vertical da fita (banner) onde gravamos o nome do destino,
+ *  ajustada por formato do selo. */
+const TIER_RIBBON: Record<BadgeTier, { bottomPct: number; heightPct: number; widthPct: number }> = {
+  // arco/dome: fita estende abaixo, perto da base
+  gold:   { bottomPct: 0.09, heightPct: 0.14, widthPct: 0.74 },
+  // escudo: fita drapejada na base
+  silver: { bottomPct: 0.10, heightPct: 0.13, widthPct: 0.78 },
+  // medalha redonda: faixa curva no interior do selo, mais alta
+  bronze: { bottomPct: 0.24, heightPct: 0.14, widthPct: 0.55 },
+};
+
 /**
  * Selo de destino conquistado — moldura metálica raster (ouro/prata/bronze)
  * com o nome do destino gravado na fita inferior do emblema.
