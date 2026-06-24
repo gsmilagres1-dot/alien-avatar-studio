@@ -337,7 +337,7 @@ function Galaxia() {
                   destinationId={currentDest.id}
                   destinationName={currentDest.name}
                   tier={lastResult.tier}
-                  size={56}
+                  size={88}
                 />
               )}
             </div>
