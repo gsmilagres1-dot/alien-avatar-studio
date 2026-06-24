@@ -381,6 +381,7 @@ function Galaxia() {
 
       {!currentDest && journeyStep === "destination" && (
         <div className="glass rounded-2xl p-5">
+          <TeleporterPrize visitedCount={visas.length} totalCount={DESTINATIONS.length} variant="banner" />
           <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Etapa 3 · Escolha seu destino</h2>
           <p className="text-xs text-muted-foreground mt-1">Passaporte liberado. Agora escolha o destino, depois sua nave e então comece o quiz. Tudo grátis.</p>
 
