@@ -133,6 +133,11 @@ function Galaxia() {
             {identity?.alien_name} {fatal ? "acabou em" : "chegou em"}{" "}
             <span className="font-bold text-gradient-neon">{journey.final_destination_name}</span>
           </p>
+          {!fatal && visas.length >= DESTINATIONS.length && (
+            <div className="mt-6">
+              <TeleporterPrize visitedCount={visas.length} totalCount={DESTINATIONS.length} variant="reward" />
+            </div>
+          )}
           {visas.length > 0 && (
             <div className="mt-6">
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
@@ -145,7 +150,7 @@ function Galaxia() {
                     destinationId={v.destination_id}
                     destinationName={v.destination_name}
                     tier={(v.tier ?? "bronze") as "bronze" | "silver" | "gold"}
-                    size={64}
+                    size={80}
                   />
                 ))}
               </div>
