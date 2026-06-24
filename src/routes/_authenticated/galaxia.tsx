@@ -530,10 +530,15 @@ function Galaxia() {
                 destinationId={v.destination_id}
                 destinationName={v.destination_name}
                 tier={(v.tier ?? "bronze") as "bronze" | "silver" | "gold"}
-                size={68}
+                size={84}
               />
             ))}
           </div>
+          {visas.length >= DESTINATIONS.length && (
+            <div className="mt-5">
+              <TeleporterPrize visitedCount={visas.length} totalCount={DESTINATIONS.length} variant="reward" />
+            </div>
+          )}
         </div>
       )}
     </main>
