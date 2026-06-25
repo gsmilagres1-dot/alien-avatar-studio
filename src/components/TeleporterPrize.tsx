@@ -67,13 +67,6 @@ export function TeleporterPrize({ visitedCount, totalCount, variant = "banner" }
             loading="lazy"
             className={`w-[216px] h-[216px] rounded-2xl object-cover border-2 brightness-110 ${unlocked ? "border-accent animate-pulse-glow" : "border-accent/40"}`}
           />
-          {!unlocked && (
-            <div className="absolute inset-0 rounded-2xl bg-black/25 flex items-center justify-center">
-              <span className="text-[11px] font-mono uppercase tracking-widest text-accent font-bold drop-shadow-[0_0_6px_rgba(0,0,0,0.9)]">
-                {visitedCount}/{totalCount}
-              </span>
-            </div>
-          )}
           {unlocked && (
             <>
               <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-accent drop-shadow-[0_0_10px_rgba(0,255,200,0.9)] animate-twinkle" />
