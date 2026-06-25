@@ -68,8 +68,8 @@ export function TeleporterPrize({ visitedCount, totalCount, variant = "banner" }
             className={`w-[216px] h-[216px] rounded-2xl object-cover border-2 ${unlocked ? "border-accent animate-pulse-glow" : "border-accent/40 opacity-80"}`}
           />
           {!unlocked && (
-            <div className="absolute inset-0 rounded-2xl bg-black/45 flex items-center justify-center">
-              <span className="text-[11px] font-mono uppercase tracking-widest text-accent font-bold">
+            <div className="absolute inset-0 rounded-2xl bg-black/25 flex items-center justify-center">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-accent font-bold drop-shadow-[0_0_6px_rgba(0,0,0,0.9)]">
                 {visitedCount}/{totalCount}
               </span>
             </div>
@@ -80,6 +80,17 @@ export function TeleporterPrize({ visitedCount, totalCount, variant = "banner" }
               <Sparkles className="absolute -bottom-2 -left-2 w-5 h-5 text-accent drop-shadow-[0_0_8px_rgba(0,255,200,0.8)] animate-twinkle [animation-delay:0.6s]" />
             </>
           )}
+          {/* cintilação contínua de energia — visível em ambos os estados */}
+          <div className="pointer-events-none absolute inset-0 rounded-2xl animate-twinkle overflow-hidden">
+            <div className="absolute top-[15%] left-[20%] w-1 h-1 rounded-full bg-white shadow-[0_0_10px_3px_oklch(0.85_0.24_155)]" />
+            <div className="absolute top-[25%] right-[25%] w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_12px_4px_oklch(0.75_0.25_200)]" />
+            <div className="absolute bottom-[35%] left-[30%] w-1 h-1 rounded-full bg-white shadow-[0_0_10px_3px_oklch(0.85_0.24_155)]" />
+            <div className="absolute bottom-[20%] right-[22%] w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_14px_5px_oklch(0.88_0.26_150)]" />
+          </div>
+          {/* brilho contínuo de vidro */}
+          <div className="pointer-events-none absolute inset-0 rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 -translate-x-full animate-shine bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12" />
+          </div>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
