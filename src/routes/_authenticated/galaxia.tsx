@@ -10,6 +10,8 @@ import { DESTINATIONS, getDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, type Desti
 import { SHIPS } from "@/lib/alien";
 import { DestinationBadge } from "@/components/DestinationBadge";
 import { TeleporterPrize } from "@/components/TeleporterPrize";
+import { SOSButton } from "@/components/SOSButton";
+import { WalletBadge } from "@/components/WalletBadge";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
