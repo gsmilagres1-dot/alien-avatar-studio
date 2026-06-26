@@ -13,8 +13,11 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as AuthenticatedMapaRouteImport } from './routes/_authenticated/mapa'
+import { Route as AuthenticatedLojaRouteImport } from './routes/_authenticated/loja'
 import { Route as AuthenticatedGaleriaRouteImport } from './routes/_authenticated/galeria'
 import { Route as AuthenticatedGalaxiaRouteImport } from './routes/_authenticated/galaxia'
+import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
 import { Route as AuthenticatedCriarRouteImport } from './routes/_authenticated/criar'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -37,6 +40,16 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMapaRoute = AuthenticatedMapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLojaRoute = AuthenticatedLojaRouteImport.update({
+  id: '/loja',
+  path: '/loja',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedGaleriaRoute = AuthenticatedGaleriaRouteImport.update({
   id: '/galeria',
   path: '/galeria',
@@ -45,6 +58,11 @@ const AuthenticatedGaleriaRoute = AuthenticatedGaleriaRouteImport.update({
 const AuthenticatedGalaxiaRoute = AuthenticatedGalaxiaRouteImport.update({
   id: '/galaxia',
   path: '/galaxia',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedEquipesRoute = AuthenticatedEquipesRouteImport.update({
+  id: '/equipes',
+  path: '/equipes',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedCriarRoute = AuthenticatedCriarRouteImport.update({
@@ -63,8 +81,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/criar': typeof AuthenticatedCriarRoute
+  '/equipes': typeof AuthenticatedEquipesRoute
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
+  '/loja': typeof AuthenticatedLojaRoute
+  '/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -72,8 +93,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/criar': typeof AuthenticatedCriarRoute
+  '/equipes': typeof AuthenticatedEquipesRoute
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
+  '/loja': typeof AuthenticatedLojaRoute
+  '/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -83,8 +107,11 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/criar': typeof AuthenticatedCriarRoute
+  '/_authenticated/equipes': typeof AuthenticatedEquipesRoute
   '/_authenticated/galaxia': typeof AuthenticatedGalaxiaRoute
   '/_authenticated/galeria': typeof AuthenticatedGaleriaRoute
+  '/_authenticated/loja': typeof AuthenticatedLojaRoute
+  '/_authenticated/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -94,8 +121,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/criar'
+    | '/equipes'
     | '/galaxia'
     | '/galeria'
+    | '/loja'
+    | '/mapa'
     | '/checkout/return'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -103,8 +133,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/criar'
+    | '/equipes'
     | '/galaxia'
     | '/galeria'
+    | '/loja'
+    | '/mapa'
     | '/checkout/return'
     | '/api/public/payments/webhook'
   id:
@@ -113,8 +146,11 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/criar'
+    | '/_authenticated/equipes'
     | '/_authenticated/galaxia'
     | '/_authenticated/galeria'
+    | '/_authenticated/loja'
+    | '/_authenticated/mapa'
     | '/checkout/return'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -157,6 +193,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/mapa': {
+      id: '/_authenticated/mapa'
+      path: '/mapa'
+      fullPath: '/mapa'
+      preLoaderRoute: typeof AuthenticatedMapaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/loja': {
+      id: '/_authenticated/loja'
+      path: '/loja'
+      fullPath: '/loja'
+      preLoaderRoute: typeof AuthenticatedLojaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/galeria': {
       id: '/_authenticated/galeria'
       path: '/galeria'
@@ -169,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/galaxia'
       fullPath: '/galaxia'
       preLoaderRoute: typeof AuthenticatedGalaxiaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/equipes': {
+      id: '/_authenticated/equipes'
+      path: '/equipes'
+      fullPath: '/equipes'
+      preLoaderRoute: typeof AuthenticatedEquipesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/criar': {
@@ -190,14 +247,20 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCriarRoute: typeof AuthenticatedCriarRoute
+  AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRoute
   AuthenticatedGalaxiaRoute: typeof AuthenticatedGalaxiaRoute
   AuthenticatedGaleriaRoute: typeof AuthenticatedGaleriaRoute
+  AuthenticatedLojaRoute: typeof AuthenticatedLojaRoute
+  AuthenticatedMapaRoute: typeof AuthenticatedMapaRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCriarRoute: AuthenticatedCriarRoute,
+  AuthenticatedEquipesRoute: AuthenticatedEquipesRoute,
   AuthenticatedGalaxiaRoute: AuthenticatedGalaxiaRoute,
   AuthenticatedGaleriaRoute: AuthenticatedGaleriaRoute,
+  AuthenticatedLojaRoute: AuthenticatedLojaRoute,
+  AuthenticatedMapaRoute: AuthenticatedMapaRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -214,13 +277,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
