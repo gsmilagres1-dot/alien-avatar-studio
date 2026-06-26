@@ -148,6 +148,25 @@ function Landing() {
           </div>
         </div>
 
+        {/* Hubs centrais — Equipe / Loja / Mapa */}
+        <div className="mt-10 grid grid-cols-3 gap-3">
+          {[
+            { to: "/equipes", icon: Users, label: "Formar equipe alien", sub: "Disputa intergaláctica", color: "from-fuchsia-500 to-purple-700" },
+            { to: "/loja",    icon: Coins, label: "Loja de fichas",      sub: "S.O.S. · upgrades",     color: "from-yellow-400 to-orange-600" },
+            { to: "/mapa",    icon: Map,   label: "Mapa intergaláctico", sub: "45 destinos · trajeto", color: "from-cyan-400 to-blue-700" },
+          ].map((h) => (
+            <Link key={h.to} to={h.to} className="group relative rounded-2xl p-[2px] bg-gradient-to-br shadow-[0_4px_18px_rgba(0,0,0,0.5)] hover:scale-105 transition" style={{ backgroundImage: undefined }}>
+              <div className={`rounded-2xl p-3 bg-gradient-to-br ${h.color} h-full flex flex-col items-center text-center`}>
+                <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur flex items-center justify-center mb-2 ring-2 ring-white/30">
+                  <h.icon className="w-6 h-6 text-white" />
+                </div>
+                <div className="font-display text-xs sm:text-sm text-white leading-tight">{h.label}</div>
+                <div className="text-[9px] text-white/80 mt-0.5">{h.sub}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
         <p className="mt-12 text-[11px] font-mono text-muted-foreground">
           Grátis · até 3 opções por selfie e novas identidades sem cobrança.
         </p>
