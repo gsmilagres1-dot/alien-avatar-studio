@@ -158,8 +158,18 @@ export const submitQuiz = createServerFn({ method: "POST" })
 
     if (passed) {
       await supabaseAdmin.from("journeys").update({ attempts_used: 0 }).eq("id", journey.id);
-      return { passed: true, score, attemptsLeft: MAX_QUIZ_ATTEMPTS, fatal: null, tier };
+      const reward = tier === "gold" ? 75 : tier === "silver" ? 50 : 25;
+      let fichasBalance: number | null = null;
+      try {
+        const { data: bal } = await supabaseAdmin.rpc("adjust_fichas", {
+          _user_id: userId, _delta: reward, _reason: `quiz_${tier}`,
+          _meta: { destinationId: dest.id, score },
+        });
+        fichasBalance = bal as number;
+      } catch { /* wallet may not exist yet on first run */ }
+      return { passed: true, score, attemptsLeft: MAX_QUIZ_ATTEMPTS, fatal: null, tier, fichasEarned: reward, fichasBalance };
     }
+
 
     const newAttempts = journey.attempts_used + 1;
     if (newAttempts >= MAX_QUIZ_ATTEMPTS) {
