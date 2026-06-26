@@ -7,7 +7,13 @@ import { useWallet } from "@/hooks/useWallet";
 
 interface Props {
   cost: number;
-  reason: Parameters<typeof spendFichas>[0]["data"]["reason"];
+  reason:
+    | "sos_voltar_pergunta_quiz"
+    | "sos_voltar_pergunta_viagem"
+    | "sos_resgate_vacuo"
+    | "sos_resgate_completo"
+    | "upgrade_motor"
+    | "aposta_equipe";
   label: string;
   onSuccess: () => void;
   meta?: Record<string, unknown>;
