@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Camera, Rocket, Sparkles, Wallet, Share2, Stamp, MapPin, Cpu, Radar, Satellite } from "lucide-react";
+import { Camera, Rocket, Sparkles, Wallet, Share2, Stamp, MapPin, Cpu, Radar, Satellite, Users, Coins, Map } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/")({

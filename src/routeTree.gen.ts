@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as AuthenticatedMapaRouteImport } from './routes/_authenticated/mapa'
 import { Route as AuthenticatedLojaRouteImport } from './routes/_authenticated/loja'
 import { Route as AuthenticatedGaleriaRouteImport } from './routes/_authenticated/galeria'
 import { Route as AuthenticatedGalaxiaRouteImport } from './routes/_authenticated/galaxia'
@@ -38,6 +39,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedMapaRoute = AuthenticatedMapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedLojaRoute = AuthenticatedLojaRouteImport.update({
   id: '/loja',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/loja': typeof AuthenticatedLojaRoute
+  '/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/loja': typeof AuthenticatedLojaRoute
+  '/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_authenticated/galaxia': typeof AuthenticatedGalaxiaRoute
   '/_authenticated/galeria': typeof AuthenticatedGaleriaRoute
   '/_authenticated/loja': typeof AuthenticatedLojaRoute
+  '/_authenticated/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/galaxia'
     | '/galeria'
     | '/loja'
+    | '/mapa'
     | '/checkout/return'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/galaxia'
     | '/galeria'
     | '/loja'
+    | '/mapa'
     | '/checkout/return'
     | '/api/public/payments/webhook'
   id:
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/_authenticated/galaxia'
     | '/_authenticated/galeria'
     | '/_authenticated/loja'
+    | '/_authenticated/mapa'
     | '/checkout/return'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -180,6 +192,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/checkout/return'
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/mapa': {
+      id: '/_authenticated/mapa'
+      path: '/mapa'
+      fullPath: '/mapa'
+      preLoaderRoute: typeof AuthenticatedMapaRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/loja': {
       id: '/_authenticated/loja'
@@ -232,6 +251,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedGalaxiaRoute: typeof AuthenticatedGalaxiaRoute
   AuthenticatedGaleriaRoute: typeof AuthenticatedGaleriaRoute
   AuthenticatedLojaRoute: typeof AuthenticatedLojaRoute
+  AuthenticatedMapaRoute: typeof AuthenticatedMapaRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -240,6 +260,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedGalaxiaRoute: AuthenticatedGalaxiaRoute,
   AuthenticatedGaleriaRoute: AuthenticatedGaleriaRoute,
   AuthenticatedLojaRoute: AuthenticatedLojaRoute,
+  AuthenticatedMapaRoute: AuthenticatedMapaRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
