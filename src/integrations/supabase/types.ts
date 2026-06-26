@@ -52,6 +52,33 @@ export type Database = {
           },
         ]
       }
+      ficha_transactions: {
+        Row: {
+          created_at: string
+          delta: number
+          id: string
+          meta: Json | null
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delta: number
+          id?: string
+          meta?: Json | null
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          id?: string
+          meta?: Json | null
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       identities: {
         Row: {
           alien_name: string
@@ -378,12 +405,53 @@ export type Database = {
           },
         ]
       }
+      wallets: {
+        Row: {
+          alimento_doce: number
+          alimento_liquido: number
+          alimento_salgado: number
+          aneis: number
+          created_at: string
+          fichas: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alimento_doce?: number
+          alimento_liquido?: number
+          alimento_salgado?: number
+          aneis?: number
+          created_at?: string
+          fichas?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alimento_doce?: number
+          alimento_liquido?: number
+          alimento_salgado?: number
+          aneis?: number
+          created_at?: string
+          fichas?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      adjust_fichas: {
+        Args: {
+          _delta: number
+          _meta?: Json
+          _reason: string
+          _user_id: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
