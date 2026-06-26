@@ -180,9 +180,27 @@ function Galaxia() {
     const allAnswered = answers.length === quiz.questions.length && answers.every((a) => a !== undefined);
     return (
       <main className="px-4 py-6 max-w-2xl mx-auto">
-        <div className="text-xs text-muted-foreground mb-2">Quiz da viagem · {quiz.destinationName}</div>
-        <h1 className="font-display text-xl text-gradient-neon mb-1">15 perguntas · 3 níveis de dificuldade</h1>
-        <p className="text-xs text-muted-foreground mb-4">Acerte 70% (11/15) para embarcar. Você tem {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s) nesta viagem.</p>
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div>
+            <div className="text-xs text-muted-foreground">Quiz da viagem · {quiz.destinationName}</div>
+            <h1 className="font-display text-xl text-gradient-neon mt-1">15 perguntas · 3 níveis</h1>
+            <p className="text-xs text-muted-foreground">Acerte 70% (11/15) para embarcar. {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s).</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <WalletBadge />
+            <SOSButton
+              cost={10}
+              reason="sos_voltar_pergunta_quiz"
+              label="Voltar pergunta"
+              meta={{ destinationId: quiz.destinationId }}
+              onSuccess={() => {
+                // Remove a última resposta marcada para o jogador refazer
+                if (answers.length === 0) { toast.info("Nada para desfazer ainda."); return; }
+                const next = [...answers]; next.pop(); setAnswers(next);
+              }}
+            />
+          </div>
+        </div>
         <div className="space-y-5">
           {quiz.questions.map((q, qi) => {
             const picked = answers[qi];
