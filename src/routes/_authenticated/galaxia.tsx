@@ -259,6 +259,7 @@ function Galaxia() {
             setLastResult(r);
             setQuiz(null); setAnswers([]);
             await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+            await qc.invalidateQueries({ queryKey: ["wallet"] });
           } catch (e) { toast.error((e as Error).message); }
           finally { setQuizLoading(false); }
         }}
