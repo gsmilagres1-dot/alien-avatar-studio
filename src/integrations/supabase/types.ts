@@ -352,6 +352,121 @@ export type Database = {
           },
         ]
       }
+      team_invites: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          team_id: string
+          token: string
+          uses: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          team_id: string
+          token: string
+          uses?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          team_id?: string
+          token?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invites_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          description: string | null
+          fichas: number
+          flag_emoji: string | null
+          id: string
+          leader_id: string
+          members_count: number
+          name: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          description?: string | null
+          fichas?: number
+          flag_emoji?: string | null
+          id?: string
+          leader_id: string
+          members_count?: number
+          name: string
+          score?: number
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          description?: string | null
+          fichas?: number
+          flag_emoji?: string | null
+          id?: string
+          leader_id?: string
+          members_count?: number
+          name?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       visas: {
         Row: {
           destination_id: string
@@ -452,9 +567,28 @@ export type Database = {
         }
         Returns: number
       }
+      create_team: {
+        Args: {
+          _country_code?: string
+          _description?: string
+          _flag_emoji?: string
+          _name: string
+        }
+        Returns: string
+      }
+      is_team_leader: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_team_member: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      join_team_via_invite: { Args: { _token: string }; Returns: string }
+      leave_team: { Args: { _team_id: string }; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      team_role: "leader" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -581,6 +715,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      team_role: ["leader", "member"],
+    },
   },
 } as const
