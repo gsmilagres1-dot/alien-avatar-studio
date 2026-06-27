@@ -1,16 +1,18 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { Users, Plus, Crown, Link2, LogOut, Trash2, Copy, Check, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Users, Plus, Crown, Link2, LogOut, Copy, Check, Loader2 } from "lucide-react";
 import { WalletBadge } from "@/components/WalletBadge";
+import { TeamChat } from "@/components/TeamChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   createTeam, listTeamsRanking, getMyTeam, updateTeam,
-  createInvite, listInvites, leaveTeam, removeMember,
+  createInvite, listInvites, leaveTeam,
 } from "@/lib/teams.functions";
 
 export const Route = createFileRoute("/_authenticated/equipes")({
@@ -224,10 +226,25 @@ function MyTeamPanel({ team, role, onChanged }: { team: TeamRow; role: "leader" 
         </Button>
       )}
       {role === "leader" && (
-        <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+        <div className="text-[10px] text-muted-foreground flex items-center gap-1 mb-3">
           <Users className="w-3 h-3" /> Líder não pode sair — transferir liderança em breve
         </div>
       )}
+
+      <CurrentUserChat teamId={team.id} />
+    </div>
+  );
+}
+
+function CurrentUserChat({ teamId }: { teamId: string }) {
+  const [uid, setUid] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null));
+  }, []);
+  if (!uid) return null;
+  return (
+    <div className="mt-2">
+      <TeamChat teamId={teamId} currentUserId={uid} />
     </div>
   );
 }
