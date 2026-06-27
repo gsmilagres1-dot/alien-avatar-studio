@@ -226,10 +226,25 @@ function MyTeamPanel({ team, role, onChanged }: { team: TeamRow; role: "leader" 
         </Button>
       )}
       {role === "leader" && (
-        <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+        <div className="text-[10px] text-muted-foreground flex items-center gap-1 mb-3">
           <Users className="w-3 h-3" /> Líder não pode sair — transferir liderança em breve
         </div>
       )}
+
+      <CurrentUserChat teamId={team.id} />
+    </div>
+  );
+}
+
+function CurrentUserChat({ teamId }: { teamId: string }) {
+  const [uid, setUid] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null));
+  }, []);
+  if (!uid) return null;
+  return (
+    <div className="mt-2">
+      <TeamChat teamId={teamId} currentUserId={uid} />
     </div>
   );
 }
