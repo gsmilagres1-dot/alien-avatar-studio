@@ -17,9 +17,9 @@ export const createTeam = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: teamId, error } = await context.supabase.rpc("create_team", {
       _name: data.name,
-      _country_code: data.countryCode ?? null,
-      _flag_emoji: data.flagEmoji ?? null,
-      _description: data.description ?? null,
+      _country_code: data.countryCode ?? undefined,
+      _flag_emoji: data.flagEmoji ?? undefined,
+      _description: data.description ?? undefined,
     });
     if (error) {
       if (error.message.includes("duplicate")) throw new Error("Já existe uma equipe com esse nome");
