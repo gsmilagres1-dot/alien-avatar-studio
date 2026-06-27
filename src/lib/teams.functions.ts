@@ -167,6 +167,5 @@ export const removeMember = createServerFn({ method: "POST" })
       .eq("team_id", data.teamId)
       .eq("user_id", data.userId);
     if (error) throw new Error(error.message);
-    await context.supabase.rpc("adjust_fichas", { _user_id: context.userId, _delta: 0, _reason: "noop_after_remove" }).then(() => {}).catch(() => {});
     return { ok: true };
   });
