@@ -87,7 +87,7 @@ export const updateTeam = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: { name?: string; flag_emoji?: string | null; country_code?: string | null; description?: string | null } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.flagEmoji !== undefined) patch.flag_emoji = data.flagEmoji;
     if (data.countryCode !== undefined) patch.country_code = data.countryCode;
