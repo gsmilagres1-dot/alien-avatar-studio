@@ -20,6 +20,7 @@ import { Route as AuthenticatedGalaxiaRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
 import { Route as AuthenticatedCriarRouteImport } from './routes/_authenticated/criar'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as AuthenticatedEquipesConviteTokenRouteImport } from './routes/_authenticated/equipes.convite.$token'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -76,29 +77,37 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedEquipesConviteTokenRoute =
+  AuthenticatedEquipesConviteTokenRouteImport.update({
+    id: '/convite/$token',
+    path: '/convite/$token',
+    getParentRoute: () => AuthenticatedEquipesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/criar': typeof AuthenticatedCriarRoute
-  '/equipes': typeof AuthenticatedEquipesRoute
+  '/equipes': typeof AuthenticatedEquipesRouteWithChildren
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/equipes/convite/$token': typeof AuthenticatedEquipesConviteTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/criar': typeof AuthenticatedCriarRoute
-  '/equipes': typeof AuthenticatedEquipesRoute
+  '/equipes': typeof AuthenticatedEquipesRouteWithChildren
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/equipes/convite/$token': typeof AuthenticatedEquipesConviteTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -107,12 +116,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/criar': typeof AuthenticatedCriarRoute
-  '/_authenticated/equipes': typeof AuthenticatedEquipesRoute
+  '/_authenticated/equipes': typeof AuthenticatedEquipesRouteWithChildren
   '/_authenticated/galaxia': typeof AuthenticatedGalaxiaRoute
   '/_authenticated/galeria': typeof AuthenticatedGaleriaRoute
   '/_authenticated/loja': typeof AuthenticatedLojaRoute
   '/_authenticated/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/_authenticated/equipes/convite/$token': typeof AuthenticatedEquipesConviteTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/loja'
     | '/mapa'
     | '/checkout/return'
+    | '/equipes/convite/$token'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/loja'
     | '/mapa'
     | '/checkout/return'
+    | '/equipes/convite/$token'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -152,6 +164,7 @@ export interface FileRouteTypes {
     | '/_authenticated/loja'
     | '/_authenticated/mapa'
     | '/checkout/return'
+    | '/_authenticated/equipes/convite/$token'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -242,12 +255,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/equipes/convite/$token': {
+      id: '/_authenticated/equipes/convite/$token'
+      path: '/convite/$token'
+      fullPath: '/equipes/convite/$token'
+      preLoaderRoute: typeof AuthenticatedEquipesConviteTokenRouteImport
+      parentRoute: typeof AuthenticatedEquipesRoute
+    }
   }
 }
 
+interface AuthenticatedEquipesRouteChildren {
+  AuthenticatedEquipesConviteTokenRoute: typeof AuthenticatedEquipesConviteTokenRoute
+}
+
+const AuthenticatedEquipesRouteChildren: AuthenticatedEquipesRouteChildren = {
+  AuthenticatedEquipesConviteTokenRoute: AuthenticatedEquipesConviteTokenRoute,
+}
+
+const AuthenticatedEquipesRouteWithChildren =
+  AuthenticatedEquipesRoute._addFileChildren(AuthenticatedEquipesRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedCriarRoute: typeof AuthenticatedCriarRoute
-  AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRoute
+  AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRouteWithChildren
   AuthenticatedGalaxiaRoute: typeof AuthenticatedGalaxiaRoute
   AuthenticatedGaleriaRoute: typeof AuthenticatedGaleriaRoute
   AuthenticatedLojaRoute: typeof AuthenticatedLojaRoute
@@ -256,7 +287,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCriarRoute: AuthenticatedCriarRoute,
-  AuthenticatedEquipesRoute: AuthenticatedEquipesRoute,
+  AuthenticatedEquipesRoute: AuthenticatedEquipesRouteWithChildren,
   AuthenticatedGalaxiaRoute: AuthenticatedGalaxiaRoute,
   AuthenticatedGaleriaRoute: AuthenticatedGaleriaRoute,
   AuthenticatedLojaRoute: AuthenticatedLojaRoute,
@@ -277,13 +308,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
