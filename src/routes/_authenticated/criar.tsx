@@ -8,6 +8,7 @@ import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, ty
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
 import { createAvatarDraft, getActivePayment, saveIdentity, generateShipImage, restartIdentityFlow } from "@/lib/identities.functions";
+import { SelfieCropper } from "@/components/SelfieCropper";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/criar")({ component: Criar });
@@ -30,6 +31,7 @@ function Criar() {
 
   const [step, setStep] = useState<Step>("intro");
   const [photo, setPhoto] = useState<string | null>(null);
+  const [rawPhoto, setRawPhoto] = useState<string | null>(null); // antes do crop ICAO
   const [name, setName] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [gender, setGender] = useState<Gender>("undefined");
@@ -137,8 +139,8 @@ function Criar() {
     if (file.size > 8 * 1024 * 1024) return toast.error("Imagem > 8MB");
     const r = new FileReader();
     r.onload = () => {
-      setPhoto(r.result as string);
-      toast.success("Selfie carregada — se não gostar, tire outra");
+      // Abre cropper ICAO 5x7 antes de aceitar
+      setRawPhoto(r.result as string);
     };
     r.readAsDataURL(file);
   }
@@ -221,6 +223,17 @@ function Criar() {
 
   return (
     <>
+      {rawPhoto && (
+        <SelfieCropper
+          src={rawPhoto}
+          onCancel={() => setRawPhoto(null)}
+          onConfirm={(dataUrl) => {
+            setPhoto(dataUrl);
+            setRawPhoto(null);
+            toast.success("Selfie enquadrada no padrão ICAO 5×7");
+          }}
+        />
+      )}
       <main className="relative z-10 px-4 py-6 sm:py-10">
         <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => { onPickFile(e.target.files?.[0]); e.target.value = ""; }} />
         <input ref={galleryRef} type="file" accept="image/*" hidden onChange={(e) => { onPickFile(e.target.files?.[0]); e.target.value = ""; }} />

@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Users, Plus, Crown, Link2, LogOut, Copy, Check, Loader2 } from "lucide-react";
+import { Users, Plus, Crown, Link2, LogOut, Copy, Check, Loader2, Swords, Coins, ChevronRight } from "lucide-react";
 import { WalletBadge } from "@/components/WalletBadge";
 import { TeamChat } from "@/components/TeamChat";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,9 @@ import {
   createTeam, listTeamsRanking, getMyTeam, updateTeam,
   createInvite, listInvites, leaveTeam,
 } from "@/lib/teams.functions";
+import {
+  listBattlesForMyTeams, listOpenTeams, createBattleFn, acceptBattleFn, listBattleDestinations,
+} from "@/lib/battles.functions";
 
 export const Route = createFileRoute("/_authenticated/equipes")({
   component: Equipes,
@@ -234,8 +237,121 @@ function MyTeamPanel({ team, role, onChanged }: { team: TeamRow; role: "leader" 
         </div>
       )}
 
+      <BattlesPanel team={team} role={role} />
+
       <CurrentUserChat teamId={team.id} />
     </div>
+  );
+}
+
+function BattlesPanel({ team, role }: { team: TeamRow; role: "leader" | "member" }) {
+  const router = useRouter();
+  const listFn = useServerFn(listBattlesForMyTeams);
+  const opensFn = useServerFn(listOpenTeams);
+  const createFn = useServerFn(createBattleFn);
+  const acceptFn = useServerFn(acceptBattleFn);
+
+  const battlesQ = useQuery({ queryKey: ["battles", team.id], queryFn: () => listFn({}) });
+  const teamsQ = useQuery({ queryKey: ["open-teams"], queryFn: () => opensFn({}), enabled: role === "leader" });
+  const destinations = listBattleDestinations();
+
+  const [open, setOpen] = useState(false);
+  const [opponent, setOpponent] = useState("");
+  const [dest, setDest] = useState(destinations[0]?.id ?? "");
+  const [bet, setBet] = useState(50);
+
+  const createM = useMutation({
+    mutationFn: () => createFn({ data: { teamAId: team.id, teamBId: opponent, destinationId: dest, betFichas: bet } }),
+    onSuccess: ({ battleId }) => {
+      toast.success("Desafio enviado!");
+      router.navigate({ to: "/batalha/$id", params: { id: battleId } });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const acceptM = useMutation({
+    mutationFn: (id: string) => acceptFn({ data: { battleId: id } }),
+    onSuccess: () => { toast.success("Batalha aceita!"); battlesQ.refetch(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <section className="mt-4 pt-4 border-t border-accent/15">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-display text-sm flex items-center gap-2">
+          <Swords className="w-4 h-4 text-fuchsia-400" /> Batalhas-quiz
+        </h3>
+        {role === "leader" && (
+          <button onClick={() => setOpen((s) => !s)} className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gradient-to-r from-fuchsia-500 to-purple-700 text-white">
+            <Plus className="w-3 h-3" /> {open ? "Fechar" : "Desafio"}
+          </button>
+        )}
+      </div>
+      <p className="text-[10px] text-muted-foreground mb-2">
+        9 perguntas no destino escolhido · vencedor leva o pote de fichas (2× aposta).
+      </p>
+
+      {open && role === "leader" && (
+        <div className="bg-black/40 rounded-lg p-2.5 space-y-2 mb-3 border border-fuchsia-500/20">
+          <select value={opponent} onChange={(e) => setOpponent(e.target.value)}
+            className="w-full px-2 py-1.5 rounded bg-black/60 border border-white/10 text-xs">
+            <option value="">Equipe adversária...</option>
+            {(teamsQ.data ?? []).filter((t) => t.id !== team.id).map((t) => (
+              <option key={t.id} value={t.id}>{t.flag_emoji ?? "🛸"} {t.name} ({t.members_count})</option>
+            ))}
+          </select>
+          <select value={dest} onChange={(e) => setDest(e.target.value)}
+            className="w-full px-2 py-1.5 rounded bg-black/60 border border-white/10 text-xs">
+            {destinations.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+          <div className="flex gap-2 items-center">
+            <Coins className="w-3 h-3 text-amber-400" />
+            <input type="number" min={0} max={10000} value={bet}
+              onChange={(e) => setBet(Math.max(0, Number(e.target.value)))}
+              className="flex-1 px-2 py-1.5 rounded bg-black/60 border border-white/10 text-xs" />
+            <span className="text-[10px] text-muted-foreground">fichas</span>
+          </div>
+          <button
+            onClick={() => createM.mutate()}
+            disabled={!opponent || createM.isPending}
+            className="w-full px-3 py-1.5 rounded bg-accent text-accent-foreground font-bold text-xs disabled:opacity-50"
+          >
+            {createM.isPending ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : "Enviar desafio"}
+          </button>
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        {battlesQ.isLoading && <Loader2 className="w-4 h-4 animate-spin mx-auto" />}
+        {(battlesQ.data?.battles ?? []).length === 0 && !battlesQ.isLoading && (
+          <p className="text-[10px] text-muted-foreground text-center py-2">Nenhuma batalha ainda.</p>
+        )}
+        {(battlesQ.data?.battles ?? []).slice(0, 6).map((b: { id: string; status: string; bet_fichas: number; team_a_id: string | null; team_b_id: string | null; team_a_score: number; team_b_score: number; team_a?: { name: string; flag_emoji: string | null } | null; team_b?: { name: string; flag_emoji: string | null } | null }) => {
+          const canAccept = b.status === "pending" && b.team_b_id === team.id && role === "leader";
+          return (
+            <div key={b.id} className="p-2 rounded-lg bg-black/40 border border-white/5 flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] truncate">
+                  {b.team_a?.flag_emoji ?? "🛸"} {b.team_a?.name} <span className="text-muted-foreground">vs</span> {b.team_b?.flag_emoji ?? "🛸"} {b.team_b?.name ?? "—"}
+                </div>
+                <div className="text-[9px] text-muted-foreground flex items-center gap-1.5">
+                  <span className="uppercase">{b.status}</span>
+                  <span className="flex items-center gap-0.5"><Coins className="w-2.5 h-2.5 text-amber-400" /> {b.bet_fichas * 2}</span>
+                  {b.status === "finished" && <span>· {b.team_a_score}–{b.team_b_score}</span>}
+                </div>
+              </div>
+              {canAccept ? (
+                <button onClick={() => acceptM.mutate(b.id)} disabled={acceptM.isPending}
+                  className="px-2 py-1 rounded bg-emerald-500 text-white text-[10px] font-bold">Aceitar</button>
+              ) : (
+                <Link to="/batalha/$id" params={{ id: b.id }} className="p-1.5 rounded bg-white/10">
+                  <ChevronRight className="w-3 h-3" />
+                </Link>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

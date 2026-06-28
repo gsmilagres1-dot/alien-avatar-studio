@@ -53,8 +53,8 @@ interface Node {
   size: number;
 }
 
-// Distribui 45 nós num pôster vertical longo, seguindo trajeto serpentino,
-// com tamanhos variados por tipo (sóis/galáxias/quasars maiores).
+// Distribui 45 nós num pôster vertical longo, seguindo trajeto serpentino.
+// Posições embaralhadas por sessão (mantém o tipo → mantém a imagem).
 function buildNodes(): Node[] {
   const all = [
     ...DESTINATIONS.map((d) => ({ ...d, group: "singular" as const })),
@@ -63,6 +63,12 @@ function buildNodes(): Node[] {
       level: d.level, kind: d.kind as DestinationKind, group: "team" as const,
     })),
   ];
+
+  // Embaralhar ordem (Fisher-Yates) para posições aleatórias por sessão
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
 
   const sizeFor = (k: DestinationKind) => {
     if (k === "galaxy" || k === "quasar") return 22;
@@ -83,8 +89,8 @@ function buildNodes(): Node[] {
     const colInRow = i % COLS;
     const leftToRight = row % 2 === 0;
     const col = leftToRight ? colInRow : COLS - 1 - colInRow;
-    const jitterX = Math.sin(i * 1.9) * 5;
-    const jitterY = Math.cos(i * 2.7) * 1.5;
+    const jitterX = Math.sin(i * 1.9 + Math.random() * 2) * 5;
+    const jitterY = Math.cos(i * 2.7 + Math.random() * 2) * 1.5;
     return {
       ...it,
       x: stepX * (col + 1) + jitterX,
