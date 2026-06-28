@@ -103,7 +103,7 @@ export function TeleporterPrize({ visitedCount, totalCount, variant = "banner" }
           <div className="text-xs text-muted-foreground leading-snug">
             {unlocked
               ? "Conquistado! Cabine vermelha com turbinas e portal de energia — sua nave pessoal."
-              : `Conquiste os ${totalCount} destinos e ganhe a cabine sob medida — faltam ${remaining}.`}
+              : `Conquiste ${totalCount} destinos quaisquer e ganhe a cabine sob medida — faltam ${remaining}.`}
           </div>
           <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
             <div
