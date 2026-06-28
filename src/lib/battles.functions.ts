@@ -152,7 +152,7 @@ export const submitBattleScore = createServerFn({ method: "POST" })
     if (battle && battle.status === "active") {
       const { data: mems } = await supabase
         .from("team_members").select("user_id, team_id")
-        .in("team_id", [battle.team_a_id, battle.team_b_id]);
+        .in("team_id", [battle.team_a_id, battle.team_b_id].filter((x): x is string => !!x));
       const { data: parts } = await supabase
         .from("battle_participants").select("user_id").eq("battle_id", data.battleId).not("score", "is", null);
       const total = (mems ?? []).length;
