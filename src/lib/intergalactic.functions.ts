@@ -122,7 +122,7 @@ export const startQuiz = createServerFn({ method: "POST" })
     if (!journey) throw new Error("Viagem não encontrada");
     if (journey.status !== "active") throw new Error("Esta viagem já terminou");
 
-    const dest = getDestination(data.destinationId);
+    const dest = getAnyDestination(data.destinationId);
     if (!dest) throw new Error("Destino inválido");
 
     const { data: already } = await supabaseAdmin
@@ -156,7 +156,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey || journey.status !== "active") throw new Error("Viagem inválida");
 
-    const dest = getDestination(data.destinationId);
+    const dest = getAnyDestination(data.destinationId);
     if (!dest) throw new Error("Destino inválido");
 
     const score = data.answers.reduce((acc, a, i) => acc + (a === data.questions[i].answer ? 1 : 0), 0);
@@ -212,7 +212,7 @@ export const claimVisa = createServerFn({ method: "POST" })
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey || journey.status !== "active") throw new Error("Viagem inválida");
 
-    const dest = getDestination(data.destinationId);
+    const dest = getAnyDestination(data.destinationId);
     if (!dest) throw new Error("Destino inválido");
 
     const { error } = await supabaseAdmin.from("visas").insert({
