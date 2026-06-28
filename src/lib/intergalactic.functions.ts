@@ -4,16 +4,28 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   DESTINATIONS,
+  ALL_DESTINATIONS,
   MAX_QUIZ_ATTEMPTS,
   QUESTIONS_PER_QUIZ,
   QUESTIONS_PER_LEVEL,
   QUIZ_LEVELS,
   QUIZ_PASS_RATIO,
-  getDestination,
+  GALAXY_SURPRISE_STEP,
+  GALAXY_SURPRISE_MIN,
+  GALAXY_SURPRISE_MAX,
+  getAnyDestination,
   pickFatalDestination,
   tierFromScore,
 } from "@/lib/intergalactic";
 import { getBankForDestination } from "@/lib/intergalactic-questions";
+import { getTeamBank, getTeamDestination } from "@/lib/team-destinations";
+
+function getBankForAny(id: string) {
+  const singular = getBankForDestination(id);
+  if (singular.length > 0) return singular;
+  return getTeamBank(id);
+}
+
 
 interface QuizQuestion { q: string; choices: string[]; answer: number; level?: number }
 
@@ -23,7 +35,7 @@ interface QuizQuestion { q: string; choices: string[]; answer: number; level?: n
  * Cada tentativa embaralha o pool — então as 3 chances podem ter perguntas diferentes.
  */
 function buildQuizFromBank(destinationId: string, attemptSeed: number): QuizQuestion[] {
-  const bank = getBankForDestination(destinationId);
+  const bank = getBankForAny(destinationId);
   if (bank.length === 0) return [];
 
   const rng = mulberry32(attemptSeed);
@@ -110,7 +122,7 @@ export const startQuiz = createServerFn({ method: "POST" })
     if (!journey) throw new Error("Viagem não encontrada");
     if (journey.status !== "active") throw new Error("Esta viagem já terminou");
 
-    const dest = getDestination(data.destinationId);
+    const dest = getAnyDestination(data.destinationId);
     if (!dest) throw new Error("Destino inválido");
 
     const { data: already } = await supabaseAdmin
@@ -144,7 +156,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey || journey.status !== "active") throw new Error("Viagem inválida");
 
-    const dest = getDestination(data.destinationId);
+    const dest = getAnyDestination(data.destinationId);
     if (!dest) throw new Error("Destino inválido");
 
     const score = data.answers.reduce((acc, a, i) => acc + (a === data.questions[i].answer ? 1 : 0), 0);
@@ -200,7 +212,7 @@ export const claimVisa = createServerFn({ method: "POST" })
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey || journey.status !== "active") throw new Error("Viagem inválida");
 
-    const dest = getDestination(data.destinationId);
+    const dest = getAnyDestination(data.destinationId);
     if (!dest) throw new Error("Destino inválido");
 
     const { error } = await supabaseAdmin.from("visas").insert({
@@ -210,8 +222,32 @@ export const claimVisa = createServerFn({ method: "POST" })
     });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
 
+    // Ligação surpresa: a cada GALAXY_SURPRISE_STEP visitas em galáxias,
+    // o viajante recebe uma chamada com fichas aleatórias.
+    let surpriseCall: { fichas: number; galaxyCount: number } | null = null;
+    if (dest.kind === "galaxy") {
+      const { data: galaxyVisas } = await supabaseAdmin
+        .from("visas").select("destination_id").eq("journey_id", journey.id);
+      const galaxyIds = new Set(
+        ALL_DESTINATIONS.filter((d) => d.kind === "galaxy").map((d) => d.id),
+      );
+      const galaxyCount = (galaxyVisas ?? []).filter((v) => galaxyIds.has(v.destination_id as string)).length;
+      if (galaxyCount > 0 && galaxyCount % GALAXY_SURPRISE_STEP === 0) {
+        const fichas = Math.floor(
+          GALAXY_SURPRISE_MIN + Math.random() * (GALAXY_SURPRISE_MAX - GALAXY_SURPRISE_MIN + 1),
+        );
+        try {
+          await supabaseAdmin.rpc("adjust_fichas", {
+            _user_id: userId, _delta: fichas, _reason: "galaxy_surprise_call",
+            _meta: { destinationId: dest.id, galaxyCount },
+          });
+          surpriseCall = { fichas, galaxyCount };
+        } catch { /* wallet may not exist yet */ }
+      }
+    }
+
     const newLevel = journey.current_level + 1;
-    if (newLevel > DESTINATIONS.length) {
+    if (newLevel > ALL_DESTINATIONS.length) {
       await supabaseAdmin.from("journeys").update({
         status: "completed",
         current_level: newLevel,
@@ -224,8 +260,9 @@ export const claimVisa = createServerFn({ method: "POST" })
         current_level: newLevel, attempts_used: 0,
       }).eq("id", journey.id);
     }
-    return { ok: true };
+    return { ok: true, surpriseCall };
   });
+
 
 export const completeJourney = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -1,6 +1,7 @@
 // Shared constants for the intergalactic area (client + server safe).
+import { TEAM_DESTINATIONS, type TeamDestKind } from "@/lib/team-destinations";
 
-export type DestinationKind = "planet" | "sun" | "moon" | "fatal";
+export type DestinationKind = "planet" | "sun" | "moon" | "fatal" | TeamDestKind;
 
 export interface Destination {
   id: string;
@@ -9,6 +10,7 @@ export interface Destination {
   level: number; // dificuldade do quiz (1-5)
   kind: DestinationKind;
 }
+
 
 export const DESTINATIONS: Destination[] = [
   // 10 planetas
@@ -78,4 +80,35 @@ export const KIND_LABEL: Record<DestinationKind, string> = {
   sun: "Sol",
   moon: "Lua",
   fatal: "Fim trágico",
+  galaxy: "Galáxia",
+  nebula: "Nebulosa",
+  exoplanet: "Exoplaneta",
+  star_system: "Sistema estelar",
+  cluster: "Aglomerado",
+  quasar: "Quasar",
 };
+
+/** Lista unificada dos 45 destinos quiz (15 singulares + 30 de equipe). */
+export const ALL_DESTINATIONS: Destination[] = [
+  ...DESTINATIONS,
+  ...TEAM_DESTINATIONS.map((d) => ({
+    id: d.id,
+    name: d.name,
+    transport: d.transport,
+    level: d.level,
+    kind: d.kind as DestinationKind,
+  })),
+];
+
+export function getAnyDestination(id: string): Destination | undefined {
+  return ALL_DESTINATIONS.find((d) => d.id === id);
+}
+
+/** Quantos destinos quaisquer concluídos liberam o Teletransportador. */
+export const TELEPORTER_THRESHOLD = 10;
+
+/** Quantos destinos de galáxia desbloqueiam uma ligação-surpresa de fichas. */
+export const GALAXY_SURPRISE_STEP = 5;
+export const GALAXY_SURPRISE_MIN = 20;
+export const GALAXY_SURPRISE_MAX = 100;
+

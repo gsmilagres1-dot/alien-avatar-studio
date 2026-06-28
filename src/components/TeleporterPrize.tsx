@@ -43,7 +43,7 @@ export function TeleporterPrize({ visitedCount, totalCount, variant = "banner" }
           <Trophy className="w-3 h-3" /> Prêmio desbloqueado
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-accent font-mono">15/15 destinos conquistados</div>
+          <div className="text-[10px] uppercase tracking-widest text-accent font-mono">{visitedCount}/{totalCount} destinos quaisquer conquistados</div>
           <h3 className="font-display text-xl text-gradient-neon mt-1">Teletransportador Cósmico</h3>
           <p className="text-xs text-white/90 mt-1">
             Cabine vermelha com 4 turbinas a jato e portal de energia — sua nave pessoal para viajar pelo cosmos.
@@ -103,7 +103,7 @@ export function TeleporterPrize({ visitedCount, totalCount, variant = "banner" }
           <div className="text-xs text-muted-foreground leading-snug">
             {unlocked
               ? "Conquistado! Cabine vermelha com turbinas e portal de energia — sua nave pessoal."
-              : `Conquiste os ${totalCount} destinos e ganhe a cabine sob medida — faltam ${remaining}.`}
+              : `Conquiste ${totalCount} destinos quaisquer e ganhe a cabine sob medida — faltam ${remaining}.`}
           </div>
           <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
             <div

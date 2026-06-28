@@ -1,88 +1,104 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Rocket, User, Users, Sparkles } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Rocket, User, Users, Sparkles, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { WalletBadge } from "@/components/WalletBadge";
-import { DESTINATIONS, type DestinationKind } from "@/lib/intergalactic";
-import { TEAM_DESTINATIONS, TEAM_KIND_LABEL, type TeamDestKind } from "@/lib/team-destinations";
+import { DESTINATIONS, ALL_DESTINATIONS, KIND_LABEL, type DestinationKind } from "@/lib/intergalactic";
+import { TEAM_DESTINATIONS, getTeamDestination } from "@/lib/team-destinations";
+import planetImg from "@/assets/map/planet.png";
+import sunImg from "@/assets/map/sun.png";
+import moonImg from "@/assets/map/moon.png";
+import galaxyImg from "@/assets/map/galaxy.png";
+import nebulaImg from "@/assets/map/nebula.png";
+import exoplanetImg from "@/assets/map/exoplanet.png";
+import starSystemImg from "@/assets/map/star_system.png";
+import clusterImg from "@/assets/map/cluster.png";
+import quasarImg from "@/assets/map/quasar.png";
 
 export const Route = createFileRoute("/_authenticated/mapa")({
   component: Mapa,
   head: () => ({
     meta: [
       { title: "Mapa Intergaláctico — 45 destinos" },
-      { name: "description", content: "Mapa interativo com os 45 destinos: 15 do modo singular + 30 exclusivos do modo Equipe." },
+      { name: "description", content: "Pôster cósmico com os 45 destinos quiz: arraste, dê zoom e escolha onde viajar." },
     ],
   }),
 });
 
 type Mode = "all" | "singular" | "team";
 
+const KIND_IMAGE: Record<string, string> = {
+  planet: planetImg,
+  sun: sunImg,
+  moon: moonImg,
+  galaxy: galaxyImg,
+  nebula: nebulaImg,
+  exoplanet: exoplanetImg,
+  star_system: starSystemImg,
+  cluster: clusterImg,
+  quasar: quasarImg,
+};
+
 interface Node {
   id: string;
   name: string;
-  kind: DestinationKind | TeamDestKind;
+  kind: DestinationKind;
   group: "singular" | "team";
   level: number;
   transport: string;
-  detail: string;
-  x: number; // 0..100 (svg viewBox)
-  y: number; // 0..100
+  /** 0..100 % do pôster (largura) */
+  x: number;
+  /** 0..100 % do pôster (altura) */
+  y: number;
+  /** Tamanho relativo (% da largura do pôster). */
+  size: number;
 }
 
-// Spread 45 nodes ao longo de um caminho serpentino dentro de uma viewBox 100×260.
+// Distribui 45 nós num pôster vertical longo, seguindo trajeto serpentino,
+// com tamanhos variados por tipo (sóis/galáxias/quasars maiores).
 function buildNodes(): Node[] {
-  const singularItems = DESTINATIONS.map((d) => ({
-    id: d.id, name: d.name, kind: d.kind, level: d.level,
-    transport: d.transport, group: "singular" as const,
-    detail: d.kind,
-  }));
-  const teamItems = TEAM_DESTINATIONS.map((d) => ({
-    id: d.id, name: d.name, kind: d.kind, level: d.level,
-    transport: d.transport, group: "team" as const,
-    detail: TEAM_KIND_LABEL[d.kind],
-  }));
-  const all = [...singularItems, ...teamItems];
+  const all = [
+    ...DESTINATIONS.map((d) => ({ ...d, group: "singular" as const })),
+    ...TEAM_DESTINATIONS.map((d) => ({
+      id: d.id, name: d.name, transport: d.transport,
+      level: d.level, kind: d.kind as DestinationKind, group: "team" as const,
+    })),
+  ];
 
-  // serpentina: 5 colunas, ~9 linhas → 45 nós
-  const COLS = 5;
-  const ROWS = Math.ceil(all.length / COLS); // 9
+  const sizeFor = (k: DestinationKind) => {
+    if (k === "galaxy" || k === "quasar") return 22;
+    if (k === "sun" || k === "nebula" || k === "star_system") return 19;
+    if (k === "planet" || k === "exoplanet") return 17;
+    if (k === "cluster") return 16;
+    if (k === "moon") return 14;
+    return 16;
+  };
+
+  const COLS = 3;
+  const ROWS = Math.ceil(all.length / COLS); // 15 fileiras
   const stepX = 100 / (COLS + 1);
-  const stepY = 260 / (ROWS + 1);
+  const stepY = 100 / (ROWS + 1);
 
   return all.map((it, i) => {
     const row = Math.floor(i / COLS);
     const colInRow = i % COLS;
     const leftToRight = row % 2 === 0;
     const col = leftToRight ? colInRow : COLS - 1 - colInRow;
-    // pequena variação para parecer caminho de mapa
-    const jitterX = (Math.sin(i * 1.7) * 4);
-    const jitterY = (Math.cos(i * 2.3) * 3);
+    const jitterX = Math.sin(i * 1.9) * 5;
+    const jitterY = Math.cos(i * 2.7) * 1.5;
     return {
       ...it,
       x: stepX * (col + 1) + jitterX,
       y: stepY * (row + 1) + jitterY,
+      size: sizeFor(it.kind),
     };
   });
 }
 
-const KIND_COLOR: Record<string, string> = {
-  // singular
-  planet: "#60a5fa",
-  sun: "#f59e0b",
-  moon: "#cbd5e1",
-  fatal: "#ef4444",
-  // team
-  galaxy: "#a78bfa",
-  nebula: "#f472b6",
-  exoplanet: "#34d399",
-  star_system: "#fbbf24",
-  cluster: "#22d3ee",
-  quasar: "#fb7185",
-};
-
 function Mapa() {
   const [mode, setMode] = useState<Mode>("all");
   const [selected, setSelected] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   const nodes = useMemo(() => buildNodes(), []);
   const visible = useMemo(
@@ -90,19 +106,17 @@ function Mapa() {
     [nodes, mode],
   );
 
-  // caminho percorrendo os nós visíveis em ordem
-  const path = useMemo(() => {
-    if (visible.length === 0) return "";
-    return visible.map((n, i) => `${i === 0 ? "M" : "L"} ${n.x.toFixed(2)} ${n.y.toFixed(2)}`).join(" ");
-  }, [visible]);
-
-  // nave singular e nave de equipe (último nó de cada grupo como "estacionamento")
+  // Posição das naves: última posição (mais avançada) por grupo dentro do filtro atual.
   const ship = {
-    singular: [...visible].reverse().find((n) => n.group === "singular"),
-    team:     [...visible].reverse().find((n) => n.group === "team"),
+    singular: [...nodes].reverse().find((n) => n.group === "singular"),
+    team:     [...nodes].reverse().find((n) => n.group === "team"),
   };
 
   const selectedNode = selected ? nodes.find((n) => n.id === selected) : null;
+  const teamMeta = selectedNode?.group === "team" ? getTeamDestination(selectedNode.id) : null;
+
+  // Pôster com proporção alta (mapa longo) para caber 15 fileiras.
+  const POSTER_RATIO = 2.6; // altura / largura
 
   return (
     <main className="px-4 py-6 max-w-3xl mx-auto pb-24">
@@ -111,10 +125,10 @@ function Mapa() {
         <WalletBadge />
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        45 destinos · 15 singulares + 30 de equipe. Clique num nó para detalhes.
+        45 destinos quiz · arraste, dê pinch-zoom ou use os botões. Naves marcam o ponto mais avançado.
       </p>
 
-      <div className="flex gap-2 mb-3" role="tablist">
+      <div className="flex flex-wrap gap-2 mb-3 items-center" role="tablist">
         <FilterChip active={mode === "all"} onClick={() => setMode("all")} icon={<Sparkles className="w-3.5 h-3.5" />}>
           Todos ({nodes.length})
         </FilterChip>
@@ -124,98 +138,166 @@ function Mapa() {
         <FilterChip active={mode === "team"} onClick={() => setMode("team")} icon={<Users className="w-3.5 h-3.5" />}>
           Equipe ({TEAM_DESTINATIONS.length})
         </FilterChip>
+        <div className="ml-auto flex items-center gap-1 text-xs">
+          <button onClick={() => setZoom((z) => Math.max(0.6, +(z - 0.2).toFixed(2)))}
+            className="p-1.5 rounded-md border border-accent/30 hover:border-accent" aria-label="Diminuir zoom">
+            <ZoomOut className="w-3.5 h-3.5" />
+          </button>
+          <span className="font-mono w-10 text-center text-[11px]">{Math.round(zoom * 100)}%</span>
+          <button onClick={() => setZoom((z) => Math.min(2.4, +(z + 0.2).toFixed(2)))}
+            className="p-1.5 rounded-md border border-accent/30 hover:border-accent" aria-label="Aumentar zoom">
+            <ZoomIn className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => setZoom(1)} className="p-1.5 rounded-md border border-accent/30 hover:border-accent" aria-label="Encaixar">
+            <Maximize2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
-      <div className="glass rounded-2xl p-2 border border-accent/30 relative overflow-hidden">
-        {/* fundo estrelado */}
-        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(167,139,250,0.15),transparent_60%),radial-gradient(circle_at_80%_70%,rgba(34,211,238,0.12),transparent_55%)] pointer-events-none" />
-        <svg viewBox="0 0 100 260" className="w-full h-[70vh] max-h-[680px] relative" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <linearGradient id="trail" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%"  stopColor="#a78bfa" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.6" />
-            </linearGradient>
-            <filter id="glow"><feGaussianBlur stdDeviation="0.8" /></filter>
-          </defs>
+      {/* Scroller: arraste vertical/horizontal + pinch-zoom no celular */}
+      <div
+        ref={scrollerRef}
+        className="glass rounded-2xl border border-accent/30 relative overflow-auto"
+        style={{
+          height: "70vh",
+          maxHeight: 680,
+          touchAction: "pan-x pan-y pinch-zoom",
+          background:
+            "radial-gradient(ellipse at top, rgba(167,139,250,0.18), transparent 60%), radial-gradient(ellipse at bottom, rgba(34,211,238,0.15), transparent 55%), #05010f",
+        }}
+      >
+        <div
+          style={{
+            width: `${100 * zoom}%`,
+            aspectRatio: `1 / ${POSTER_RATIO}`,
+            position: "relative",
+            margin: "0 auto",
+            transition: "width 200ms ease",
+          }}
+        >
+          {/* fundo estrelado */}
+          <div aria-hidden className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage:
+                "radial-gradient(1px 1px at 20% 8%, #fff 99%, transparent), radial-gradient(1px 1px at 70% 14%, #fff 99%, transparent), radial-gradient(1px 1px at 35% 22%, #cbd5e1 99%, transparent), radial-gradient(1.5px 1.5px at 85% 30%, #fff 99%, transparent), radial-gradient(1px 1px at 12% 42%, #fff 99%, transparent), radial-gradient(1px 1px at 55% 50%, #cbd5e1 99%, transparent), radial-gradient(1px 1px at 78% 58%, #fff 99%, transparent), radial-gradient(1.5px 1.5px at 28% 66%, #fff 99%, transparent), radial-gradient(1px 1px at 60% 74%, #cbd5e1 99%, transparent), radial-gradient(1px 1px at 90% 82%, #fff 99%, transparent), radial-gradient(1px 1px at 18% 90%, #fff 99%, transparent), radial-gradient(1px 1px at 48% 96%, #cbd5e1 99%, transparent)",
+            }}
+          />
 
-          {/* estrelas decorativas */}
-          {Array.from({ length: 40 }).map((_, i) => (
-            <circle key={i} cx={(i * 53) % 100} cy={(i * 97) % 260} r={0.3 + ((i * 7) % 5) / 10} fill="#fff" opacity={0.25 + ((i % 5) * 0.1)} />
-          ))}
+          {/* Trajeto entre nós visíveis */}
+          <svg viewBox="0 0 100 260" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none">
+            <defs>
+              <linearGradient id="trail" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.6" />
+              </linearGradient>
+            </defs>
+            {visible.length > 1 && (
+              <path
+                d={visible.map((n, i) => `${i === 0 ? "M" : "L"} ${n.x} ${(n.y / 100) * 260}`).join(" ")}
+                fill="none"
+                stroke="url(#trail)"
+                strokeWidth="0.4"
+                strokeDasharray="1.2 1.5"
+              />
+            )}
+          </svg>
 
-          {/* trajeto */}
-          {path && (
-            <path d={path} fill="none" stroke="url(#trail)" strokeWidth="0.6"
-              strokeDasharray="1.5 1.5" filter="url(#glow)" />
-          )}
-
-          {/* nós */}
+          {/* Nós: imagens reais por tipo */}
           {visible.map((n) => {
-            const color = KIND_COLOR[n.kind] ?? "#a78bfa";
+            const src = KIND_IMAGE[n.kind];
             const isSel = selected === n.id;
-            const r = n.group === "singular" ? 2.4 : 2.0;
+            const sizePct = n.size;
             return (
-              <g key={n.id} className="cursor-pointer" onClick={() => setSelected(n.id)}>
-                <circle cx={n.x} cy={n.y} r={r + 1.4} fill={color} opacity={isSel ? 0.55 : 0.25} />
-                <circle cx={n.x} cy={n.y} r={r} fill={color}
-                  stroke={isSel ? "#fff" : "rgba(255,255,255,0.4)"} strokeWidth={isSel ? 0.5 : 0.2} />
-                {n.group === "team" && (
-                  <circle cx={n.x} cy={n.y} r={r - 1} fill="none" stroke="#0b1020" strokeWidth="0.3" />
-                )}
-              </g>
+              <button
+                key={n.id}
+                onClick={() => setSelected(n.id)}
+                className="absolute -translate-x-1/2 -translate-y-1/2 group"
+                style={{ left: `${n.x}%`, top: `${n.y}%`, width: `${sizePct}%` }}
+                aria-label={n.name}
+              >
+                <div className="relative aspect-square">
+                  <img
+                    src={src}
+                    alt={n.name}
+                    loading="lazy"
+                    className={`w-full h-full object-contain drop-shadow-[0_0_18px_rgba(167,139,250,0.55)] transition-transform group-hover:scale-110 ${isSel ? "scale-110" : ""}`}
+                  />
+                  {isSel && (
+                    <div className="absolute inset-0 rounded-full ring-2 ring-accent animate-pulse" />
+                  )}
+                </div>
+                <div className={`mt-0.5 text-center text-[9px] leading-tight font-mono px-1 truncate ${isSel ? "text-accent" : "text-white/85"}`}>
+                  {n.name}
+                </div>
+              </button>
             );
           })}
 
-          {/* naves estacionadas */}
+          {/* Naves: 🚀 singular e 🛸 equipe na última posição de cada grupo */}
           {ship.singular && (
-            <g transform={`translate(${ship.singular.x + 2.5} ${ship.singular.y - 3})`}>
-              <text fontSize="3.2" fill="#fbbf24">🚀</text>
-            </g>
+            <div
+              className="absolute -translate-x-1/2 -translate-y-full text-2xl drop-shadow-[0_0_8px_rgba(251,191,36,0.9)] pointer-events-none"
+              style={{ left: `${ship.singular.x + 4}%`, top: `${ship.singular.y}%` }}
+              aria-label="Nave singular"
+              title="Nave singular"
+            >
+              🚀
+            </div>
           )}
-          {ship.team && ship.team.id !== ship.singular?.id && (
-            <g transform={`translate(${ship.team.x + 2.5} ${ship.team.y - 3})`}>
-              <text fontSize="3.2" fill="#a78bfa">🛸</text>
-            </g>
+          {ship.team && (
+            <div
+              className="absolute -translate-x-1/2 -translate-y-full text-2xl drop-shadow-[0_0_8px_rgba(167,139,250,0.9)] pointer-events-none"
+              style={{ left: `${ship.team.x - 4}%`, top: `${ship.team.y}%` }}
+              aria-label="Nave de equipe"
+              title="Nave de equipe"
+            >
+              🛸
+            </div>
           )}
-        </svg>
-      </div>
-
-      {/* legenda */}
-      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-        <LegendDot color={KIND_COLOR.planet}>planeta</LegendDot>
-        <LegendDot color={KIND_COLOR.sun}>sol</LegendDot>
-        <LegendDot color={KIND_COLOR.moon}>lua</LegendDot>
-        <LegendDot color={KIND_COLOR.galaxy}>galáxia</LegendDot>
-        <LegendDot color={KIND_COLOR.nebula}>nebulosa</LegendDot>
-        <LegendDot color={KIND_COLOR.exoplanet}>exoplaneta</LegendDot>
-        <LegendDot color={KIND_COLOR.star_system}>sistema estelar</LegendDot>
-        <LegendDot color={KIND_COLOR.cluster}>aglomerado</LegendDot>
-        <LegendDot color={KIND_COLOR.quasar}>quasar</LegendDot>
+        </div>
       </div>
 
       {/* detalhe do nó selecionado */}
       <div className="mt-3 glass rounded-xl p-4 border border-accent/20 min-h-[88px]">
         {selectedNode ? (
-          <>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: KIND_COLOR[selectedNode.kind] ?? "#a78bfa" }} />
-              <h3 className="font-display text-sm">{selectedNode.name}</h3>
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground ml-auto">
-                {selectedNode.group === "team" ? "equipe" : "singular"} · nível {selectedNode.level}
-              </span>
+          <div className="flex gap-3">
+            <img
+              src={KIND_IMAGE[selectedNode.kind]}
+              alt=""
+              loading="lazy"
+              className="w-16 h-16 object-contain shrink-0 drop-shadow-[0_0_12px_rgba(167,139,250,0.6)]"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-display text-sm truncate">{selectedNode.name}</h3>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground ml-auto shrink-0">
+                  {selectedNode.group === "team" ? "equipe" : "singular"} · nv {selectedNode.level}
+                </span>
+              </div>
+              <p className="text-xs text-foreground/70">
+                Tipo: <span className="text-foreground/90">{KIND_LABEL[selectedNode.kind]}</span>
+              </p>
+              <p className="text-xs text-foreground/70">
+                Transporte: <span className="text-foreground/90">{selectedNode.transport}</span>
+              </p>
+              {teamMeta && (
+                <>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Constelação: <span className="text-foreground/80">{teamMeta.constellation}</span> · {teamMeta.distance}
+                  </p>
+                  <p className="text-[11px] text-foreground/70 line-clamp-2">{teamMeta.highlight}</p>
+                </>
+              )}
+              <div className="mt-2">
+                <Link
+                  to="/galaxia"
+                  className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-accent text-accent-foreground font-bold"
+                >
+                  <Rocket className="w-3 h-3" /> Ir fazer o quiz
+                </Link>
+              </div>
             </div>
-            <p className="text-xs text-foreground/70">
-              Tipo: <span className="text-foreground/90 capitalize">{selectedNode.detail.replaceAll("_", " ")}</span>
-            </p>
-            <p className="text-xs text-foreground/70">
-              Transporte: <span className="text-foreground/90">{selectedNode.transport}</span>
-            </p>
-            {selectedNode.group === "team" && (
-              <Link to="/equipes/destinos" className="text-[11px] underline text-accent mt-1 inline-block">
-                Ver todos os destinos de equipe →
-              </Link>
-            )}
-          </>
+          </div>
         ) : (
           <p className="text-xs text-muted-foreground text-center py-3">
             <Rocket className="w-4 h-4 inline mr-1 text-accent" />
@@ -243,13 +325,5 @@ function FilterChip({ active, onClick, icon, children }: { active: boolean; onCl
     >
       {icon}{children}
     </button>
-  );
-}
-
-function LegendDot({ color, children }: { color: string; children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1">
-      <span className="w-2 h-2 rounded-full" style={{ background: color }} /> {children}
-    </span>
   );
 }
