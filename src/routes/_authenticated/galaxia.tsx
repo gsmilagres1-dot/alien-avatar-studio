@@ -117,7 +117,7 @@ function Galaxia() {
 
   const { journey, passport, visas, identity } = state;
   const visitedIds = new Set(visas.map((v) => v.destination_id));
-  const remaining = DESTINATIONS.filter((d) => !visitedIds.has(d.id));
+  const remaining = ALL_DESTINATIONS.filter((d) => !visitedIds.has(d.id));
   const currentDest = chosenDestId ? getAnyDestination(chosenDestId) ?? null : null;
   const attemptsLeft = MAX_QUIZ_ATTEMPTS - journey.attempts_used;
 
@@ -135,9 +135,9 @@ function Galaxia() {
             {identity?.alien_name} {fatal ? "acabou em" : "chegou em"}{" "}
             <span className="font-bold text-gradient-neon">{journey.final_destination_name}</span>
           </p>
-          {!fatal && visas.length >= DESTINATIONS.length && (
+          {!fatal && visas.length >= TELEPORTER_THRESHOLD && (
             <div className="mt-6">
-              <TeleporterPrize visitedCount={visas.length} totalCount={DESTINATIONS.length} variant="reward" />
+              <TeleporterPrize visitedCount={visas.length} totalCount={TELEPORTER_THRESHOLD} variant="reward" />
             </div>
           )}
           {visas.length > 0 && (
@@ -335,10 +335,10 @@ function Galaxia() {
       <div className="mb-5">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
           <span>Destinos visitados</span>
-          <span>{visas.length}/{DESTINATIONS.length}</span>
+          <span>{visas.length}/{ALL_DESTINATIONS.length}</span>
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
-          <div className="h-full bg-accent" style={{ width: `${(visas.length / DESTINATIONS.length) * 100}%` }} />
+          <div className="h-full bg-accent" style={{ width: `${(visas.length / ALL_DESTINATIONS.length) * 100}%` }} />
         </div>
       </div>
 
@@ -407,7 +407,7 @@ function Galaxia() {
 
       {!currentDest && journeyStep === "destination" && (
         <div className="glass rounded-2xl p-5">
-          <TeleporterPrize visitedCount={visas.length} totalCount={DESTINATIONS.length} variant="banner" />
+          <TeleporterPrize visitedCount={visas.length} totalCount={TELEPORTER_THRESHOLD} variant="banner" />
           <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Etapa 3 · Escolha seu destino</h2>
           <p className="text-xs text-muted-foreground mt-1">Passaporte liberado. Agora escolha o destino, depois sua nave e então comece o quiz. Tudo grátis.</p>
 
@@ -547,7 +547,7 @@ function Galaxia() {
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
               Painel · Selos de embarque conquistados
             </div>
-            <div className="text-[10px] font-mono text-accent">{visas.length}/{DESTINATIONS.length}</div>
+            <div className="text-[10px] font-mono text-accent">{visas.length}/{ALL_DESTINATIONS.length}</div>
           </div>
           <div className="flex flex-wrap gap-3 justify-center rounded-2xl border border-accent/30 bg-gradient-to-b from-black/40 to-accent/5 p-4 shadow-inner">
             {visas.map((v) => (
@@ -560,9 +560,9 @@ function Galaxia() {
               />
             ))}
           </div>
-          {visas.length >= DESTINATIONS.length && (
+          {visas.length >= TELEPORTER_THRESHOLD && (
             <div className="mt-5">
-              <TeleporterPrize visitedCount={visas.length} totalCount={DESTINATIONS.length} variant="reward" />
+              <TeleporterPrize visitedCount={visas.length} totalCount={TELEPORTER_THRESHOLD} variant="reward" />
             </div>
           )}
         </div>
