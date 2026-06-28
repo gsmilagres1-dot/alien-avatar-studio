@@ -19,6 +19,7 @@ import { Route as AuthenticatedGaleriaRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedGalaxiaRouteImport } from './routes/_authenticated/galaxia'
 import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
 import { Route as AuthenticatedCriarRouteImport } from './routes/_authenticated/criar'
+import { Route as AuthenticatedEquipesDestinosRouteImport } from './routes/_authenticated/equipes.destinos'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedEquipesConviteTokenRouteImport } from './routes/_authenticated/equipes.convite.$token'
 
@@ -71,6 +72,12 @@ const AuthenticatedCriarRoute = AuthenticatedCriarRouteImport.update({
   path: '/criar',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedEquipesDestinosRoute =
+  AuthenticatedEquipesDestinosRouteImport.update({
+    id: '/destinos',
+    path: '/destinos',
+    getParentRoute: () => AuthenticatedEquipesRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -94,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/equipes/destinos': typeof AuthenticatedEquipesDestinosRoute
   '/equipes/convite/$token': typeof AuthenticatedEquipesConviteTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -107,6 +115,7 @@ export interface FileRoutesByTo {
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/equipes/destinos': typeof AuthenticatedEquipesDestinosRoute
   '/equipes/convite/$token': typeof AuthenticatedEquipesConviteTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -122,6 +131,7 @@ export interface FileRoutesById {
   '/_authenticated/loja': typeof AuthenticatedLojaRoute
   '/_authenticated/mapa': typeof AuthenticatedMapaRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/_authenticated/equipes/destinos': typeof AuthenticatedEquipesDestinosRoute
   '/_authenticated/equipes/convite/$token': typeof AuthenticatedEquipesConviteTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/loja'
     | '/mapa'
     | '/checkout/return'
+    | '/equipes/destinos'
     | '/equipes/convite/$token'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/loja'
     | '/mapa'
     | '/checkout/return'
+    | '/equipes/destinos'
     | '/equipes/convite/$token'
     | '/api/public/payments/webhook'
   id:
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/_authenticated/loja'
     | '/_authenticated/mapa'
     | '/checkout/return'
+    | '/_authenticated/equipes/destinos'
     | '/_authenticated/equipes/convite/$token'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -248,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCriarRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/equipes/destinos': {
+      id: '/_authenticated/equipes/destinos'
+      path: '/destinos'
+      fullPath: '/equipes/destinos'
+      preLoaderRoute: typeof AuthenticatedEquipesDestinosRouteImport
+      parentRoute: typeof AuthenticatedEquipesRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -266,10 +286,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedEquipesRouteChildren {
+  AuthenticatedEquipesDestinosRoute: typeof AuthenticatedEquipesDestinosRoute
   AuthenticatedEquipesConviteTokenRoute: typeof AuthenticatedEquipesConviteTokenRoute
 }
 
 const AuthenticatedEquipesRouteChildren: AuthenticatedEquipesRouteChildren = {
+  AuthenticatedEquipesDestinosRoute: AuthenticatedEquipesDestinosRoute,
   AuthenticatedEquipesConviteTokenRoute: AuthenticatedEquipesConviteTokenRoute,
 }
 
