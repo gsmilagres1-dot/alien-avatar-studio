@@ -98,8 +98,8 @@ function Mapa() {
 
   // nave singular e nave de equipe (último nó de cada grupo como "estacionamento")
   const ship = {
-    singular: visible.findLast?.((n) => n.group === "singular") ?? [...visible].reverse().find((n) => n.group === "singular"),
-    team:     visible.findLast?.((n) => n.group === "team")     ?? [...visible].reverse().find((n) => n.group === "team"),
+    singular: [...visible].reverse().find((n) => n.group === "singular"),
+    team:     [...visible].reverse().find((n) => n.group === "team"),
   };
 
   const selectedNode = selected ? nodes.find((n) => n.id === selected) : null;
