@@ -118,7 +118,7 @@ function Galaxia() {
   const { journey, passport, visas, identity } = state;
   const visitedIds = new Set(visas.map((v) => v.destination_id));
   const remaining = DESTINATIONS.filter((d) => !visitedIds.has(d.id));
-  const currentDest = chosenDestId ? getDestination(chosenDestId) ?? null : null;
+  const currentDest = chosenDestId ? getAnyDestination(chosenDestId) ?? null : null;
   const attemptsLeft = MAX_QUIZ_ATTEMPTS - journey.attempts_used;
 
   // Journey ended (completed or lost)
