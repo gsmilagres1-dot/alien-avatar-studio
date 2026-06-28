@@ -223,6 +223,17 @@ function Criar() {
 
   return (
     <>
+      {rawPhoto && (
+        <SelfieCropper
+          src={rawPhoto}
+          onCancel={() => setRawPhoto(null)}
+          onConfirm={(dataUrl) => {
+            setPhoto(dataUrl);
+            setRawPhoto(null);
+            toast.success("Selfie enquadrada no padrão ICAO 5×7");
+          }}
+        />
+      )}
       <main className="relative z-10 px-4 py-6 sm:py-10">
         <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => { onPickFile(e.target.files?.[0]); e.target.value = ""; }} />
         <input ref={galleryRef} type="file" accept="image/*" hidden onChange={(e) => { onPickFile(e.target.files?.[0]); e.target.value = ""; }} />
