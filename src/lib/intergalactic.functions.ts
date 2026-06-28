@@ -222,8 +222,32 @@ export const claimVisa = createServerFn({ method: "POST" })
     });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
 
+    // Ligação surpresa: a cada GALAXY_SURPRISE_STEP visitas em galáxias,
+    // o viajante recebe uma chamada com fichas aleatórias.
+    let surpriseCall: { fichas: number; galaxyCount: number } | null = null;
+    if (dest.kind === "galaxy") {
+      const { data: galaxyVisas } = await supabaseAdmin
+        .from("visas").select("destination_id").eq("journey_id", journey.id);
+      const galaxyIds = new Set(
+        ALL_DESTINATIONS.filter((d) => d.kind === "galaxy").map((d) => d.id),
+      );
+      const galaxyCount = (galaxyVisas ?? []).filter((v) => galaxyIds.has(v.destination_id as string)).length;
+      if (galaxyCount > 0 && galaxyCount % GALAXY_SURPRISE_STEP === 0) {
+        const fichas = Math.floor(
+          GALAXY_SURPRISE_MIN + Math.random() * (GALAXY_SURPRISE_MAX - GALAXY_SURPRISE_MIN + 1),
+        );
+        try {
+          await supabaseAdmin.rpc("adjust_fichas", {
+            _user_id: userId, _delta: fichas, _reason: "galaxy_surprise_call",
+            _meta: { destinationId: dest.id, galaxyCount },
+          });
+          surpriseCall = { fichas, galaxyCount };
+        } catch { /* wallet may not exist yet */ }
+      }
+    }
+
     const newLevel = journey.current_level + 1;
-    if (newLevel > DESTINATIONS.length) {
+    if (newLevel > ALL_DESTINATIONS.length) {
       await supabaseAdmin.from("journeys").update({
         status: "completed",
         current_level: newLevel,
@@ -236,8 +260,9 @@ export const claimVisa = createServerFn({ method: "POST" })
         current_level: newLevel, attempts_used: 0,
       }).eq("id", journey.id);
     }
-    return { ok: true };
+    return { ok: true, surpriseCall };
   });
+
 
 export const completeJourney = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
