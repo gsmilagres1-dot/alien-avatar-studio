@@ -528,11 +528,19 @@ function Galaxia() {
             {lastResult?.passed && lastResult.tier && (
               <button onClick={async () => {
                 try {
-                  await claimVisaFn({ data: { journeyId: journey.id, destinationId: currentDest.id, tier: lastResult.tier! } });
+                  const r = await claimVisaFn({ data: { journeyId: journey.id, destinationId: currentDest.id, tier: lastResult.tier! } });
                   toast.success(`Visto ${lastResult.tier === "gold" ? "OURO" : lastResult.tier === "silver" ? "PRATA" : "BRONZE"} emitido para ${currentDest.name}!`);
+                  if (r?.surpriseCall) {
+                    toast(`☎️ Ligação surpresa! +${r.surpriseCall.fichas} fichas (${r.surpriseCall.galaxyCount} galáxias visitadas)`, {
+                      duration: 7000,
+                      style: { background: "oklch(0.25 0.08 280)", color: "#fde68a", border: "1px solid #fbbf24" },
+                    });
+                    await qc.invalidateQueries({ queryKey: ["wallet"] });
+                  }
                   setChosenDestId(null); setLastResult(null);
                   await qc.invalidateQueries({ queryKey: ["journey", identityId] });
                 } catch (e) { toast.error((e as Error).message); }
+
               }} className="flex-1 px-5 py-3 rounded-full border border-accent/40 hover:bg-accent/10 text-sm">
                 Embarcar com selo {lastResult.tier === "gold" ? "OURO" : lastResult.tier === "silver" ? "PRATA" : "BRONZE"} <ArrowRight className="w-3.5 h-3.5 inline" />
               </button>
