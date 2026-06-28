@@ -1,6 +1,7 @@
 // Shared constants for the intergalactic area (client + server safe).
+import { TEAM_DESTINATIONS, type TeamDestKind } from "@/lib/team-destinations";
 
-export type DestinationKind = "planet" | "sun" | "moon" | "fatal";
+export type DestinationKind = "planet" | "sun" | "moon" | "fatal" | TeamDestKind;
 
 export interface Destination {
   id: string;
@@ -9,6 +10,7 @@ export interface Destination {
   level: number; // dificuldade do quiz (1-5)
   kind: DestinationKind;
 }
+
 
 export const DESTINATIONS: Destination[] = [
   // 10 planetas
