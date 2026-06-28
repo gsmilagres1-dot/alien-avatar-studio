@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Users, Plus, Crown, Link2, LogOut, Copy, Check, Loader2 } from "lucide-react";
+import { Users, Plus, Crown, Link2, LogOut, Copy, Check, Loader2, Swords, Coins, ChevronRight } from "lucide-react";
 import { WalletBadge } from "@/components/WalletBadge";
 import { TeamChat } from "@/components/TeamChat";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,9 @@ import {
   createTeam, listTeamsRanking, getMyTeam, updateTeam,
   createInvite, listInvites, leaveTeam,
 } from "@/lib/teams.functions";
+import {
+  listBattlesForMyTeams, listOpenTeams, createBattleFn, acceptBattleFn, listBattleDestinations,
+} from "@/lib/battles.functions";
 
 export const Route = createFileRoute("/_authenticated/equipes")({
   component: Equipes,
