@@ -4,16 +4,28 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   DESTINATIONS,
+  ALL_DESTINATIONS,
   MAX_QUIZ_ATTEMPTS,
   QUESTIONS_PER_QUIZ,
   QUESTIONS_PER_LEVEL,
   QUIZ_LEVELS,
   QUIZ_PASS_RATIO,
-  getDestination,
+  GALAXY_SURPRISE_STEP,
+  GALAXY_SURPRISE_MIN,
+  GALAXY_SURPRISE_MAX,
+  getAnyDestination,
   pickFatalDestination,
   tierFromScore,
 } from "@/lib/intergalactic";
 import { getBankForDestination } from "@/lib/intergalactic-questions";
+import { getTeamBank, getTeamDestination } from "@/lib/team-destinations";
+
+function getBankForAny(id: string) {
+  const singular = getBankForDestination(id);
+  if (singular.length > 0) return singular;
+  return getTeamBank(id);
+}
+
 
 interface QuizQuestion { q: string; choices: string[]; answer: number; level?: number }
 
