@@ -32,9 +32,12 @@ function Equipes() {
         <h1 className="font-display text-2xl text-gradient-neon">Equipes Alien</h1>
         <WalletBadge />
       </div>
-      <p className="text-sm text-muted-foreground mb-6">
+      <p className="text-sm text-muted-foreground mb-3">
         Forme equipe de até 50 membros e dispute batalhas-quiz online apostando fichas.
       </p>
+      <Link to="/equipes/destinos" className="inline-flex items-center gap-2 text-xs text-accent underline mb-6">
+        🌌 Ver os 30 destinos exclusivos de equipe →
+      </Link>
 
       {myTeam.isLoading ? (
         <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
