@@ -35,7 +35,7 @@ interface QuizQuestion { q: string; choices: string[]; answer: number; level?: n
  * Cada tentativa embaralha o pool — então as 3 chances podem ter perguntas diferentes.
  */
 function buildQuizFromBank(destinationId: string, attemptSeed: number): QuizQuestion[] {
-  const bank = getBankForDestination(destinationId);
+  const bank = getBankForAny(destinationId);
   if (bank.length === 0) return [];
 
   const rng = mulberry32(attemptSeed);
