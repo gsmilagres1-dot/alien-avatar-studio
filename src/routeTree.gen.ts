@@ -13,13 +13,16 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as AuthenticatedUpgradesRouteImport } from './routes/_authenticated/upgrades'
 import { Route as AuthenticatedMapaRouteImport } from './routes/_authenticated/mapa'
 import { Route as AuthenticatedLojaRouteImport } from './routes/_authenticated/loja'
 import { Route as AuthenticatedGaleriaRouteImport } from './routes/_authenticated/galeria'
 import { Route as AuthenticatedGalaxiaRouteImport } from './routes/_authenticated/galaxia'
 import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
 import { Route as AuthenticatedCriarRouteImport } from './routes/_authenticated/criar'
+import { Route as AuthenticatedBatalhaRouteImport } from './routes/_authenticated/batalha'
 import { Route as AuthenticatedEquipesDestinosRouteImport } from './routes/_authenticated/equipes.destinos'
+import { Route as AuthenticatedBatalhaIdRouteImport } from './routes/_authenticated/batalha.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedEquipesConviteTokenRouteImport } from './routes/_authenticated/equipes.convite.$token'
 
@@ -41,6 +44,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedUpgradesRoute = AuthenticatedUpgradesRouteImport.update({
+  id: '/upgrades',
+  path: '/upgrades',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMapaRoute = AuthenticatedMapaRouteImport.update({
   id: '/mapa',
@@ -72,12 +80,22 @@ const AuthenticatedCriarRoute = AuthenticatedCriarRouteImport.update({
   path: '/criar',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedBatalhaRoute = AuthenticatedBatalhaRouteImport.update({
+  id: '/batalha',
+  path: '/batalha',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedEquipesDestinosRoute =
   AuthenticatedEquipesDestinosRouteImport.update({
     id: '/destinos',
     path: '/destinos',
     getParentRoute: () => AuthenticatedEquipesRoute,
   } as any)
+const AuthenticatedBatalhaIdRoute = AuthenticatedBatalhaIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedBatalhaRoute,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -94,13 +112,16 @@ const AuthenticatedEquipesConviteTokenRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/batalha': typeof AuthenticatedBatalhaRouteWithChildren
   '/criar': typeof AuthenticatedCriarRoute
   '/equipes': typeof AuthenticatedEquipesRouteWithChildren
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
+  '/upgrades': typeof AuthenticatedUpgradesRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/batalha/$id': typeof AuthenticatedBatalhaIdRoute
   '/equipes/destinos': typeof AuthenticatedEquipesDestinosRoute
   '/equipes/convite/$token': typeof AuthenticatedEquipesConviteTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -108,13 +129,16 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/batalha': typeof AuthenticatedBatalhaRouteWithChildren
   '/criar': typeof AuthenticatedCriarRoute
   '/equipes': typeof AuthenticatedEquipesRouteWithChildren
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
+  '/upgrades': typeof AuthenticatedUpgradesRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/batalha/$id': typeof AuthenticatedBatalhaIdRoute
   '/equipes/destinos': typeof AuthenticatedEquipesDestinosRoute
   '/equipes/convite/$token': typeof AuthenticatedEquipesConviteTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -124,13 +148,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/batalha': typeof AuthenticatedBatalhaRouteWithChildren
   '/_authenticated/criar': typeof AuthenticatedCriarRoute
   '/_authenticated/equipes': typeof AuthenticatedEquipesRouteWithChildren
   '/_authenticated/galaxia': typeof AuthenticatedGalaxiaRoute
   '/_authenticated/galeria': typeof AuthenticatedGaleriaRoute
   '/_authenticated/loja': typeof AuthenticatedLojaRoute
   '/_authenticated/mapa': typeof AuthenticatedMapaRoute
+  '/_authenticated/upgrades': typeof AuthenticatedUpgradesRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/_authenticated/batalha/$id': typeof AuthenticatedBatalhaIdRoute
   '/_authenticated/equipes/destinos': typeof AuthenticatedEquipesDestinosRoute
   '/_authenticated/equipes/convite/$token': typeof AuthenticatedEquipesConviteTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -140,13 +167,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/batalha'
     | '/criar'
     | '/equipes'
     | '/galaxia'
     | '/galeria'
     | '/loja'
     | '/mapa'
+    | '/upgrades'
     | '/checkout/return'
+    | '/batalha/$id'
     | '/equipes/destinos'
     | '/equipes/convite/$token'
     | '/api/public/payments/webhook'
@@ -154,13 +184,16 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/batalha'
     | '/criar'
     | '/equipes'
     | '/galaxia'
     | '/galeria'
     | '/loja'
     | '/mapa'
+    | '/upgrades'
     | '/checkout/return'
+    | '/batalha/$id'
     | '/equipes/destinos'
     | '/equipes/convite/$token'
     | '/api/public/payments/webhook'
@@ -169,13 +202,16 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/batalha'
     | '/_authenticated/criar'
     | '/_authenticated/equipes'
     | '/_authenticated/galaxia'
     | '/_authenticated/galeria'
     | '/_authenticated/loja'
     | '/_authenticated/mapa'
+    | '/_authenticated/upgrades'
     | '/checkout/return'
+    | '/_authenticated/batalha/$id'
     | '/_authenticated/equipes/destinos'
     | '/_authenticated/equipes/convite/$token'
     | '/api/public/payments/webhook'
@@ -219,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/upgrades': {
+      id: '/_authenticated/upgrades'
+      path: '/upgrades'
+      fullPath: '/upgrades'
+      preLoaderRoute: typeof AuthenticatedUpgradesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/mapa': {
       id: '/_authenticated/mapa'
       path: '/mapa'
@@ -261,12 +304,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCriarRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/batalha': {
+      id: '/_authenticated/batalha'
+      path: '/batalha'
+      fullPath: '/batalha'
+      preLoaderRoute: typeof AuthenticatedBatalhaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/equipes/destinos': {
       id: '/_authenticated/equipes/destinos'
       path: '/destinos'
       fullPath: '/equipes/destinos'
       preLoaderRoute: typeof AuthenticatedEquipesDestinosRouteImport
       parentRoute: typeof AuthenticatedEquipesRoute
+    }
+    '/_authenticated/batalha/$id': {
+      id: '/_authenticated/batalha/$id'
+      path: '/$id'
+      fullPath: '/batalha/$id'
+      preLoaderRoute: typeof AuthenticatedBatalhaIdRouteImport
+      parentRoute: typeof AuthenticatedBatalhaRoute
     }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
@@ -285,6 +342,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedBatalhaRouteChildren {
+  AuthenticatedBatalhaIdRoute: typeof AuthenticatedBatalhaIdRoute
+}
+
+const AuthenticatedBatalhaRouteChildren: AuthenticatedBatalhaRouteChildren = {
+  AuthenticatedBatalhaIdRoute: AuthenticatedBatalhaIdRoute,
+}
+
+const AuthenticatedBatalhaRouteWithChildren =
+  AuthenticatedBatalhaRoute._addFileChildren(AuthenticatedBatalhaRouteChildren)
+
 interface AuthenticatedEquipesRouteChildren {
   AuthenticatedEquipesDestinosRoute: typeof AuthenticatedEquipesDestinosRoute
   AuthenticatedEquipesConviteTokenRoute: typeof AuthenticatedEquipesConviteTokenRoute
@@ -299,21 +367,25 @@ const AuthenticatedEquipesRouteWithChildren =
   AuthenticatedEquipesRoute._addFileChildren(AuthenticatedEquipesRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedBatalhaRoute: typeof AuthenticatedBatalhaRouteWithChildren
   AuthenticatedCriarRoute: typeof AuthenticatedCriarRoute
   AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRouteWithChildren
   AuthenticatedGalaxiaRoute: typeof AuthenticatedGalaxiaRoute
   AuthenticatedGaleriaRoute: typeof AuthenticatedGaleriaRoute
   AuthenticatedLojaRoute: typeof AuthenticatedLojaRoute
   AuthenticatedMapaRoute: typeof AuthenticatedMapaRoute
+  AuthenticatedUpgradesRoute: typeof AuthenticatedUpgradesRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedBatalhaRoute: AuthenticatedBatalhaRouteWithChildren,
   AuthenticatedCriarRoute: AuthenticatedCriarRoute,
   AuthenticatedEquipesRoute: AuthenticatedEquipesRouteWithChildren,
   AuthenticatedGalaxiaRoute: AuthenticatedGalaxiaRoute,
   AuthenticatedGaleriaRoute: AuthenticatedGaleriaRoute,
   AuthenticatedLojaRoute: AuthenticatedLojaRoute,
   AuthenticatedMapaRoute: AuthenticatedMapaRoute,
+  AuthenticatedUpgradesRoute: AuthenticatedUpgradesRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

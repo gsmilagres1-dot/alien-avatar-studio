@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Camera, Rocket, Sparkles, Stamp, MapPin, Cpu, Radar, Satellite, Users, Coins, Map, Gauge, Zap, Shield, Signal } from "lucide-react";
+import { Camera, Rocket, Sparkles, Stamp, MapPin, Cpu, Radar, Satellite, Users, Coins, Map, Gauge, Zap, Shield, Signal, Swords, Wrench } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import cockpitView from "@/assets/cockpit-view.jpg";
 
@@ -179,9 +179,12 @@ function Landing() {
         {/* 3 hub buttons */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { to: "/equipes", icon: Users, label: "Equipe",  sub: "Intergaláctica", color: "from-fuchsia-500 to-purple-700" },
-            { to: "/loja",    icon: Coins, label: "Fichas",  sub: "Loja · S.O.S.",   color: "from-yellow-400 to-orange-600" },
-            { to: "/mapa",    icon: Map,   label: "Mapa",    sub: "45 destinos",     color: "from-cyan-400 to-blue-700" },
+            { to: "/equipes",  icon: Users,  label: "Equipe",   sub: "Intergaláctica", color: "from-fuchsia-500 to-purple-700" },
+            { to: "/loja",     icon: Coins,  label: "Fichas",   sub: "Loja · S.O.S.",  color: "from-yellow-400 to-orange-600" },
+            { to: "/mapa",     icon: Map,    label: "Mapa",     sub: "45 destinos",    color: "from-cyan-400 to-blue-700" },
+            { to: "/batalha",  icon: Swords, label: "Batalha",  sub: "9 perguntas",    color: "from-rose-500 to-red-700" },
+            { to: "/upgrades", icon: Wrench, label: "Upgrades", sub: "Evoluir nave",   color: "from-emerald-400 to-teal-700" },
+            { to: "/galeria",  icon: Rocket, label: "Galeria",  sub: "Suas identid.",  color: "from-sky-400 to-indigo-700" },
           ].map((h) => (
             <Link key={h.to} to={h.to} className="rounded-xl p-[2px] bg-white/10 hover:scale-[1.03] active:scale-[0.97] transition">
               <div className={`rounded-xl p-2 bg-gradient-to-br ${h.color} h-full flex flex-col items-center text-center`}>

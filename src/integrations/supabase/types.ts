@@ -52,6 +52,112 @@ export type Database = {
           },
         ]
       }
+      battle_participants: {
+        Row: {
+          battle_id: string
+          completed_at: string | null
+          id: string
+          score: number | null
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          battle_id: string
+          completed_at?: string | null
+          id?: string
+          score?: number | null
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          battle_id?: string
+          completed_at?: string | null
+          id?: string
+          score?: number | null
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_participants_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battle_participants_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      battles: {
+        Row: {
+          bet_fichas: number
+          created_at: string
+          destination_key: string
+          id: string
+          status: Database["public"]["Enums"]["battle_status"]
+          team_a_id: string
+          team_a_score: number
+          team_b_id: string | null
+          team_b_score: number
+          updated_at: string
+          winner_team_id: string | null
+        }
+        Insert: {
+          bet_fichas?: number
+          created_at?: string
+          destination_key: string
+          id?: string
+          status?: Database["public"]["Enums"]["battle_status"]
+          team_a_id: string
+          team_a_score?: number
+          team_b_id?: string | null
+          team_b_score?: number
+          updated_at?: string
+          winner_team_id?: string | null
+        }
+        Update: {
+          bet_fichas?: number
+          created_at?: string
+          destination_key?: string
+          id?: string
+          status?: Database["public"]["Enums"]["battle_status"]
+          team_a_id?: string
+          team_a_score?: number
+          team_b_id?: string | null
+          team_b_score?: number
+          updated_at?: string
+          winner_team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battles_team_a_id_fkey"
+            columns: ["team_a_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battles_team_b_id_fkey"
+            columns: ["team_b_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battles_winner_team_id_fkey"
+            columns: ["winner_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ficha_transactions: {
         Row: {
           created_at: string
@@ -199,6 +305,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nave_upgrades: {
+        Row: {
+          created_at: string
+          id: string
+          level: number
+          updated_at: string
+          upgrade_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: number
+          updated_at?: string
+          upgrade_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: number
+          updated_at?: string
+          upgrade_key?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       passports: {
         Row: {
@@ -590,6 +723,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_battle: { Args: { _battle_id: string }; Returns: undefined }
       adjust_fichas: {
         Args: {
           _delta: number
@@ -598,6 +732,15 @@ export type Database = {
           _user_id: string
         }
         Returns: number
+      }
+      create_battle: {
+        Args: {
+          _bet_fichas: number
+          _destination_key: string
+          _team_a_id: string
+          _team_b_id: string
+        }
+        Returns: string
       }
       create_team: {
         Args: {
@@ -608,6 +751,7 @@ export type Database = {
         }
         Returns: string
       }
+      finalize_battle: { Args: { _battle_id: string }; Returns: string }
       is_team_leader: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
@@ -618,8 +762,14 @@ export type Database = {
       }
       join_team_via_invite: { Args: { _token: string }; Returns: string }
       leave_team: { Args: { _team_id: string }; Returns: undefined }
+      purchase_upgrade: { Args: { _upgrade_key: string }; Returns: number }
+      submit_battle_score: {
+        Args: { _battle_id: string; _score: number }
+        Returns: undefined
+      }
     }
     Enums: {
+      battle_status: "pending" | "active" | "finished" | "cancelled"
       team_role: "leader" | "member"
     }
     CompositeTypes: {
@@ -748,6 +898,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      battle_status: ["pending", "active", "finished", "cancelled"],
       team_role: ["leader", "member"],
     },
   },
