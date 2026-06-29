@@ -4,7 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { deleteIdentity } from "@/lib/identities.functions";
 import { listIdentitiesWithJourneys } from "@/lib/gallery.functions";
-import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin } from "lucide-react";
+import { rescueLostIdentity, RESCUE_COST } from "@/lib/rescue.functions";
+import { useWallet } from "@/hooks/useWallet";
+import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy } from "lucide-react";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
 import { DestinationBadge } from "@/components/DestinationBadge";
@@ -15,8 +17,11 @@ function Galeria() {
   const navigate = useNavigate();
   const list = useServerFn(listIdentitiesWithJourneys);
   const del = useServerFn(deleteIdentity);
+  const rescueFn = useServerFn(rescueLostIdentity);
+  const { fichas, refresh: refreshWallet } = useWallet();
   const qc = useQueryClient();
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [rescuingId, setRescuingId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ["identities-with-journeys"], queryFn: () => list() });
 
@@ -32,6 +37,25 @@ function Galeria() {
       toast.success("Removida");
     } catch (e) { toast.error((e as Error).message); }
     finally { setRemovingId(null); }
+  }
+
+  async function rescue(id: string) {
+    if (fichas < RESCUE_COST) {
+      toast.error(`Faltam ${RESCUE_COST - fichas} fichas para o resgate`);
+      return;
+    }
+    if (!confirm(`Resgatar essa identidade perdida no espaço? Custa ${RESCUE_COST} fichas.`)) return;
+    setRescuingId(id);
+    try {
+      await rescueFn({ data: { identityId: id } });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["identities-with-journeys"] }),
+        refreshWallet(),
+      ]);
+      toast.success("Resgatado! Selos preservados, viagem reativada.");
+      navigate({ to: "/galaxia", search: { identityId: id } });
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setRescuingId(null); }
   }
 
   return (
@@ -109,6 +133,19 @@ function Galeria() {
                       ))}
                     </div>
                   </div>
+                )}
+
+                {fatal && (
+                  <button
+                    type="button"
+                    disabled={rescuingId === i.id || fichas < RESCUE_COST}
+                    onClick={() => rescue(i.id)}
+                    className="mt-3 w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black text-xs font-bold shadow-neon disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={fichas < RESCUE_COST ? `Faltam ${RESCUE_COST - fichas} fichas` : "Resgatar identidade perdida"}
+                  >
+                    {rescuingId === i.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LifeBuoy className="w-3.5 h-3.5" />}
+                    Resgatar do espaço · {RESCUE_COST} fichas
+                  </button>
                 )}
 
                 <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Camera, Rocket, Sparkles, Stamp, MapPin, Cpu, Radar, Satellite, Users, Coins, Map, Gauge, Zap, Shield, Signal, Swords, Wrench } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useUpgradeStats } from "@/hooks/useUpgradeStats";
 import cockpitView from "@/assets/cockpit-view.jpg";
 
 export const Route = createFileRoute("/")({
@@ -52,6 +53,7 @@ function Readout({ icon: Icon, label, value, color }: { icon: typeof Gauge; labe
 }
 
 function Landing() {
+  const stats = useUpgradeStats();
   return (
     <main className="relative z-10 min-h-screen overflow-hidden">
       {/* ===== COCKPIT VIEWPORT (arched window) ===== */}
@@ -85,12 +87,12 @@ function Landing() {
 
           {/* Side readouts on viewport frame */}
           <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 w-[88px]">
-            <Readout icon={Gauge} label="Velocidade" value="0.42 c" color="#22d3ee" />
-            <Readout icon={Zap}   label="Reator"    value="98%"    color="#34d399" />
-            <Readout icon={Shield} label="Escudos"  value="OK"     color="#a78bfa" />
+            <Readout icon={Gauge} label="Velocidade" value={stats.speedC} color="#22d3ee" />
+            <Readout icon={Zap}   label="Reator"    value={stats.reactor}    color="#34d399" />
+            <Readout icon={Shield} label="Escudos"  value={stats.shields}     color="#a78bfa" />
           </div>
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 w-[88px] items-end">
-            <Readout icon={Radar}     label="Radar"  value="3 nv"  color="#fbbf24" />
+            <Readout icon={Radar}     label="Radar"  value={stats.radar}  color="#fbbf24" />
             <Readout icon={Satellite} label="Sync"   value="LINK"  color="#22d3ee" />
             <Readout icon={Signal}    label="Sinal"  value="-42dB" color="#f472b6" />
           </div>
