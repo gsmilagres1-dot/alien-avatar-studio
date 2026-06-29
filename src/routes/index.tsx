@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Camera, Rocket, Sparkles, Stamp, MapPin, Cpu, Radar, Satellite, Users, Coins, Map, Gauge, Zap, Shield, Signal, Swords, Wrench } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useUpgradeStats } from "@/hooks/useUpgradeStats";
 import cockpitView from "@/assets/cockpit-view.jpg";
 
 export const Route = createFileRoute("/")({
