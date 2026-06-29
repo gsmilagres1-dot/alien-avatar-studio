@@ -10,6 +10,7 @@ import { DESTINATIONS, ALL_DESTINATIONS, getAnyDestination, MAX_QUIZ_ATTEMPTS, K
 import { SHIPS } from "@/lib/alien";
 import { DestinationBadge } from "@/components/DestinationBadge";
 import { TeleporterPrize } from "@/components/TeleporterPrize";
+import { WormholePrize } from "@/components/WormholePrize";
 import { SOSButton } from "@/components/SOSButton";
 import { WalletBadge } from "@/components/WalletBadge";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
@@ -138,6 +139,11 @@ function Galaxia() {
           {!fatal && visas.length >= TELEPORTER_THRESHOLD && (
             <div className="mt-6">
               <TeleporterPrize visitedCount={visas.length} totalCount={TELEPORTER_THRESHOLD} variant="reward" />
+            </div>
+          )}
+          {!fatal && visas.length >= 15 && (
+            <div className="mt-4">
+              <WormholePrize visitedCount={visas.length} variant="reward" />
             </div>
           )}
           {visas.length > 0 && (
@@ -408,6 +414,9 @@ function Galaxia() {
       {!currentDest && journeyStep === "destination" && (
         <div className="glass rounded-2xl p-5">
           <TeleporterPrize visitedCount={visas.length} totalCount={TELEPORTER_THRESHOLD} variant="banner" />
+          {visas.length >= TELEPORTER_THRESHOLD && (
+            <WormholePrize visitedCount={visas.length} variant="banner" />
+          )}
           <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Etapa 3 · Escolha seu destino</h2>
           <p className="text-xs text-muted-foreground mt-1">Passaporte liberado. Agora escolha o destino, depois sua nave e então comece o quiz. Tudo grátis.</p>
 
@@ -571,6 +580,11 @@ function Galaxia() {
           {visas.length >= TELEPORTER_THRESHOLD && (
             <div className="mt-5">
               <TeleporterPrize visitedCount={visas.length} totalCount={TELEPORTER_THRESHOLD} variant="reward" />
+            </div>
+          )}
+          {visas.length >= 15 && (
+            <div className="mt-4">
+              <WormholePrize visitedCount={visas.length} variant="reward" />
             </div>
           )}
         </div>
