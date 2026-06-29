@@ -53,6 +53,7 @@ function Readout({ icon: Icon, label, value, color }: { icon: typeof Gauge; labe
 }
 
 function Landing() {
+  const stats = useUpgradeStats();
   return (
     <main className="relative z-10 min-h-screen overflow-hidden">
       {/* ===== COCKPIT VIEWPORT (arched window) ===== */}
