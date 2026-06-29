@@ -255,7 +255,7 @@ function Galaxia() {
         <button disabled={!allAnswered || quizLoading} onClick={async () => {
           setQuizLoading(true);
           try {
-            const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, questions: quiz.questions, answers } });
+            const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers } });
             setLastResult(r);
             setQuiz(null); setAnswers([]);
             await qc.invalidateQueries({ queryKey: ["journey", identityId] });
