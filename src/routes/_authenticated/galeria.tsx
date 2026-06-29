@@ -4,7 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { deleteIdentity } from "@/lib/identities.functions";
 import { listIdentitiesWithJourneys } from "@/lib/gallery.functions";
-import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin } from "lucide-react";
+import { rescueLostIdentity, RESCUE_COST } from "@/lib/rescue.functions";
+import { useWallet } from "@/hooks/useWallet";
+import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy } from "lucide-react";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
 import { DestinationBadge } from "@/components/DestinationBadge";
@@ -15,8 +17,11 @@ function Galeria() {
   const navigate = useNavigate();
   const list = useServerFn(listIdentitiesWithJourneys);
   const del = useServerFn(deleteIdentity);
+  const rescueFn = useServerFn(rescueLostIdentity);
+  const { fichas, refresh: refreshWallet } = useWallet();
   const qc = useQueryClient();
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [rescuingId, setRescuingId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ["identities-with-journeys"], queryFn: () => list() });
 
@@ -32,6 +37,25 @@ function Galeria() {
       toast.success("Removida");
     } catch (e) { toast.error((e as Error).message); }
     finally { setRemovingId(null); }
+  }
+
+  async function rescue(id: string) {
+    if (fichas < RESCUE_COST) {
+      toast.error(`Faltam ${RESCUE_COST - fichas} fichas para o resgate`);
+      return;
+    }
+    if (!confirm(`Resgatar essa identidade perdida no espaço? Custa ${RESCUE_COST} fichas.`)) return;
+    setRescuingId(id);
+    try {
+      await rescueFn({ data: { identityId: id } });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["identities-with-journeys"] }),
+        refreshWallet(),
+      ]);
+      toast.success("Resgatado! Selos preservados, viagem reativada.");
+      navigate({ to: "/galaxia", search: { identityId: id } });
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setRescuingId(null); }
   }
 
   return (
