@@ -147,7 +147,6 @@ export const submitQuiz = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     journeyId: z.string().uuid(),
     destinationId: z.string().min(1).max(64),
-    questions: z.array(z.object({ q: z.string(), choices: z.array(z.string()), answer: z.number(), level: z.number().optional() })).length(QUESTIONS_PER_QUIZ),
     answers: z.array(z.number().min(0).max(3)).length(QUESTIONS_PER_QUIZ),
   }).parse(d))
   .handler(async ({ data, context }) => {
@@ -159,13 +158,27 @@ export const submitQuiz = createServerFn({ method: "POST" })
     const dest = getAnyDestination(data.destinationId);
     if (!dest) throw new Error("Destino inválido");
 
-    const score = data.answers.reduce((acc, a, i) => acc + (a === data.questions[i].answer ? 1 : 0), 0);
+    // Re-derive the exact same quiz the client received (deterministic from
+    // journey + destination + attempt index). Never trust client-supplied
+    // answer keys.
+    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}`);
+    const questions = buildQuizFromBank(dest.id, seed);
+    if (questions.length !== QUESTIONS_PER_QUIZ) {
+      throw new Error("Banco de perguntas indisponível para este destino");
+    }
+
+    const score = data.answers.reduce(
+      (acc, a, i) => acc + (a === questions[i].answer ? 1 : 0),
+      0,
+    );
     const passed = score / QUESTIONS_PER_QUIZ >= QUIZ_PASS_RATIO;
     const tier = passed ? tierFromScore(score, QUESTIONS_PER_QUIZ) : null;
 
     await supabaseAdmin.from("quiz_attempts").insert({
       user_id: userId, journey_id: journey.id, level: dest.level,
-      score, total: QUESTIONS_PER_QUIZ, passed, questions: data.questions, answers: data.answers,
+      destination_id: dest.id,
+      score, total: QUESTIONS_PER_QUIZ, passed,
+      questions, answers: data.answers,
     });
 
     if (passed) {
@@ -198,6 +211,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
     await supabaseAdmin.from("journeys").update({ attempts_used: newAttempts }).eq("id", journey.id);
     return { passed: false, score, attemptsLeft: MAX_QUIZ_ATTEMPTS - newAttempts, fatal: null, tier: null };
   });
+
 
 export const claimVisa = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
