@@ -103,7 +103,7 @@ export function TeleporterPrize({ visitedCount, totalCount, variant = "banner" }
             </span>
           </div>
           <div className="font-display text-base text-gradient-neon truncate">
-            Teletransportador Cósmico
+            {unlocked ? "Teletransportador Cósmico" : "Prêmio misterioso"}
           </div>
           <div className="text-xs text-muted-foreground leading-snug">
             {unlocked
