@@ -218,7 +218,6 @@ export const claimVisa = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     journeyId: z.string().uuid(),
     destinationId: z.string().min(1).max(64),
-    tier: z.enum(["bronze", "silver", "gold"]).default("bronze"),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
@@ -229,12 +228,27 @@ export const claimVisa = createServerFn({ method: "POST" })
     const dest = getAnyDestination(data.destinationId);
     if (!dest) throw new Error("Destino inválido");
 
+    // Require a passing quiz attempt for this exact destination before
+    // issuing the visa. Tier is derived server-side from the best score.
+    const { data: passes } = await supabaseAdmin
+      .from("quiz_attempts")
+      .select("score, total")
+      .eq("journey_id", journey.id)
+      .eq("destination_id", dest.id)
+      .eq("passed", true)
+      .order("score", { ascending: false })
+      .limit(1);
+    const best = passes?.[0];
+    if (!best) throw new Error("Você precisa passar no quiz deste destino antes de embarcar");
+    const tier = tierFromScore(best.score, best.total);
+
     const { error } = await supabaseAdmin.from("visas").insert({
       user_id: userId, journey_id: journey.id, destination_id: dest.id,
       destination_name: dest.name, transport: dest.transport, kind: "normal",
-      tier: data.tier,
+      tier,
     });
     if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+
 
     // Ligação surpresa: a cada GALAXY_SURPRISE_STEP visitas em galáxias,
     // o viajante recebe uma chamada com fichas aleatórias.
