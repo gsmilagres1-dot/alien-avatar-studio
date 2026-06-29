@@ -528,7 +528,7 @@ function Galaxia() {
             {lastResult?.passed && lastResult.tier && (
               <button onClick={async () => {
                 try {
-                  const r = await claimVisaFn({ data: { journeyId: journey.id, destinationId: currentDest.id, tier: lastResult.tier! } });
+                  const r = await claimVisaFn({ data: { journeyId: journey.id, destinationId: currentDest.id } });
                   toast.success(`Visto ${lastResult.tier === "gold" ? "OURO" : lastResult.tier === "silver" ? "PRATA" : "BRONZE"} emitido para ${currentDest.name}!`);
                   if (r?.surpriseCall) {
                     toast(`☎️ Ligação surpresa! +${r.surpriseCall.fichas} fichas (${r.surpriseCall.galaxyCount} galáxias visitadas)`, {
