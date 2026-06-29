@@ -8,10 +8,10 @@ import { useWallet } from "@/hooks/useWallet";
 import { WalletBadge } from "@/components/WalletBadge";
 
 const PACKS = [
-  { id: "p30",  fichas: 30,  price: "R$ 1,99" },
-  { id: "p60",  fichas: 60,  price: "R$ 4,99" },
-  { id: "p150", fichas: 150, price: "R$ 9,99" },
-  { id: "p500", fichas: 500, price: "R$ 24,99" },
+  { id: "p100",  fichas: 100,  price: "R$ 1,99" },
+  { id: "p300",  fichas: 300,  price: "R$ 4,99" },
+  { id: "p700",  fichas: 700,  price: "R$ 9,99" },
+  { id: "p1000", fichas: 1000, price: "R$ 13,99" },
 ];
 
 export const Route = createFileRoute("/_authenticated/loja")({

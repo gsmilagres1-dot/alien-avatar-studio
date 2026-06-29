@@ -195,9 +195,9 @@ function Galaxia() {
           <div className="flex flex-col items-end gap-2">
             <WalletBadge />
             <SOSButton
-              cost={10}
+              cost={25}
               reason="sos_voltar_pergunta_quiz"
-              label="Voltar pergunta"
+              label="Resposta errada"
               meta={{ destinationId: quiz.destinationId }}
               onSuccess={() => {
                 // Remove a última resposta marcada para o jogador refazer
