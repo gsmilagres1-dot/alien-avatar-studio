@@ -65,12 +65,17 @@ export function TeleporterPrize({ visitedCount, totalCount, variant = "banner" }
             width={216}
             height={216}
             loading="lazy"
-            className={`w-[216px] h-[216px] rounded-2xl object-cover border-2 brightness-110 ${unlocked ? "border-accent animate-pulse-glow" : "border-accent/40"}`}
+            className={`w-[216px] h-[216px] rounded-2xl object-cover border-2 brightness-110 transition-[filter] ${unlocked ? "border-accent animate-pulse-glow blur-0" : "border-accent/40 blur-xl scale-95 opacity-70"}`}
           />
           {!unlocked && (
-            <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm border border-accent/40 text-[10px] font-mono uppercase tracking-widest text-accent font-bold">
-              {visitedCount}/{totalCount}
-            </div>
+            <>
+              <div className="absolute inset-0 rounded-2xl bg-black/40 flex items-center justify-center">
+                <Lock className="w-8 h-8 text-accent/80" />
+              </div>
+              <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm border border-accent/40 text-[10px] font-mono uppercase tracking-widest text-accent font-bold">
+                {visitedCount}/{totalCount}
+              </div>
+            </>
           )}
           {unlocked && (
             <>
