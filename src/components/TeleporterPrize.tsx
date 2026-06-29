@@ -1,5 +1,5 @@
 import teleporterImg from "@/assets/teleporter-prize.jpg";
-import { Sparkles, Trophy } from "lucide-react";
+import { Lock, Sparkles, Trophy } from "lucide-react";
 
 interface Props {
   visitedCount: number;
