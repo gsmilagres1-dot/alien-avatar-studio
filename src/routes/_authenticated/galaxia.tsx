@@ -582,6 +582,11 @@ function Galaxia() {
               <TeleporterPrize visitedCount={visas.length} totalCount={TELEPORTER_THRESHOLD} variant="reward" />
             </div>
           )}
+          {visas.length >= 15 && (
+            <div className="mt-4">
+              <WormholePrize visitedCount={visas.length} variant="reward" />
+            </div>
+          )}
         </div>
       )}
     </main>
