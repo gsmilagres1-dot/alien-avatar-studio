@@ -107,6 +107,14 @@ export function getAnyDestination(id: string): Destination | undefined {
 /** Quantos destinos quaisquer concluídos liberam o Teletransportador. */
 export const TELEPORTER_THRESHOLD = 10;
 
+/**
+ * Após o teletransportador (10 destinos), cada +5 destinos concede 1 segmento
+ * do anel de buraco de minhoca. Aos 40 destinos o viajante completa os 6
+ * segmentos que formam o túnel do buraco de minhoca.
+ */
+export const WORMHOLE_RING_THRESHOLDS = [15, 20, 25, 30, 35, 40] as const;
+export const WORMHOLE_RING_TOTAL = WORMHOLE_RING_THRESHOLDS.length;
+
 /** Quantos destinos de galáxia desbloqueiam uma ligação-surpresa de fichas. */
 export const GALAXY_SURPRISE_STEP = 5;
 export const GALAXY_SURPRISE_MIN = 20;
