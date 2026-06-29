@@ -178,7 +178,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
       user_id: userId, journey_id: journey.id, level: dest.level,
       destination_id: dest.id,
       score, total: QUESTIONS_PER_QUIZ, passed,
-      questions: questions as unknown as Record<string, unknown>[], answers: data.answers,
+      questions: questions as never, answers: data.answers,
     });
 
     if (passed) {
