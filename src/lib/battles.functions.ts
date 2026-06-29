@@ -133,35 +133,49 @@ export const submitBattleScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     battleId: z.string().uuid(),
-    questions: z.array(z.object({ q: z.string(), choices: z.array(z.string()), answer: z.number() })).length(BATTLE_QUESTIONS),
     answers: z.array(z.number().min(0).max(3)).length(BATTLE_QUESTIONS),
   }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const score = data.answers.reduce((acc, a, i) => acc + (a === data.questions[i].answer ? 1 : 0), 0);
-    const { error } = await supabase.rpc("submit_battle_score", {
+    const { supabase, userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Re-derive the same quiz the client received so we score against the
+    // server's answer key, never client-supplied keys.
+    const { data: battle } = await supabase
+      .from("battles").select("team_a_id, team_b_id, status, destination_key").eq("id", data.battleId).maybeSingle();
+    if (!battle) throw new Error("Batalha não encontrada");
+    if (battle.status !== "active") throw new Error("Batalha não está ativa");
+
+    let h = 2166136261 >>> 0;
+    const s = `${data.battleId}:${userId}`;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    const questions = pickQuestions(battle.destination_key, h >>> 0);
+    if (questions.length !== BATTLE_QUESTIONS) throw new Error("Banco de perguntas indisponível");
+
+    const score = data.answers.reduce(
+      (acc, a, i) => acc + (a === questions[i].answer ? 1 : 0),
+      0,
+    );
+
+    const { error } = await supabaseAdmin.rpc("submit_battle_score", {
       _battle_id: data.battleId, _score: score,
     });
     if (error) throw new Error(error.message);
 
     // Try to finalize: if every member of both teams already submitted
-    const { data: battle } = await supabase
-      .from("battles").select("team_a_id, team_b_id, status").eq("id", data.battleId).maybeSingle();
     let finalized = false;
     let winnerId: string | null = null;
-    if (battle && battle.status === "active") {
-      const { data: mems } = await supabase
-        .from("team_members").select("user_id, team_id")
-        .in("team_id", [battle.team_a_id, battle.team_b_id].filter((x): x is string => !!x));
-      const { data: parts } = await supabase
-        .from("battle_participants").select("user_id").eq("battle_id", data.battleId).not("score", "is", null);
-      const total = (mems ?? []).length;
-      const submitted = (parts ?? []).length;
-      if (total > 0 && submitted >= total) {
-        const { data: w } = await supabase.rpc("finalize_battle", { _battle_id: data.battleId });
-        finalized = true;
-        winnerId = (w as string | null) ?? null;
-      }
+    const { data: mems } = await supabaseAdmin
+      .from("team_members").select("user_id, team_id")
+      .in("team_id", [battle.team_a_id, battle.team_b_id].filter((x): x is string => !!x));
+    const { data: parts } = await supabaseAdmin
+      .from("battle_participants").select("user_id").eq("battle_id", data.battleId).not("score", "is", null);
+    const total = (mems ?? []).length;
+    const submitted = (parts ?? []).length;
+    if (total > 0 && submitted >= total) {
+      const { data: w } = await supabaseAdmin.rpc("finalize_battle", { _battle_id: data.battleId });
+      finalized = true;
+      winnerId = (w as string | null) ?? null;
     }
     return { score, total: BATTLE_QUESTIONS, finalized, winnerId };
   });
@@ -169,11 +183,13 @@ export const submitBattleScore = createServerFn({ method: "POST" })
 export const finalizeBattleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ battleId: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { data: w, error } = await context.supabase.rpc("finalize_battle", { _battle_id: data.battleId });
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: w, error } = await supabaseAdmin.rpc("finalize_battle", { _battle_id: data.battleId });
     if (error) throw new Error(error.message);
     return { winnerId: (w as string | null) ?? null };
   });
+
 
 // Listing of valid destinations for battles (5-pick: subset of 45)
 export function listBattleDestinations() {

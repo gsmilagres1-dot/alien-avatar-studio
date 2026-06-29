@@ -32,7 +32,7 @@ function BattleDetail() {
   });
 
   const submitM = useMutation({
-    mutationFn: (final: number[]) => submitQ({ data: { battleId: id, questions: quiz!, answers: final } }),
+    mutationFn: (final: number[]) => submitQ({ data: { battleId: id, answers: final } }),
     onSuccess: ({ score, finalized, winnerId }) => {
       toast.success(`Pontuação: ${score}/9`);
       setQuiz(null);

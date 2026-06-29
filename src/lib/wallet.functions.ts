@@ -2,14 +2,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const AD_REWARD_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
+const AD_REWARD_AMOUNT_MAX = 5;
+
 export const getWallet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     let { data } = await supabase.from("wallets").select("*").eq("user_id", userId).maybeSingle();
     if (!data) {
-      const ins = await supabase.from("wallets").insert({ user_id: userId }).select("*").single();
-      data = ins.data;
+      // First-time wallet creation goes through the SECURITY DEFINER fn (admin)
+      // since direct INSERT was removed from the RLS policies.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.from("wallets").insert({ user_id: userId });
+      const fresh = await supabase.from("wallets").select("*").eq("user_id", userId).maybeSingle();
+      data = fresh.data;
     }
     return data;
   });
@@ -31,8 +38,9 @@ export const spendFichas = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: balance, error } = await supabase.rpc("adjust_fichas", {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: balance, error } = await supabaseAdmin.rpc("adjust_fichas", {
       _user_id: userId,
       _delta: -data.amount,
       _reason: data.reason,
@@ -52,13 +60,38 @@ export const earnFichas = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: balance, error } = await supabase.rpc("adjust_fichas", {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Ad-watch rewards: cap server-side and enforce a cooldown per user.
+    // (Replace this guard with a verifiable ad-network completion token once available.)
+    let amount = data.amount;
+    if (data.reason === "video_assistido") {
+      amount = Math.min(amount, AD_REWARD_AMOUNT_MAX);
+      const { data: w } = await supabaseAdmin
+        .from("wallets").select("last_ad_reward_at").eq("user_id", userId).maybeSingle();
+      const last = w?.last_ad_reward_at ? new Date(w.last_ad_reward_at).getTime() : 0;
+      const now = Date.now();
+      if (last && now - last < AD_REWARD_COOLDOWN_MS) {
+        const waitMs = AD_REWARD_COOLDOWN_MS - (now - last);
+        const waitMin = Math.ceil(waitMs / 60000);
+        throw new Error(`Aguarde ${waitMin} min para ganhar outra recompensa por vídeo`);
+      }
+    }
+
+    const { data: balance, error } = await supabaseAdmin.rpc("adjust_fichas", {
       _user_id: userId,
-      _delta: data.amount,
+      _delta: amount,
       _reason: data.reason,
       _meta: data.meta ?? null,
     });
     if (error) throw new Error(error.message);
+
+    if (data.reason === "video_assistido") {
+      await supabaseAdmin.from("wallets")
+        .update({ last_ad_reward_at: new Date().toISOString() })
+        .eq("user_id", userId);
+    }
+
     return { balance: balance as number };
   });

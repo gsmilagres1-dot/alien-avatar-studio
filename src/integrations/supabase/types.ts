@@ -442,6 +442,7 @@ export type Database = {
         Row: {
           answers: Json | null
           created_at: string
+          destination_id: string | null
           id: string
           journey_id: string | null
           level: number
@@ -454,6 +455,7 @@ export type Database = {
         Insert: {
           answers?: Json | null
           created_at?: string
+          destination_id?: string | null
           id?: string
           journey_id?: string | null
           level: number
@@ -466,6 +468,7 @@ export type Database = {
         Update: {
           answers?: Json | null
           created_at?: string
+          destination_id?: string | null
           id?: string
           journey_id?: string | null
           level?: number
@@ -693,6 +696,7 @@ export type Database = {
           aneis: number
           created_at: string
           fichas: number
+          last_ad_reward_at: string | null
           updated_at: string
           user_id: string
         }
@@ -703,6 +707,7 @@ export type Database = {
           aneis?: number
           created_at?: string
           fichas?: number
+          last_ad_reward_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -713,6 +718,7 @@ export type Database = {
           aneis?: number
           created_at?: string
           fichas?: number
+          last_ad_reward_at?: string | null
           updated_at?: string
           user_id?: string
         }

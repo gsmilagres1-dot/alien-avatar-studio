@@ -255,7 +255,7 @@ function Galaxia() {
         <button disabled={!allAnswered || quizLoading} onClick={async () => {
           setQuizLoading(true);
           try {
-            const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, questions: quiz.questions, answers } });
+            const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers } });
             setLastResult(r);
             setQuiz(null); setAnswers([]);
             await qc.invalidateQueries({ queryKey: ["journey", identityId] });
@@ -528,7 +528,7 @@ function Galaxia() {
             {lastResult?.passed && lastResult.tier && (
               <button onClick={async () => {
                 try {
-                  const r = await claimVisaFn({ data: { journeyId: journey.id, destinationId: currentDest.id, tier: lastResult.tier! } });
+                  const r = await claimVisaFn({ data: { journeyId: journey.id, destinationId: currentDest.id } });
                   toast.success(`Visto ${lastResult.tier === "gold" ? "OURO" : lastResult.tier === "silver" ? "PRATA" : "BRONZE"} emitido para ${currentDest.name}!`);
                   if (r?.surpriseCall) {
                     toast(`☎️ Ligação surpresa! +${r.surpriseCall.fichas} fichas (${r.surpriseCall.galaxyCount} galáxias visitadas)`, {
