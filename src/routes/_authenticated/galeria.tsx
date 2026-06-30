@@ -5,8 +5,14 @@ import { useState } from "react";
 import { deleteIdentity } from "@/lib/identities.functions";
 import { listIdentitiesWithJourneys } from "@/lib/gallery.functions";
 import { rescueLostIdentity, RESCUE_COST } from "@/lib/rescue.functions";
+import {
+  purchaseExtraIdentityPack,
+  EXTRA_PACK_COST,
+  EXTRA_PACK_SLOTS,
+  FREE_IDENTITIES_LIMIT,
+} from "@/lib/identity-pack.functions";
 import { useWallet } from "@/hooks/useWallet";
-import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy } from "lucide-react";
+import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
 import { DestinationBadge } from "@/components/DestinationBadge";
