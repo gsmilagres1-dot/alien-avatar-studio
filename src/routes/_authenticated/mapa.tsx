@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { Rocket, User, Users, Sparkles, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Rocket, Users, Sparkles, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { WalletBadge } from "@/components/WalletBadge";
-import { DESTINATIONS, ALL_DESTINATIONS, KIND_LABEL, type DestinationKind } from "@/lib/intergalactic";
+import { DESTINATIONS, KIND_LABEL, type DestinationKind } from "@/lib/intergalactic";
 import { TEAM_DESTINATIONS, getTeamDestination } from "@/lib/team-destinations";
 import planetImg from "@/assets/map/planet.png";
 import sunImg from "@/assets/map/sun.png";
@@ -137,9 +137,6 @@ function Mapa() {
       <div className="flex flex-wrap gap-2 mb-3 items-center" role="tablist">
         <FilterChip active={mode === "all"} onClick={() => setMode("all")} icon={<Sparkles className="w-3.5 h-3.5" />}>
           Todos ({nodes.length})
-        </FilterChip>
-        <FilterChip active={mode === "singular"} onClick={() => setMode("singular")} icon={<User className="w-3.5 h-3.5" />}>
-          Singular ({DESTINATIONS.length})
         </FilterChip>
         <FilterChip active={mode === "team"} onClick={() => setMode("team")} icon={<Users className="w-3.5 h-3.5" />}>
           Equipe ({TEAM_DESTINATIONS.length})
