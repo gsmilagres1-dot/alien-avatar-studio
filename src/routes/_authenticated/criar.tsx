@@ -243,10 +243,30 @@ function Criar() {
             <section className="glass rounded-2xl p-8 text-center">
               <Sparkles className="w-10 h-10 text-accent mx-auto" />
               <h2 className="font-display text-2xl mt-3 text-gradient-neon">Criar nova identidade</h2>
-              <p className="text-sm text-muted-foreground mt-2">Fluxo grátis: 1 criar identidade, 2 fazer passaporte, 3 escolher destino, 4 escolher nave, 5 fazer quiz.</p>
-              <button onClick={() => setStep("form")} className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon">
-                Começar
-              </button>
+              {payment ? (
+                <>
+                  <p className="text-sm text-muted-foreground mt-2">Fluxo grátis: 1 criar identidade, 2 fazer passaporte, 3 escolher destino, 4 escolher nave, 5 fazer quiz.</p>
+                  <button onClick={() => setStep("form")} className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon">
+                    Começar
+                  </button>
+                </>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-left">
+                    <p className="text-sm text-amber-200/90 leading-relaxed">
+                      <b className="text-amber-300">Você atingiu o limite de 3 identidades gratuitas.</b><br/>
+                      Para criar mais avatares alien, libere um pacote extra de <b>3 avatares por 500 fichas</b>{" "}
+                      na sua galeria. Eles ficam guardados para viagens e batalhas.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate({ to: "/galeria" })}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-display font-bold shadow-neon"
+                  >
+                    Ir para galeria
+                  </button>
+                </div>
+              )}
             </section>
           )}
 
