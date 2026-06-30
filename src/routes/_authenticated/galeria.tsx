@@ -66,14 +66,58 @@ function Galeria() {
     finally { setRescuingId(null); }
   }
 
+  async function buyExtraPack() {
+    if (fichas < EXTRA_PACK_COST) {
+      toast.error(`Faltam ${EXTRA_PACK_COST - fichas} fichas para comprar o pacote extra`);
+      return;
+    }
+    if (!confirm(`Liberar mais ${EXTRA_PACK_SLOTS} avatares alien por ${EXTRA_PACK_COST} fichas?`)) return;
+    setBuyingPack(true);
+    try {
+      await buyPackFn();
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["active-payment"] }),
+        refreshWallet(),
+      ]);
+      toast.success(`Liberados ${EXTRA_PACK_SLOTS} novos slots de avatar!`);
+      navigate({ to: "/criar" });
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setBuyingPack(false); }
+  }
+
+  const identityCount = data?.items.length ?? 0;
+  const reachedFreeLimit = identityCount >= FREE_IDENTITIES_LIMIT;
+
   return (
     <main className="px-4 py-8 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <h1 className="font-display text-2xl text-gradient-neon">Minha galeria</h1>
-        <Link to="/criar" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-xs font-bold shadow-neon">
-          <Plus className="w-3.5 h-3.5" /> Nova
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={buyExtraPack}
+            disabled={buyingPack || fichas < EXTRA_PACK_COST}
+            title={fichas < EXTRA_PACK_COST ? `Faltam ${EXTRA_PACK_COST - fichas} fichas` : `Mais ${EXTRA_PACK_SLOTS} avatares por ${EXTRA_PACK_COST} fichas`}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black text-[11px] font-bold shadow-neon disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {buyingPack ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
+            +{EXTRA_PACK_SLOTS} avatares · {EXTRA_PACK_COST} fichas
+          </button>
+          <Link to="/criar" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-xs font-bold shadow-neon">
+            <Plus className="w-3.5 h-3.5" /> Nova
+          </Link>
+        </div>
       </div>
+
+      {reachedFreeLimit && (
+        <div className="glass rounded-2xl p-4 mb-6 border border-amber-500/40 bg-amber-500/5">
+          <p className="text-xs text-amber-200/90 leading-relaxed">
+            <b className="text-amber-300">Você atingiu o limite de {FREE_IDENTITIES_LIMIT} identidades gratuitas.</b>{" "}
+            Para criar mais avatares alien, libere um pacote extra de {EXTRA_PACK_SLOTS} por {EXTRA_PACK_COST} fichas.
+            Eles ficam guardados aqui na galeria para viagens e batalhas.
+          </p>
+        </div>
+      )}
 
       {isLoading && <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>}
 
