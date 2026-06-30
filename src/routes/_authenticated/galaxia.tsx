@@ -249,10 +249,6 @@ function Galaxia() {
             );
           })}
         </div>
-              </div>
-            );
-          })}
-        </div>
         <button disabled={!allAnswered || quizLoading} onClick={async () => {
           setQuizLoading(true);
           try {
