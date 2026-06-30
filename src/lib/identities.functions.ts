@@ -347,7 +347,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
         .eq("kind", "identity")
         .eq("amount_cents", 0);
 
-      if ((totalFree ?? 0) < 5) {
+      if ((totalFree ?? 0) < 3) {
         const ins = await supabaseAdmin
           .from("payment_transactions")
           .insert({
