@@ -227,13 +227,10 @@ function Galaxia() {
                 <div className="text-sm font-medium mb-3">{qi + 1}. {q.q}</div>
                 <div className="space-y-2">
                   {q.choices.map((c, ci) => {
-                    const isCorrect = ci === q.answer;
                     const isPicked = picked === ci;
                     let cls = "border-border hover:bg-accent/5";
-                    let mark: string | null = null;
                     if (locked) {
-                      if (isCorrect) { cls = "border-green-500 bg-green-500/10"; mark = "✔"; }
-                      else if (isPicked) { cls = "border-red-500 bg-red-500/10"; mark = "❌"; }
+                      if (isPicked) { cls = "border-accent bg-accent/10"; }
                       else { cls = "border-border opacity-60"; }
                     }
                     return (
@@ -243,17 +240,15 @@ function Galaxia() {
                       }}
                         className={`w-full text-left px-3 py-2 rounded-lg text-sm border flex items-center justify-between gap-2 ${cls}`}>
                         <span>{c}</span>
-                        {mark && <span className="text-base">{mark}</span>}
                       </button>
                     );
                   })}
                 </div>
-                {locked && (
-                  <div className={`mt-2 text-xs font-medium ${picked === q.answer ? "text-green-500" : "text-red-500"}`}>
-                    {picked === q.answer ? "✔ Resposta correta!" : `❌ Resposta correta: ${q.choices[q.answer]}`}
-                  </div>
-                )}
                 </div>
+              </div>
+            );
+          })}
+        </div>
               </div>
             );
           })}
