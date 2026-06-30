@@ -94,7 +94,7 @@ function Landing() {
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 w-[88px] items-end">
             <Readout icon={Radar}     label="Radar"  value={stats.radar}  color="#fbbf24" />
             <Readout icon={Satellite} label="Sync"   value="LINK"  color="#22d3ee" />
-            <Readout icon={Signal}    label="Sinal"  value="-42dB" color="#f472b6" />
+            <Readout icon={Signal}    label="Sinal"  value="-42dB" color="#fbbf24" />
           </div>
 
           {/* Bottom curved bezel suggesting cockpit edge */}
@@ -116,7 +116,7 @@ function Landing() {
         </div>
 
         {/* Primary CTA bar */}
-        <div className="rounded-2xl p-[2px] bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-amber-400 shadow-[0_4px_20px_rgba(122,77,208,0.4)] mb-3">
+        <div className="rounded-2xl p-[2px] bg-gradient-to-r from-amber-300 via-orange-400 to-yellow-500 shadow-[0_4px_20px_rgba(251,146,60,0.4)] mb-3">
           <div className="rounded-2xl bg-black/85 backdrop-blur p-3 flex gap-2">
             <Link
               to="/criar"
@@ -181,10 +181,10 @@ function Landing() {
         {/* 3 hub buttons */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { to: "/equipes",  icon: Users,  label: "Equipe",   sub: "Intergaláctica", color: "from-fuchsia-500 to-purple-700" },
+            { to: "/equipes",  icon: Users,  label: "Equipe",   sub: "Intergaláctica", color: "from-amber-400 to-orange-600" },
             { to: "/loja",     icon: Coins,  label: "Fichas",   sub: "Loja · S.O.S.",  color: "from-yellow-400 to-orange-600" },
             { to: "/mapa",     icon: Map,    label: "Mapa",     sub: "45 destinos",    color: "from-cyan-400 to-blue-700" },
-            { to: "/batalha",  icon: Swords, label: "Batalha",  sub: "9 perguntas",    color: "from-rose-500 to-red-700" },
+            { to: "/batalha",  icon: Swords, label: "Batalha",  sub: "9 perguntas",    color: "from-orange-500 to-red-700" },
             { to: "/upgrades", icon: Wrench, label: "Upgrades", sub: "Evoluir nave",   color: "from-emerald-400 to-teal-700" },
             { to: "/galeria",  icon: Rocket, label: "Galeria",  sub: "Suas identid.",  color: "from-sky-400 to-indigo-700" },
           ].map((h) => (
