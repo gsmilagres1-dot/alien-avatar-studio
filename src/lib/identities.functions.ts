@@ -370,10 +370,44 @@ export const getActivePayment = createServerFn({ method: "GET" })
     return { payment: data, drafts, usedAvatarUrls: (usedIdentities ?? []).map((row) => row.avatar_url) };
   });
 
+const FREE_SESSION_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
+const FREE_SESSION_LIFETIME_MAX = 5; // total free identity sessions ever issued per user
+
 export const restartIdentityFlow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
+
+    // Lifetime cap on free identity sessions to prevent abuse of free AI generation.
+    const { count: totalFree } = await supabaseAdmin
+      .from("payment_transactions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("kind", "identity")
+      .eq("amount_cents", 0);
+
+    if ((totalFree ?? 0) >= FREE_SESSION_LIFETIME_MAX) {
+      throw new Error("Limite de identidades gratuitas atingido. Para criar mais, compre créditos.");
+    }
+
+    // 24h cooldown between free sessions.
+    const { data: lastFree } = await supabaseAdmin
+      .from("payment_transactions")
+      .select("created_at")
+      .eq("user_id", userId)
+      .eq("kind", "identity")
+      .eq("amount_cents", 0)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastFree?.created_at) {
+      const elapsed = Date.now() - new Date(lastFree.created_at).getTime();
+      if (elapsed < FREE_SESSION_COOLDOWN_MS) {
+        const waitHours = Math.ceil((FREE_SESSION_COOLDOWN_MS - elapsed) / (60 * 60 * 1000));
+        throw new Error(`Aguarde ${waitHours}h para iniciar outra identidade gratuita.`);
+      }
+    }
 
     const { data: openPayments, error: openErr } = await supabaseAdmin
       .from("payment_transactions")
@@ -413,3 +447,4 @@ export const restartIdentityFlow = createServerFn({ method: "POST" })
 
     return { payment, drafts: [] };
   });
+
