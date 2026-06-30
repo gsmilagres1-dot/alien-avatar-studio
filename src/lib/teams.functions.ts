@@ -15,7 +15,9 @@ export const createTeam = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: teamId, error } = await context.supabase.rpc("create_team", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: teamId, error } = await supabaseAdmin.rpc("create_team", {
+      _caller_id: context.userId,
       _name: data.name,
       _country_code: data.countryCode ?? undefined,
       _flag_emoji: data.flagEmoji ?? undefined,
