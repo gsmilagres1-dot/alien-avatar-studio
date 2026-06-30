@@ -178,27 +178,42 @@ function Landing() {
           <span className="w-1 h-1 rounded-full bg-white/30" />
         </div>
 
-        {/* 3 hub buttons */}
+        {/* 6 hub buttons — futuristic console style */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { to: "/equipes",  icon: Users,  label: "Equipe",   sub: "Intergaláctica", color: "from-amber-400 to-orange-600" },
-            { to: "/loja",     icon: Coins,  label: "Fichas",   sub: "Loja · S.O.S.",  color: "from-yellow-400 to-orange-600" },
-            { to: "/mapa",     icon: Map,    label: "Mapa",     sub: "45 destinos",    color: "from-cyan-400 to-blue-700" },
-            { to: "/batalha",  icon: Swords, label: "Batalha",  sub: "9 perguntas",    color: "from-orange-500 to-red-700" },
-            { to: "/upgrades", icon: Wrench, label: "Upgrades", sub: "Evoluir nave",   color: "from-emerald-400 to-teal-700" },
-            { to: "/galeria",  icon: Rocket, label: "Galeria",  sub: "Suas identid.",  color: "from-sky-400 to-indigo-700" },
-          ].map((h) => (
-            <Link key={h.to} to={h.to} className="rounded-xl p-[2px] bg-white/10 hover:scale-[1.03] active:scale-[0.97] transition">
-              <div className={`rounded-xl p-2 bg-gradient-to-br ${h.color} h-full flex flex-col items-center text-center`}>
-                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur flex items-center justify-center mb-1 ring-2 ring-white/30">
-                  <h.icon className="w-4 h-4 text-white" />
+            { to: "/equipes",  icon: Users,  label: "Equipe",   sub: "Intergaláctica", metal: "gold"   as const, hint: "TEAM-Σ" },
+            { to: "/loja",     icon: Coins,  label: "Fichas",   sub: "Loja · S.O.S.",  metal: "gold"   as const, hint: "FIC-€"  },
+            { to: "/mapa",     icon: Map,    label: "Mapa",     sub: "45 destinos",    metal: "plasma" as const, hint: "MAP-∞"  },
+            { to: "/batalha",  icon: Swords, label: "Batalha",  sub: "9 perguntas",    metal: "copper" as const, hint: "BTL-X"  },
+            { to: "/upgrades", icon: Wrench, label: "Upgrades", sub: "Evoluir nave",   metal: "silver" as const, hint: "UPG-7"  },
+            { to: "/galeria",  icon: Rocket, label: "Galeria",  sub: "Suas identid.",  metal: "plasma" as const, hint: "GAL-9"  },
+          ].map((h) => {
+            const m = METAL[h.metal];
+            return (
+              <Link
+                key={h.to}
+                to={h.to}
+                className={`relative rounded-xl p-[2px] bg-gradient-to-br ${m.ring} shadow-[0_4px_14px_rgba(0,0,0,0.6)] active:scale-[0.97] hover:scale-[1.02] transition`}
+              >
+                <div className="rounded-xl bg-gradient-to-b from-black/90 via-black/75 to-black/90 p-2 h-full flex flex-col items-center text-center">
+                  <span className="text-[7px] font-mono text-white/40 tracking-widest self-end">{h.hint}</span>
+                  <div className={`relative w-9 h-9 rounded-full p-[2px] bg-gradient-to-br ${m.ring} mb-1`}>
+                    <div className="w-full h-full rounded-full bg-black/85 flex items-center justify-center">
+                      <h.icon className={`w-4 h-4 ${m.accent}`} />
+                    </div>
+                    <span
+                      className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse"
+                      style={{ backgroundColor: m.glow, boxShadow: `0 0 6px ${m.glow}` }}
+                    />
+                  </div>
+                  <div className="font-display text-[11px] text-foreground leading-tight">{h.label}</div>
+                  <div className="text-[8px] text-white/55 leading-tight">{h.sub}</div>
                 </div>
-                <div className="font-display text-[11px] text-white leading-tight">{h.label}</div>
-                <div className="text-[8px] text-white/80 leading-tight">{h.sub}</div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
+
 
         {/* Bottom status strip */}
         <div className="mt-3 rounded-xl bg-black/70 border border-white/10 px-3 py-2 grid grid-cols-3 gap-2">
