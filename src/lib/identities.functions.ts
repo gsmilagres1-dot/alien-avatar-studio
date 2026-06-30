@@ -337,25 +337,36 @@ export const getActivePayment = createServerFn({ method: "GET" })
       drafts = draftRows ?? [];
     }
 
-    // Modo grátis: se não existir sessão recente utilizável, cria automaticamente
+    // Modo grátis: cria sessão automaticamente apenas se o usuário ainda tem direito.
+    // Limite vitalício de sessões gratuitas é aplicado para prevenir abuso de geração de IA.
     if (!data || (data.credits_remaining < 1 && drafts.length === 0)) {
-      const ins = await supabaseAdmin
+      const { count: totalFree } = await supabaseAdmin
         .from("payment_transactions")
-        .insert({
-          user_id: userId,
-          amount_cents: 0,
-          currency: "brl",
-          status: "completed",
-          credits_granted: 1,
-          credits_remaining: 1,
-          env: "sandbox",
-          kind: "identity",
-        })
-        .select("id, status, credits_remaining, created_at")
-        .single();
-      data = ins.data;
-      drafts = [];
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("kind", "identity")
+        .eq("amount_cents", 0);
+
+      if ((totalFree ?? 0) < 5) {
+        const ins = await supabaseAdmin
+          .from("payment_transactions")
+          .insert({
+            user_id: userId,
+            amount_cents: 0,
+            currency: "brl",
+            status: "completed",
+            credits_granted: 1,
+            credits_remaining: 1,
+            env: "sandbox",
+            kind: "identity",
+          })
+          .select("id, status, credits_remaining, created_at")
+          .single();
+        data = ins.data;
+        drafts = [];
+      }
     }
+
 
     if (!data) {
       return { payment: null, drafts: [], usedAvatarUrls: [] };
