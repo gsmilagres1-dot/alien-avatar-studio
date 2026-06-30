@@ -74,8 +74,9 @@ export const createBattleFn = createServerFn({ method: "POST" })
     betFichas: z.number().int().min(0).max(10000),
   }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: id, error } = await supabase.rpc("create_battle", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: id, error } = await supabaseAdmin.rpc("create_battle", {
+      _caller_id: context.userId,
       _team_a_id: data.teamAId,
       _team_b_id: data.teamBId,
       _destination_key: data.destinationId,
@@ -89,7 +90,8 @@ export const acceptBattleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ battleId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.rpc("accept_battle", { _battle_id: data.battleId });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.rpc("accept_battle", { _caller_id: context.userId, _battle_id: data.battleId });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
