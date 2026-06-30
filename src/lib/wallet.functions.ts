@@ -55,7 +55,7 @@ export const earnFichas = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({
       amount: z.number().int().positive().max(500),
-      reason: z.enum(["video_assistido", "vitoria_equipe"]),
+      reason: z.enum(["video_assistido"]),
       meta: z.record(z.any()).optional(),
     }).parse(d),
   )
@@ -64,7 +64,8 @@ export const earnFichas = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Ad-watch rewards: cap server-side and enforce a cooldown per user.
-    // (Replace this guard with a verifiable ad-network completion token once available.)
+    // Battle/team-win rewards are NOT exposed here — they are credited
+    // exclusively from inside finalize_battle() server-side.
     let amount = data.amount;
     if (data.reason === "video_assistido") {
       amount = Math.min(amount, AD_REWARD_AMOUNT_MAX);
@@ -95,3 +96,4 @@ export const earnFichas = createServerFn({ method: "POST" })
 
     return { balance: balance as number };
   });
+
