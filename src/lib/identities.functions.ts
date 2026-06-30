@@ -382,7 +382,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
   });
 
 const FREE_SESSION_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
-const FREE_SESSION_LIFETIME_MAX = 5; // total free identity sessions ever issued per user
+const FREE_SESSION_LIFETIME_MAX = 3; // total free identity sessions ever issued per user
 
 export const restartIdentityFlow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
