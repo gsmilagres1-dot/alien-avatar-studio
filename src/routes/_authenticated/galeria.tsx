@@ -24,10 +24,12 @@ function Galeria() {
   const list = useServerFn(listIdentitiesWithJourneys);
   const del = useServerFn(deleteIdentity);
   const rescueFn = useServerFn(rescueLostIdentity);
+  const buyPackFn = useServerFn(purchaseExtraIdentityPack);
   const { fichas, refresh: refreshWallet } = useWallet();
   const qc = useQueryClient();
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [rescuingId, setRescuingId] = useState<string | null>(null);
+  const [buyingPack, setBuyingPack] = useState(false);
 
   const { data, isLoading } = useQuery({ queryKey: ["identities-with-journeys"], queryFn: () => list() });
 
