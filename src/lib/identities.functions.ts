@@ -398,7 +398,7 @@ export const restartIdentityFlow = createServerFn({ method: "POST" })
       .eq("amount_cents", 0);
 
     if ((totalFree ?? 0) >= FREE_SESSION_LIFETIME_MAX) {
-      throw new Error("Limite de identidades gratuitas atingido. Para criar mais, compre créditos.");
+      throw new Error("Limite de 3 identidades gratuitas atingido. Compre +3 avatares por 500 fichas na galeria.");
     }
 
     // 24h cooldown between free sessions.
