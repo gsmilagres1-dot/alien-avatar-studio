@@ -133,7 +133,9 @@ export const startQuiz = createServerFn({ method: "POST" })
     const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}`);
     const questions = buildQuizFromBank(dest.id, seed);
     if (questions.length === 0) throw new Error("Banco de perguntas indisponível para este destino");
-    return { questions, level: dest.level, destination: dest, attemptsUsed: journey.attempts_used };
+    // Strip answer keys before returning to the client; correctness is decided server-side.
+    const safeQuestions = questions.map(({ q, choices, level }) => ({ q, choices, level }));
+    return { questions: safeQuestions, level: dest.level, destination: dest, attemptsUsed: journey.attempts_used };
   });
 
 function hashSeed(s: string): number {

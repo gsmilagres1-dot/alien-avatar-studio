@@ -729,7 +729,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_battle: { Args: { _battle_id: string }; Returns: undefined }
+      accept_battle: {
+        Args: { _battle_id: string; _caller_id: string }
+        Returns: undefined
+      }
       adjust_fichas: {
         Args: {
           _delta: number
@@ -742,6 +745,7 @@ export type Database = {
       create_battle: {
         Args: {
           _bet_fichas: number
+          _caller_id: string
           _destination_key: string
           _team_a_id: string
           _team_b_id: string
@@ -750,6 +754,7 @@ export type Database = {
       }
       create_team: {
         Args: {
+          _caller_id: string
           _country_code?: string
           _description?: string
           _flag_emoji?: string
@@ -757,7 +762,10 @@ export type Database = {
         }
         Returns: string
       }
-      finalize_battle: { Args: { _battle_id: string }; Returns: string }
+      finalize_battle: {
+        Args: { _battle_id: string; _caller_id: string }
+        Returns: string
+      }
       is_team_leader: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
@@ -766,9 +774,18 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
-      join_team_via_invite: { Args: { _token: string }; Returns: string }
-      leave_team: { Args: { _team_id: string }; Returns: undefined }
-      purchase_upgrade: { Args: { _upgrade_key: string }; Returns: number }
+      join_team_via_invite: {
+        Args: { _caller_id: string; _token: string }
+        Returns: string
+      }
+      leave_team: {
+        Args: { _caller_id: string; _team_id: string }
+        Returns: undefined
+      }
+      purchase_upgrade: {
+        Args: { _caller_id: string; _upgrade_key: string }
+        Returns: number
+      }
       submit_battle_score: {
         Args: { _battle_id: string; _score: number }
         Returns: undefined

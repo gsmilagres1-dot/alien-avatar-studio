@@ -15,7 +15,9 @@ export const createTeam = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: teamId, error } = await context.supabase.rpc("create_team", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: teamId, error } = await supabaseAdmin.rpc("create_team", {
+      _caller_id: context.userId,
       _name: data.name,
       _country_code: data.countryCode ?? undefined,
       _flag_emoji: data.flagEmoji ?? undefined,
@@ -129,7 +131,8 @@ export const joinTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ token: z.string().min(4).max(64) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: teamId, error } = await context.supabase.rpc("join_team_via_invite", { _token: data.token });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: teamId, error } = await supabaseAdmin.rpc("join_team_via_invite", { _caller_id: context.userId, _token: data.token });
     if (error) {
       const map: Record<string, string> = {
         invite_not_found: "Convite inválido ou expirado",
@@ -147,7 +150,8 @@ export const leaveTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ teamId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.rpc("leave_team", { _team_id: data.teamId });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.rpc("leave_team", { _caller_id: context.userId, _team_id: data.teamId });
     if (error) {
       if (error.message.includes("leader_cannot_leave")) {
         throw new Error("O líder não pode sair da equipe. Transfira a liderança ou exclua a equipe.");

@@ -19,7 +19,9 @@ export const purchaseUpgradeFn = createServerFn({ method: "POST" })
     upgradeKey: z.enum(["speed", "shield", "radar", "energy", "cargo"]),
   }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: newLevel, error } = await context.supabase.rpc("purchase_upgrade", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: newLevel, error } = await supabaseAdmin.rpc("purchase_upgrade", {
+      _caller_id: context.userId,
       _upgrade_key: data.upgradeKey,
     });
     if (error) throw new Error(error.message);

@@ -74,8 +74,9 @@ export const createBattleFn = createServerFn({ method: "POST" })
     betFichas: z.number().int().min(0).max(10000),
   }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: id, error } = await supabase.rpc("create_battle", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: id, error } = await supabaseAdmin.rpc("create_battle", {
+      _caller_id: context.userId,
       _team_a_id: data.teamAId,
       _team_b_id: data.teamBId,
       _destination_key: data.destinationId,
@@ -89,7 +90,8 @@ export const acceptBattleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ battleId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.rpc("accept_battle", { _battle_id: data.battleId });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.rpc("accept_battle", { _caller_id: context.userId, _battle_id: data.battleId });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -126,7 +128,9 @@ export const startBattleQuiz = createServerFn({ method: "POST" })
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
     const questions = pickQuestions(battle.destination_key, h >>> 0);
     if (!questions.length) throw new Error("Banco de perguntas indisponível");
-    return { questions };
+    // Strip answer keys from client payload; scoring happens server-side.
+    const safe = questions.map(({ q, choices }) => ({ q, choices }));
+    return { questions: safe };
   });
 
 export const submitBattleScore = createServerFn({ method: "POST" })
@@ -173,7 +177,7 @@ export const submitBattleScore = createServerFn({ method: "POST" })
     const total = (mems ?? []).length;
     const submitted = (parts ?? []).length;
     if (total > 0 && submitted >= total) {
-      const { data: w } = await supabaseAdmin.rpc("finalize_battle", { _battle_id: data.battleId });
+      const { data: w } = await supabaseAdmin.rpc("finalize_battle", { _caller_id: userId, _battle_id: data.battleId });
       finalized = true;
       winnerId = (w as string | null) ?? null;
     }
@@ -183,9 +187,17 @@ export const submitBattleScore = createServerFn({ method: "POST" })
 export const finalizeBattleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ battleId: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: w, error } = await supabaseAdmin.rpc("finalize_battle", { _battle_id: data.battleId });
+    // Authorize: caller must be a member of either team in the battle.
+    const { data: battle } = await supabaseAdmin
+      .from("battles").select("team_a_id, team_b_id").eq("id", data.battleId).maybeSingle();
+    if (!battle) throw new Error("Batalha não encontrada");
+    const { data: membership } = await supabaseAdmin
+      .from("team_members").select("team_id").eq("user_id", context.userId)
+      .in("team_id", [battle.team_a_id, battle.team_b_id].filter((x): x is string => !!x));
+    if (!membership?.length) throw new Error("Você não participa desta batalha");
+    const { data: w, error } = await supabaseAdmin.rpc("finalize_battle", { _caller_id: context.userId, _battle_id: data.battleId });
     if (error) throw new Error(error.message);
     return { winnerId: (w as string | null) ?? null };
   });
