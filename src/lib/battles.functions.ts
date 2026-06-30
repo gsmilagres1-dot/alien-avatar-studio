@@ -128,7 +128,9 @@ export const startBattleQuiz = createServerFn({ method: "POST" })
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
     const questions = pickQuestions(battle.destination_key, h >>> 0);
     if (!questions.length) throw new Error("Banco de perguntas indisponível");
-    return { questions };
+    // Strip answer keys from client payload; scoring happens server-side.
+    const safe = questions.map(({ q, choices }) => ({ q, choices }));
+    return { questions: safe };
   });
 
 export const submitBattleScore = createServerFn({ method: "POST" })
