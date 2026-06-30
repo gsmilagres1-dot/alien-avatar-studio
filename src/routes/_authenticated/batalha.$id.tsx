@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/batalha/$id")({
   component: BattleDetail,
 });
 
-type Question = { q: string; choices: string[]; answer: number };
+type Question = { q: string; choices: string[] };
 
 function BattleDetail() {
   const { id } = Route.useParams();
