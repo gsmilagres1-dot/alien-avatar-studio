@@ -76,6 +76,32 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
               payRowId = inserted?.id ?? null;
             }
 
+            // Credit fichas on completed fichas pack purchase
+            if (kind === "fichas" && payRowId && userIdMeta) {
+              const fichasStr = session.metadata?.fichas ?? "";
+              const fichas = Number.parseInt(fichasStr, 10);
+              if (Number.isFinite(fichas) && fichas > 0) {
+                // Idempotency: only credit if the row is still pending crediting
+                const { data: row } = await supabaseAdmin
+                  .from("payment_transactions")
+                  .select("credits_remaining")
+                  .eq("id", payRowId)
+                  .maybeSingle();
+                if (row && (row.credits_remaining ?? 0) > 0) {
+                  await supabaseAdmin.rpc("adjust_fichas", {
+                    _user_id: userIdMeta,
+                    _delta: fichas,
+                    _reason: "fichas_pack_purchase",
+                    _meta: { pack: session.metadata?.pack ?? null, payment_id: payRowId },
+                  });
+                  await supabaseAdmin
+                    .from("payment_transactions")
+                    .update({ credits_remaining: 0 })
+                    .eq("id", payRowId);
+                }
+              }
+            }
+
             // Auto-issue passport on completed passport payment
             if (kind === "passport" && payRowId && userIdMeta) {
               const { data: existingP } = await supabaseAdmin
