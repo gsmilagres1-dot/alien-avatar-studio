@@ -44,19 +44,21 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
 
             // Mark pending row completed (or insert if missing) and capture id
             let payRowId: string | null = null;
+            let wasAlreadyCompleted = false;
             const { data: existing } = await supabaseAdmin
               .from("payment_transactions")
-              .select("id")
+              .select("id, status")
               .eq("stripe_session_id", sessionId)
               .maybeSingle();
 
             if (existing) {
+              wasAlreadyCompleted = existing.status === "completed";
               await supabaseAdmin
                 .from("payment_transactions")
                 .update({
                   status: "completed",
                   stripe_payment_intent: paymentIntentId,
-                  credits_remaining: 1,
+                  ...(wasAlreadyCompleted ? {} : { credits_remaining: 1 }),
                 })
                 .eq("id", existing.id);
               payRowId = existing.id;
@@ -76,31 +78,25 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
               payRowId = inserted?.id ?? null;
             }
 
-            // Credit fichas on completed fichas pack purchase
-            if (kind === "fichas" && payRowId && userIdMeta) {
+            // Credit fichas on completed fichas pack purchase (idempotent)
+            if (kind === "fichas" && payRowId && userIdMeta && !wasAlreadyCompleted) {
               const fichasStr = session.metadata?.fichas ?? "";
               const fichas = Number.parseInt(fichasStr, 10);
               if (Number.isFinite(fichas) && fichas > 0) {
-                // Idempotency: only credit if the row is still pending crediting
-                const { data: row } = await supabaseAdmin
+                await supabaseAdmin.rpc("adjust_fichas", {
+                  _user_id: userIdMeta,
+                  _delta: fichas,
+                  _reason: "fichas_pack_purchase",
+                  _meta: { pack: session.metadata?.pack ?? null, payment_id: payRowId },
+                });
+                await supabaseAdmin
                   .from("payment_transactions")
-                  .select("credits_remaining")
-                  .eq("id", payRowId)
-                  .maybeSingle();
-                if (row && (row.credits_remaining ?? 0) > 0) {
-                  await supabaseAdmin.rpc("adjust_fichas", {
-                    _user_id: userIdMeta,
-                    _delta: fichas,
-                    _reason: "fichas_pack_purchase",
-                    _meta: { pack: session.metadata?.pack ?? null, payment_id: payRowId },
-                  });
-                  await supabaseAdmin
-                    .from("payment_transactions")
-                    .update({ credits_remaining: 0 })
-                    .eq("id", payRowId);
-                }
+                  .update({ credits_remaining: 0 })
+                  .eq("id", payRowId);
               }
             }
+
+            // Auto-issue passport on completed passport payment
 
             // Auto-issue passport on completed passport payment
             if (kind === "passport" && payRowId && userIdMeta) {
