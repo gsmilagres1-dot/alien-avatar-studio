@@ -4,19 +4,27 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createStripeClient, getStripeErrorMessage, type StripeEnv } from "@/lib/stripe.server";
 
-type Kind = "identity" | "passport" | "visa";
+type Kind = "identity" | "passport" | "visa" | "fichas";
 
-const PRICES: Record<Kind, { lookup: string; amount: number }> = {
+const PRICES: Record<Exclude<Kind, "fichas">, { lookup: string; amount: number }> = {
   identity: { lookup: "alien_identity_single", amount: 299 },
   passport: { lookup: "alien_passport_single", amount: 299 },
   visa:     { lookup: "alien_visa_single",     amount: 199 },
 };
 
+const FICHAS_PACKS: Record<string, { lookup: string; amount: number; fichas: number }> = {
+  fichas_pack_100:  { lookup: "fichas_pack_100",  amount: 199,  fichas: 100 },
+  fichas_pack_300:  { lookup: "fichas_pack_300",  amount: 499,  fichas: 300 },
+  fichas_pack_700:  { lookup: "fichas_pack_700",  amount: 999,  fichas: 700 },
+  fichas_pack_1000: { lookup: "fichas_pack_1000", amount: 1399, fichas: 1000 },
+};
+
 const input = z.object({
   environment: z.enum(["sandbox", "live"]),
   returnUrl: z.string().url(),
-  kind: z.enum(["identity", "passport", "visa"]).default("identity"),
+  kind: z.enum(["identity", "passport", "visa", "fichas"]).default("identity"),
   journeyId: z.string().uuid().optional(),
+  pack: z.string().optional(),
 });
 
 type Result = { clientSecret: string; paymentRowId: string } | { error: string };
