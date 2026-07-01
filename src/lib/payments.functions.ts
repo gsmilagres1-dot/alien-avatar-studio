@@ -64,7 +64,18 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       const { userId, claims } = context;
       const env: StripeEnv = data.environment;
       const kind: Kind = data.kind;
-      const cfg = PRICES[kind];
+
+      let cfg: { lookup: string; amount: number };
+      let fichasCredits = 0;
+      if (kind === "fichas") {
+        const pack = data.pack && FICHAS_PACKS[data.pack];
+        if (!pack) throw new Error("Pacote de fichas inválido");
+        cfg = { lookup: pack.lookup, amount: pack.amount };
+        fichasCredits = pack.fichas;
+      } else {
+        cfg = PRICES[kind];
+      }
+
       const stripe = createStripeClient(env);
 
       const prices = await stripe.prices.list({ lookup_keys: [cfg.lookup] });
@@ -84,7 +95,13 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         return_url: data.returnUrl,
         customer: customerId,
         payment_intent_data: { description: product.name },
-        metadata: { userId, kind, journeyId: data.journeyId ?? "" },
+        metadata: {
+          userId,
+          kind,
+          journeyId: data.journeyId ?? "",
+          pack: kind === "fichas" ? (data.pack ?? "") : "",
+          fichas: fichasCredits ? String(fichasCredits) : "",
+        },
       });
 
       const { data: row, error } = await supabaseAdmin
@@ -95,7 +112,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
           amount_cents: cfg.amount,
           currency: "brl",
           status: "pending",
-          credits_granted: 1,
+          credits_granted: kind === "fichas" ? fichasCredits : 1,
           credits_remaining: 0,
           env,
           kind,
