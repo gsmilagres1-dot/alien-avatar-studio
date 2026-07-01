@@ -5,15 +5,16 @@ import { createCheckoutSession } from "@/lib/payments.functions";
 
 interface Props {
   returnUrl: string;
-  kind?: "identity" | "passport" | "visa";
+  kind?: "identity" | "passport" | "visa" | "fichas";
   journeyId?: string;
+  pack?: string;
 }
 
-export function StripeEmbeddedCheckout({ returnUrl, kind = "identity", journeyId }: Props) {
+export function StripeEmbeddedCheckout({ returnUrl, kind = "identity", journeyId, pack }: Props) {
   const create = useServerFn(createCheckoutSession);
 
   const fetchClientSecret = async (): Promise<string> => {
-    const result = await create({ data: { environment: getStripeEnvironment(), returnUrl, kind, journeyId } });
+    const result = await create({ data: { environment: getStripeEnvironment(), returnUrl, kind, journeyId, pack } });
     if ("error" in result) throw new Error(result.error);
     if (!result.clientSecret) throw new Error("Sem client secret");
     return result.clientSecret;
