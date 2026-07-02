@@ -283,6 +283,38 @@ export const listMyIdentities = createServerFn({ method: "GET" })
     return { identities: data ?? [] };
   });
 
+const setAvatarInput = z.object({
+  identityId: z.string().uuid(),
+  sourceIdentityId: z.string().uuid(),
+});
+
+/**
+ * Troca o avatar de uma identidade do próprio usuário por outro avatar
+ * já existente na galeria dele. Ambas identidades precisam pertencer ao
+ * usuário autenticado.
+ */
+export const setIdentityAvatarFromGallery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => setAvatarInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: source } = await supabaseAdmin
+      .from("identities")
+      .select("id, user_id, avatar_url")
+      .eq("id", data.sourceIdentityId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!source?.avatar_url) throw new Error("Avatar de origem não encontrado");
+
+    const { error } = await supabaseAdmin
+      .from("identities")
+      .update({ avatar_url: source.avatar_url, updated_at: new Date().toISOString() })
+      .eq("id", data.identityId)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true, avatarUrl: source.avatar_url };
+  });
+
 export const deleteIdentity = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
