@@ -41,10 +41,21 @@ export const FATAL_DESTINATIONS = [
 
 export const MAX_QUIZ_ATTEMPTS = 3;
 export const QUIZ_PASS_RATIO = 0.7;
-// 3 níveis de dificuldade x 5 perguntas = 15 perguntas distintas por tentativa.
-export const QUESTIONS_PER_LEVEL = 5;
+// Quiz agora tem 9 perguntas distintas por destino. Se o usuário escolher
+// um nível de dificuldade antes de iniciar, todas as 9 perguntas vêm daquele
+// nível; caso contrário, mantemos 3 níveis × 3 perguntas cada.
+export const QUESTIONS_PER_LEVEL = 3;
 export const QUIZ_LEVELS = 3;
-export const QUESTIONS_PER_QUIZ = QUESTIONS_PER_LEVEL * QUIZ_LEVELS; // 15
+export const QUESTIONS_PER_QUIZ = 9;
+
+export type QuizDifficulty = 1 | 2 | 3;
+export const DIFFICULTY_LABEL: Record<QuizDifficulty, string> = {
+  1: "Fácil",
+  2: "Médio",
+  3: "Difícil",
+};
+/** Prêmio final: completar os 45 destinos com selo destrava o Telescópio Jimmy Wath. */
+export const TELESCOPE_JIMMY_WATH_THRESHOLD = 45;
 
 export type BadgeTier = "bronze" | "silver" | "gold";
 
