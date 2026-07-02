@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Coins, PlayCircle, Loader2, X } from "lucide-react";
+import { Coins, PlayCircle, Loader2, X, Hourglass } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { earnFichas } from "@/lib/wallet.functions";
 import { useWallet } from "@/hooks/useWallet";
 import { WalletBadge } from "@/components/WalletBadge";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { getVideoAdStatus, claimVideoAdReward } from "@/lib/rewards.functions";
+
 
 const PACKS = [
   { id: "fichas_pack_100",  fichas: 100,  price: "R$ 1,99" },
