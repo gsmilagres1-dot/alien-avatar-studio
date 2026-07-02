@@ -151,6 +151,12 @@ function Galaxia() {
               <WormholePrize visitedCount={visas.length} variant="reward" />
             </div>
           )}
+          {!fatal && (
+            <div className="mt-4">
+              <TelescopePrize visitedCount={visas.length} totalCount={TELESCOPE_JIMMY_WATH_THRESHOLD} variant={visas.length >= TELESCOPE_JIMMY_WATH_THRESHOLD ? "reward" : "banner"} />
+            </div>
+          )}
+
           {visas.length > 0 && (
             <div className="mt-6">
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
