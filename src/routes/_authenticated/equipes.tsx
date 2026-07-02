@@ -17,6 +17,7 @@ import {
 import {
   listBattlesForMyTeams, listOpenTeams, createBattleFn, acceptBattleFn, listBattleDestinations,
 } from "@/lib/battles.functions";
+import { listTeamJoinRequests, respondJoinRequest } from "@/lib/team-requests.functions";
 
 export const Route = createFileRoute("/_authenticated/equipes")({
   component: Equipes,
