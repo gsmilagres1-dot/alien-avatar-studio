@@ -194,7 +194,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
         });
         fichasBalance = bal as number;
       } catch { /* wallet may not exist yet on first run */ }
-      return { passed: true, score, attemptsLeft: MAX_QUIZ_ATTEMPTS, fatal: null, tier, fichasEarned: reward, fichasBalance };
+      return { passed: true, score, attemptsLeft: MAX_QUIZ_ATTEMPTS, fatal: null, tier, fichasEarned: reward, fichasBalance, correctAnswers: questions.map((q) => q.answer) };
     }
 
 
