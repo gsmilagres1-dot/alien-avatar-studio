@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
-import { Sparkles, Rocket, Images, Globe2, Home, Share2 } from "lucide-react";
+import { Sparkles, Rocket, Images, Globe2, Home, Share2, Users } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { toast } from "sonner";
 
@@ -53,6 +53,9 @@ function AuthLayout() {
             </Link>
             <Link to="/galeria" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
               <Images className="w-3.5 h-3.5" /> <span>Galeria</span>
+            </Link>
+            <Link to="/pilotos" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" /> <span>Pilotos</span>
             </Link>
             <LanguageSwitcher compact />
           </div>
