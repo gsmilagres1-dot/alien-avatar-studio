@@ -66,6 +66,7 @@ function Galaxia() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [quizLoading, setQuizLoading] = useState(false);
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null; tier: "bronze" | "silver" | "gold" | null; fichasEarned?: number } | null>(null);
+  const [review, setReview] = useState<number[] | null>(null);
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
   const [journeyStep, setJourneyStep] = useState<"passport" | "destination" | "ship">("passport");
@@ -228,18 +229,28 @@ function Galaxia() {
                 <div className="space-y-2">
                   {q.choices.map((c, ci) => {
                     const isPicked = picked === ci;
+                    const correctIdx = review?.[qi];
+                    const reviewing = correctIdx !== undefined;
+                    const isCorrect = reviewing && ci === correctIdx;
+                    const isWrongPick = reviewing && isPicked && ci !== correctIdx;
                     let cls = "border-border hover:bg-accent/5";
-                    if (locked) {
-                      if (isPicked) { cls = "border-accent bg-accent/10"; }
-                      else { cls = "border-border opacity-60"; }
+                    if (reviewing) {
+                      if (isCorrect) cls = "border-green-500 bg-green-500/15 text-green-300";
+                      else if (isWrongPick) cls = "border-red-500 bg-red-500/15 text-red-300 line-through";
+                      else cls = "border-border opacity-50";
+                    } else if (locked) {
+                      if (isPicked) cls = "border-accent bg-accent/10";
+                      else cls = "border-border opacity-60";
                     }
                     return (
-                      <button key={ci} disabled={locked} onClick={() => {
+                      <button key={ci} disabled={locked || reviewing} onClick={() => {
                         if (locked) return;
                         const next = [...answers]; next[qi] = ci; setAnswers(next);
                       }}
                         className={`w-full text-left px-3 py-2 rounded-lg text-sm border flex items-center justify-between gap-2 ${cls}`}>
                         <span>{c}</span>
+                        {reviewing && isCorrect && <span className="text-[10px] font-bold">✓ correta</span>}
+                        {reviewing && isWrongPick && <span className="text-[10px] font-bold">✗ sua resposta</span>}
                       </button>
                     );
                   })}
@@ -249,20 +260,27 @@ function Galaxia() {
             );
           })}
         </div>
-        <button disabled={!allAnswered || quizLoading} onClick={async () => {
-          setQuizLoading(true);
-          try {
-            const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers } });
-            setLastResult(r);
-            setQuiz(null); setAnswers([]);
-            await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-            await qc.invalidateQueries({ queryKey: ["wallet"] });
-          } catch (e) { toast.error((e as Error).message); }
-          finally { setQuizLoading(false); }
-        }}
-          className="mt-6 w-full px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
-          {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Enviar respostas"}
-        </button>
+        {review ? (
+          <button onClick={() => { setReview(null); setQuiz(null); setAnswers([]); }}
+            className="mt-6 w-full px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold">
+            Fechar revisão
+          </button>
+        ) : (
+          <button disabled={!allAnswered || quizLoading} onClick={async () => {
+            setQuizLoading(true);
+            try {
+              const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers } });
+              setLastResult(r);
+              setReview(r.correctAnswers ?? null);
+              await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+              await qc.invalidateQueries({ queryKey: ["wallet"] });
+            } catch (e) { toast.error((e as Error).message); }
+            finally { setQuizLoading(false); }
+          }}
+            className="mt-6 w-full px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
+            {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Enviar respostas"}
+          </button>
+        )}
       </main>
     );
   }
