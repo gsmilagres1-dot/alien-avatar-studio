@@ -533,21 +533,44 @@ function Galaxia() {
             )}
           </div>
 
-          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 70% no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 70% (7/9) no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+
+          {/* Seletor de dificuldade */}
+          <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Escolha a dificuldade do quiz</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {([
+                { v: null, label: "Misto", desc: "3+3+3", cls: "border-border" },
+                { v: 1 as const, label: "Fácil", desc: "9 fáceis", cls: "border-green-500/40 text-green-300" },
+                { v: 2 as const, label: "Médio", desc: "9 médias", cls: "border-yellow-500/40 text-yellow-300" },
+                { v: 3 as const, label: "Difícil", desc: "9 difíceis", cls: "border-red-500/40 text-red-300" },
+              ] as const).map((opt) => {
+                const active = chosenDifficulty === opt.v;
+                return (
+                  <button key={String(opt.v)} onClick={() => setChosenDifficulty(opt.v)}
+                    className={`rounded-lg border px-3 py-2 text-left text-xs transition ${opt.cls} ${active ? "ring-2 ring-accent bg-accent/10" : "opacity-70 hover:opacity-100"}`}>
+                    <div className="font-bold">{opt.label}</div>
+                    <div className="text-[10px] text-muted-foreground">{opt.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="mt-5 flex flex-col sm:flex-row gap-2">
             <button disabled={quizLoading} onClick={async () => {
               setQuizLoading(true);
               try {
-                const r = await quizStartFn({ data: { journeyId: journey.id, destinationId: currentDest.id } });
-                setQuiz({ questions: r.questions, level: r.level, destinationId: currentDest.id, destinationName: r.destination.name });
-                setAnswers([]); setLastResult(null);
+                const r = await quizStartFn({ data: { journeyId: journey.id, destinationId: currentDest.id, ...(chosenDifficulty ? { difficulty: chosenDifficulty } : {}) } });
+                setQuiz({ questions: r.questions, level: r.level, destinationId: currentDest.id, destinationName: r.destination.name, difficulty: chosenDifficulty });
+                setAnswers([]); setLastResult(null); setReview(null);
               } catch (e) { toast.error((e as Error).message); }
               finally { setQuizLoading(false); }
             }}
               className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
               {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
             </button>
+
             {lastResult?.passed && lastResult.tier && (
               <button onClick={async () => {
                 try {
