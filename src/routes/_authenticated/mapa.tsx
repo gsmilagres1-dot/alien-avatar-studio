@@ -319,10 +319,6 @@ function Mapa() {
   );
 }
 
-// Sentinel so line_replace's structural check stays valid
-const __mapaEnd = true; void __mapaEnd;
-  );
-}
 
 function FilterChip({ active, onClick, icon, children }: { active: boolean; onClick: () => void; icon: React.ReactNode; children: React.ReactNode }) {
   return (
