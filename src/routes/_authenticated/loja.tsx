@@ -23,33 +23,68 @@ export const Route = createFileRoute("/_authenticated/loja")({
 });
 
 function Loja() {
-  const earnFn = useServerFn(earnFichas);
+  const statusFn = useServerFn(getVideoAdStatus);
+  const claimFn = useServerFn(claimVideoAdReward);
   const { refresh } = useWallet();
   const [watching, setWatching] = useState(false);
   const [progress, setProgress] = useState(0);
   const [buyingPack, setBuyingPack] = useState<string | null>(null);
+  const [cooldownMs, setCooldownMs] = useState(0);
+
+  const statusQ = useQuery({
+    queryKey: ["video-ad-status"],
+    queryFn: () => statusFn({}),
+    refetchInterval: 30_000,
+  });
+
+  const nextAt = statusQ.data?.nextAvailableAt ? new Date(statusQ.data.nextAvailableAt).getTime() : 0;
+  useEffect(() => {
+    if (!nextAt) { setCooldownMs(0); return; }
+    const t = setInterval(() => {
+      const rem = Math.max(0, nextAt - Date.now());
+      setCooldownMs(rem);
+      if (rem === 0) statusQ.refetch();
+    }, 1000);
+    return () => clearInterval(t);
+  }, [nextAt, statusQ]);
+
+  const remaining = statusQ.data?.remaining ?? 0;
+  const used = statusQ.data?.used ?? 0;
+  const locked = remaining === 0 && cooldownMs > 0;
+
+  function fmtCooldown(ms: number) {
+    const s = Math.ceil(ms / 1000);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
 
   async function watchAd() {
+    if (locked) { toast.error("Aguarde a ampulheta ⌛"); return; }
     setWatching(true);
     setProgress(0);
     const start = Date.now();
+    const DURATION = 15000;
     const tick = setInterval(() => {
-      setProgress(Math.min(100, ((Date.now() - start) / 5000) * 100));
+      setProgress(Math.min(100, ((Date.now() - start) / DURATION) * 100));
     }, 100);
     setTimeout(async () => {
       clearInterval(tick);
       try {
-        await earnFn({ data: { amount: 5, reason: "video_assistido" } });
+        await claimFn({});
         await refresh();
-        toast.success("+5 fichas grátis!");
+        await statusQ.refetch();
+        toast.success("+5 fichas! 🛸");
       } catch (e) {
         toast.error((e as Error).message);
       } finally {
         setWatching(false);
         setProgress(0);
       }
-    }, 5000);
+    }, DURATION);
   }
+
 
   const returnUrl =
     typeof window !== "undefined"
