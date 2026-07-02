@@ -643,6 +643,9 @@ function Galaxia() {
             </div>
           )}
           <div className="mt-4">
+            <WormholeSurprisePrize visitedCount={visas.length} variant={visas.length >= WORMHOLE_SURPRISE_THRESHOLD ? "reward" : "banner"} />
+          </div>
+          <div className="mt-4">
             <TelescopePrize visitedCount={visas.length} totalCount={TELESCOPE_JIMMY_WATH_THRESHOLD} variant={visas.length >= TELESCOPE_JIMMY_WATH_THRESHOLD ? "reward" : "banner"} />
           </div>
 
