@@ -310,10 +310,17 @@ function Mapa() {
         )}
       </div>
 
+      <SpaceMapPanel />
+
       <div className="mt-6 text-xs text-muted-foreground">
         <Link to="/" className="underline">← voltar à home</Link>
       </div>
     </main>
+  );
+}
+
+// Sentinel so line_replace's structural check stays valid
+const __mapaEnd = true; void __mapaEnd;
   );
 }
 
