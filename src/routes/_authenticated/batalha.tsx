@@ -65,24 +65,33 @@ function BattleRoom() {
         Desafie outra equipe: 9 perguntas no destino escolhido. Quem somar mais pontos leva o pote de fichas.
       </p>
 
-      {myTeam ? (
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <Link
-            to="/pilotos"
-            className="px-3 py-3 rounded-xl glass border border-white/10 text-center font-display text-sm flex items-center justify-center gap-2"
-          >
-            <Users className="w-4 h-4 text-cyan-300" /> Buscar Equipes
-          </Link>
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <Link
+          to="/pilotos"
+          className="px-3 py-3 rounded-xl glass border border-white/10 text-center font-display text-sm flex items-center justify-center gap-2"
+        >
+          <Users className="w-4 h-4 text-cyan-300" /> Buscar Equipes
+        </Link>
+        {myTeam ? (
           <button
             onClick={() => setShowForm((s) => !s)}
             className="px-3 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-700 text-white font-display text-sm flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" /> Convocar p/ Batalha
           </button>
-        </div>
-      ) : (
-        <div className="mb-4 p-3 rounded-xl glass text-sm">
-          Você precisa de uma equipe. <Link to="/equipes" className="underline">Criar equipe →</Link>
+        ) : (
+          <Link
+            to="/equipes"
+            className="px-3 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-700 text-white font-display text-sm flex items-center justify-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> Criar Equipe
+          </Link>
+        )}
+      </div>
+
+      {!myTeam && (
+        <div className="mb-4 p-3 rounded-xl glass text-xs text-muted-foreground">
+          Você ainda não faz parte de uma equipe. Crie uma ou peça para entrar em uma existente pela aba Pilotos.
         </div>
       )}
 
