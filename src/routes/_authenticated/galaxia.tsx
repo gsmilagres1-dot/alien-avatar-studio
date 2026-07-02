@@ -192,9 +192,12 @@ function Galaxia() {
         <div className="flex items-start justify-between gap-3 mb-2">
           <div>
             <div className="text-xs text-muted-foreground">Quiz da viagem · {quiz.destinationName}</div>
-            <h1 className="font-display text-xl text-gradient-neon mt-1">15 perguntas · 3 níveis</h1>
-            <p className="text-xs text-muted-foreground">Acerte 70% (11/15) para embarcar. {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s).</p>
+            <h1 className="font-display text-xl text-gradient-neon mt-1">
+              9 perguntas · {quiz.difficulty ? LEVEL_LABEL[quiz.difficulty] : "3 níveis"}
+            </h1>
+            <p className="text-xs text-muted-foreground">Acerte 70% (7/9) para embarcar. {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s).</p>
           </div>
+
           <div className="flex flex-col items-end gap-2">
             <WalletBadge />
             <SOSButton
