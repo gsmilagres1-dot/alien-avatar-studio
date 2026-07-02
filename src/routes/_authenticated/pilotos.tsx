@@ -131,6 +131,9 @@ function PilotosPage() {
         })}
       </ol>
 
+      <TeamsRecruitmentPanel />
+
+
       {openUser && (
         <PilotDetailModal
           userId={openUser}
