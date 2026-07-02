@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthenticatedUpgradesRouteImport } from './routes/_authenticated/upgrades'
+import { Route as AuthenticatedPilotosRouteImport } from './routes/_authenticated/pilotos'
 import { Route as AuthenticatedMapaRouteImport } from './routes/_authenticated/mapa'
 import { Route as AuthenticatedLojaRouteImport } from './routes/_authenticated/loja'
 import { Route as AuthenticatedGaleriaRouteImport } from './routes/_authenticated/galeria'
@@ -48,6 +49,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
 const AuthenticatedUpgradesRoute = AuthenticatedUpgradesRouteImport.update({
   id: '/upgrades',
   path: '/upgrades',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPilotosRoute = AuthenticatedPilotosRouteImport.update({
+  id: '/pilotos',
+  path: '/pilotos',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMapaRoute = AuthenticatedMapaRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
+  '/pilotos': typeof AuthenticatedPilotosRoute
   '/upgrades': typeof AuthenticatedUpgradesRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/batalha/$id': typeof AuthenticatedBatalhaIdRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/galeria': typeof AuthenticatedGaleriaRoute
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
+  '/pilotos': typeof AuthenticatedPilotosRoute
   '/upgrades': typeof AuthenticatedUpgradesRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/batalha/$id': typeof AuthenticatedBatalhaIdRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/_authenticated/galeria': typeof AuthenticatedGaleriaRoute
   '/_authenticated/loja': typeof AuthenticatedLojaRoute
   '/_authenticated/mapa': typeof AuthenticatedMapaRoute
+  '/_authenticated/pilotos': typeof AuthenticatedPilotosRoute
   '/_authenticated/upgrades': typeof AuthenticatedUpgradesRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/batalha/$id': typeof AuthenticatedBatalhaIdRoute
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/galeria'
     | '/loja'
     | '/mapa'
+    | '/pilotos'
     | '/upgrades'
     | '/checkout/return'
     | '/batalha/$id'
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
     | '/galeria'
     | '/loja'
     | '/mapa'
+    | '/pilotos'
     | '/upgrades'
     | '/checkout/return'
     | '/batalha/$id'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/_authenticated/galeria'
     | '/_authenticated/loja'
     | '/_authenticated/mapa'
+    | '/_authenticated/pilotos'
     | '/_authenticated/upgrades'
     | '/checkout/return'
     | '/_authenticated/batalha/$id'
@@ -260,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/upgrades'
       fullPath: '/upgrades'
       preLoaderRoute: typeof AuthenticatedUpgradesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/pilotos': {
+      id: '/_authenticated/pilotos'
+      path: '/pilotos'
+      fullPath: '/pilotos'
+      preLoaderRoute: typeof AuthenticatedPilotosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/mapa': {
@@ -374,6 +393,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedGaleriaRoute: typeof AuthenticatedGaleriaRoute
   AuthenticatedLojaRoute: typeof AuthenticatedLojaRoute
   AuthenticatedMapaRoute: typeof AuthenticatedMapaRoute
+  AuthenticatedPilotosRoute: typeof AuthenticatedPilotosRoute
   AuthenticatedUpgradesRoute: typeof AuthenticatedUpgradesRoute
 }
 
@@ -385,6 +405,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedGaleriaRoute: AuthenticatedGaleriaRoute,
   AuthenticatedLojaRoute: AuthenticatedLojaRoute,
   AuthenticatedMapaRoute: AuthenticatedMapaRoute,
+  AuthenticatedPilotosRoute: AuthenticatedPilotosRoute,
   AuthenticatedUpgradesRoute: AuthenticatedUpgradesRoute,
 }
 
