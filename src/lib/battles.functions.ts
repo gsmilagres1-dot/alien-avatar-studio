@@ -249,7 +249,12 @@ export const finalizeBattleFn = createServerFn({ method: "POST" })
   });
 
 
-// Listing of valid destinations for battles (5-pick: subset of 45)
+// All quiz destinations available for team battles (any destination whose
+// question bank supports the full 9-question format). Map/singular mode
+// destinations are unaffected — this only feeds the battle picker.
 export function listBattleDestinations() {
-  return ALL_DESTINATIONS.slice(0, 5).map((d) => ({ id: d.id, name: d.name, kind: d.kind }));
+  return ALL_DESTINATIONS
+    .filter((d) => getBank(d.id).length >= BATTLE_QUESTIONS)
+    .map((d) => ({ id: d.id, name: d.name, kind: d.kind }));
 }
+
