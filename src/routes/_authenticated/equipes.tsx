@@ -17,6 +17,8 @@ import {
 import {
   listBattlesForMyTeams, listOpenTeams, createBattleFn, acceptBattleFn, listBattleDestinations,
 } from "@/lib/battles.functions";
+import { getSubscribersList } from "@/lib/rewards.functions";
+
 
 export const Route = createFileRoute("/_authenticated/equipes")({
   component: Equipes,
