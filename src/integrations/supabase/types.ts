@@ -96,6 +96,7 @@ export type Database = {
       }
       battles: {
         Row: {
+          active_at: string | null
           bet_fichas: number
           created_at: string
           destination_key: string
@@ -109,6 +110,7 @@ export type Database = {
           winner_team_id: string | null
         }
         Insert: {
+          active_at?: string | null
           bet_fichas?: number
           created_at?: string
           destination_key: string
@@ -122,6 +124,7 @@ export type Database = {
           winner_team_id?: string | null
         }
         Update: {
+          active_at?: string | null
           bet_fichas?: number
           created_at?: string
           destination_key?: string
@@ -645,6 +648,7 @@ export type Database = {
           leader_id: string
           members_count: number
           name: string
+          ranking_points: number
           score: number
           updated_at: string
         }
@@ -658,6 +662,7 @@ export type Database = {
           leader_id: string
           members_count?: number
           name: string
+          ranking_points?: number
           score?: number
           updated_at?: string
         }
@@ -671,6 +676,7 @@ export type Database = {
           leader_id?: string
           members_count?: number
           name?: string
+          ranking_points?: number
           score?: number
           updated_at?: string
         }
@@ -846,6 +852,7 @@ export type Database = {
         }
         Returns: string
       }
+      expire_battle: { Args: { _battle_id: string }; Returns: string }
       finalize_battle: {
         Args: { _battle_id: string; _caller_id: string }
         Returns: string
