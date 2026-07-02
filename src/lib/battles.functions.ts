@@ -17,7 +17,7 @@ function getBank(id: string) {
 function pickQuestions(destId: string, seed: number) {
   const bank = getBank(destId);
   if (!bank.length) return [];
-  // simple shuffle with seed
+  // Seeded RNG (mulberry-ish) — same seed produces the same order for both teams.
   let a = seed | 0;
   const rng = () => {
     a = (a + 0x6d2b79f5) | 0;
@@ -25,17 +25,38 @@ function pickQuestions(destId: string, seed: number) {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  const arr = bank.slice();
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+  const shuffle = <T,>(xs: T[]) => {
+    const arr = xs.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+  // 9 questions balanced across the 3 difficulty levels (3 each), when available.
+  const byLevel: Record<1 | 2 | 3, typeof bank> = { 1: [], 2: [], 3: [] };
+  for (const q of bank) {
+    const lvl = ((q as { level?: number }).level ?? 1) as 1 | 2 | 3;
+    if (byLevel[lvl]) byLevel[lvl].push(q);
   }
-  return arr.slice(0, BATTLE_QUESTIONS).map((q) => ({
+  const picked: typeof bank = [];
+  for (const lvl of [1, 2, 3] as const) {
+    picked.push(...shuffle(byLevel[lvl]).slice(0, 3));
+  }
+  // If any level was short, top up from the remaining bank so we always return 9.
+  if (picked.length < BATTLE_QUESTIONS) {
+    const used = new Set(picked);
+    const rest = shuffle(bank.filter((q) => !used.has(q)));
+    picked.push(...rest.slice(0, BATTLE_QUESTIONS - picked.length));
+  }
+  // Final ordering is easy → medium → hard (already the case above).
+  return picked.slice(0, BATTLE_QUESTIONS).map((q) => ({
     q: q.q,
     choices: q.choices,
     answer: q.answer,
   }));
 }
+
 
 export const listBattlesForMyTeams = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -228,7 +249,12 @@ export const finalizeBattleFn = createServerFn({ method: "POST" })
   });
 
 
-// Listing of valid destinations for battles (5-pick: subset of 45)
+// All quiz destinations available for team battles (any destination whose
+// question bank supports the full 9-question format). Map/singular mode
+// destinations are unaffected — this only feeds the battle picker.
 export function listBattleDestinations() {
-  return ALL_DESTINATIONS.slice(0, 5).map((d) => ({ id: d.id, name: d.name, kind: d.kind }));
+  return ALL_DESTINATIONS
+    .filter((d) => getBank(d.id).length >= BATTLE_QUESTIONS)
+    .map((d) => ({ id: d.id, name: d.name, kind: d.kind }));
 }
+
