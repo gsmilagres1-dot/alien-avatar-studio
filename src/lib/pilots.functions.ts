@@ -38,16 +38,19 @@ export const listPilotsRanking = createServerFn({ method: "GET" })
       if (!currentByUser.has(i.user_id)) currentByUser.set(i.user_id, i);
     }
 
-    const rows = (profiles ?? []).map((p) => {
-      const ident = currentByUser.get(p.user_id) ?? null;
-      return {
-        userId: p.user_id,
-        displayName: p.display_name ?? ident?.alien_name ?? "Piloto",
-        joinedAt: p.created_at,
-        visas: visasByUser.get(p.user_id) ?? 0,
-        identity: ident,
-      };
-    });
+    const rows = (profiles ?? [])
+      .map((p) => {
+        const ident = currentByUser.get(p.user_id) ?? null;
+        return {
+          userId: p.user_id,
+          displayName: p.display_name ?? ident?.alien_name ?? "Piloto",
+          joinedAt: p.created_at,
+          visas: visasByUser.get(p.user_id) ?? 0,
+          identity: ident,
+        };
+      })
+      // Esconde perfis vazios (contas de teste sem nenhuma identidade criada).
+      .filter((r) => r.identity !== null);
 
     rows.sort((a, b) => {
       if (b.visas !== a.visas) return b.visas - a.visas;
