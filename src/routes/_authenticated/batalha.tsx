@@ -65,29 +65,34 @@ function BattleRoom() {
         Desafie outra equipe: 9 perguntas no destino escolhido. Quem somar mais pontos leva o pote de fichas.
       </p>
 
-      <div className="grid grid-cols-2 gap-2 mb-4">
+      <div className="grid grid-cols-2 gap-2 mb-3">
         <Link
           to="/pilotos"
           className="px-3 py-3 rounded-xl glass border border-white/10 text-center font-display text-sm flex items-center justify-center gap-2"
         >
           <Users className="w-4 h-4 text-cyan-300" /> Buscar Equipes
         </Link>
-        {myTeam ? (
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="px-3 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-700 text-white font-display text-sm flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> Convocar p/ Batalha
-          </button>
-        ) : (
-          <Link
-            to="/equipes"
-            className="px-3 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-700 text-white font-display text-sm flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> Criar Equipe
-          </Link>
-        )}
+        <button
+          onClick={() => {
+            if (!myTeam) {
+              toast.error("Você precisa estar em uma equipe para desafiar. Crie ou entre em uma pela aba Pilotos.");
+              return;
+            }
+            setShowForm((s) => !s);
+          }}
+          className="px-3 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-700 text-white font-display text-sm flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-500/30"
+        >
+          <Swords className="w-4 h-4" /> Desafiar Equipe
+        </button>
       </div>
+      {!myTeam && (
+        <Link
+          to="/equipes"
+          className="block mb-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-display text-sm text-center flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" /> Criar Equipe
+        </Link>
+      )}
 
       {!myTeam && (
         <div className="mb-4 p-3 rounded-xl glass text-xs text-muted-foreground">
