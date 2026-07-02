@@ -31,8 +31,8 @@ export function SOSButton({ cost, reason, label, onSuccess, meta, className = ""
     <button
       disabled={busy || insufficient}
       onClick={async () => {
-        if (!confirm(`Usar ${cost} fichas em "${label}"?`)) return;
         setBusy(true);
+        toast.info(`Usando ${cost} fichas para voltar à pergunta`);
         try {
           await fn({ data: { amount: cost, reason, meta } });
           await refresh();
