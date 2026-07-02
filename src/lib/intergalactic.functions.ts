@@ -126,6 +126,7 @@ export const startQuiz = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     journeyId: z.string().uuid(),
     destinationId: z.string().min(1).max(64),
+    difficulty: z.number().int().min(1).max(3).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
@@ -141,15 +142,16 @@ export const startQuiz = createServerFn({ method: "POST" })
       .from("visas").select("id").eq("journey_id", journey.id).eq("destination_id", dest.id).maybeSingle();
     if (already) throw new Error("Você já visitou esse destino");
 
-    // Seed varia conforme tentativa: cada chance pode sortear perguntas diferentes do pool.
-    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}`);
-    const questions = buildQuizFromBank(dest.id, seed);
+    // Seed varia conforme tentativa + dificuldade: cada chance pode sortear perguntas diferentes.
+    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}:${data.difficulty ?? 0}`);
+    const questions = buildQuizFromBank(dest.id, seed, data.difficulty);
     if (questions.length === 0) throw new Error("Banco de perguntas indisponível para este destino");
     // O app precisa mostrar na hora se a resposta marcada está certa ou errada,
     // para o botão S.O.S. fazer sentido durante o quiz.
     const safeQuestions = questions.map(({ q, choices, answer, level }) => ({ q, choices, answer, level }));
-    return { questions: safeQuestions, level: dest.level, destination: dest, attemptsUsed: journey.attempts_used };
+    return { questions: safeQuestions, level: dest.level, destination: dest, attemptsUsed: journey.attempts_used, difficulty: data.difficulty ?? null };
   });
+
 
 function hashSeed(s: string): number {
   let h = 2166136261 >>> 0;
