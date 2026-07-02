@@ -6,12 +6,14 @@ import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, 
 import { toast } from "sonner";
 import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
 import { getJourneyState, startQuiz, submitQuiz, claimVisa, completeJourney } from "@/lib/intergalactic.functions";
-import { DESTINATIONS, ALL_DESTINATIONS, getAnyDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, TELEPORTER_THRESHOLD, type Destination } from "@/lib/intergalactic";
+import { DESTINATIONS, ALL_DESTINATIONS, getAnyDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, TELEPORTER_THRESHOLD, TELESCOPE_JIMMY_WATH_THRESHOLD, type Destination } from "@/lib/intergalactic";
 import { SHIPS } from "@/lib/alien";
 import { DestinationBadge } from "@/components/DestinationBadge";
 import { TeleporterPrize } from "@/components/TeleporterPrize";
 import { WormholePrize } from "@/components/WormholePrize";
+import { TelescopePrize } from "@/components/TelescopePrize";
 import { SOSButton } from "@/components/SOSButton";
+
 import { WalletBadge } from "@/components/WalletBadge";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
