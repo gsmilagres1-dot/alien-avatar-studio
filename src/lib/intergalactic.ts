@@ -54,6 +54,8 @@ export const DIFFICULTY_LABEL: Record<QuizDifficulty, string> = {
   2: "Médio",
   3: "Difícil",
 };
+/** Prêmio surpresa intermediário: Portal do Buraco de Minhoca revelado ao atingir 42 destinos. */
+export const WORMHOLE_SURPRISE_THRESHOLD = 42;
 /** Prêmio final: completar os 45 destinos com selo destrava o Telescópio Jimmy Wath. */
 export const TELESCOPE_JIMMY_WATH_THRESHOLD = 45;
 
