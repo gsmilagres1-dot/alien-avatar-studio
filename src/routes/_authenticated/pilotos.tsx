@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
   Loader2, Trophy, X, Rocket, Sparkles, ChevronRight, Users, Trash2, ImagePlus, Check,
-  UserPlus, Shield, Hourglass, XCircle,
+  UserPlus, Shield, Hourglass,
 } from "lucide-react";
 import { toast } from "sonner";
 import { listPilotsRanking, getPilotDetail } from "@/lib/pilots.functions";
