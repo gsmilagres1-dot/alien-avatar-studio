@@ -229,18 +229,28 @@ function Galaxia() {
                 <div className="space-y-2">
                   {q.choices.map((c, ci) => {
                     const isPicked = picked === ci;
+                    const correctIdx = review?.[qi];
+                    const reviewing = correctIdx !== undefined;
+                    const isCorrect = reviewing && ci === correctIdx;
+                    const isWrongPick = reviewing && isPicked && ci !== correctIdx;
                     let cls = "border-border hover:bg-accent/5";
-                    if (locked) {
-                      if (isPicked) { cls = "border-accent bg-accent/10"; }
-                      else { cls = "border-border opacity-60"; }
+                    if (reviewing) {
+                      if (isCorrect) cls = "border-green-500 bg-green-500/15 text-green-300";
+                      else if (isWrongPick) cls = "border-red-500 bg-red-500/15 text-red-300 line-through";
+                      else cls = "border-border opacity-50";
+                    } else if (locked) {
+                      if (isPicked) cls = "border-accent bg-accent/10";
+                      else cls = "border-border opacity-60";
                     }
                     return (
-                      <button key={ci} disabled={locked} onClick={() => {
+                      <button key={ci} disabled={locked || reviewing} onClick={() => {
                         if (locked) return;
                         const next = [...answers]; next[qi] = ci; setAnswers(next);
                       }}
                         className={`w-full text-left px-3 py-2 rounded-lg text-sm border flex items-center justify-between gap-2 ${cls}`}>
                         <span>{c}</span>
+                        {reviewing && isCorrect && <span className="text-[10px] font-bold">✓ correta</span>}
+                        {reviewing && isWrongPick && <span className="text-[10px] font-bold">✗ sua resposta</span>}
                       </button>
                     );
                   })}
