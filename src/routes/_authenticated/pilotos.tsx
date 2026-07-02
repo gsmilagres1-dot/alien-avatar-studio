@@ -362,3 +362,127 @@ function Row({ label, value, highlight, mono }: { label: string; value?: string 
     </div>
   );
 }
+
+function TeamsRecruitmentPanel() {
+  const qc = useQueryClient();
+  const rankingFn = useServerFn(listTeamsRanking);
+  const myTeamFn = useServerFn(getMyTeam);
+  const myReqsFn = useServerFn(listMyJoinRequests);
+  const requestFn = useServerFn(requestJoinTeam);
+  const cancelFn = useServerFn(cancelJoinRequest);
+
+  const teamsQ = useQuery({ queryKey: ["teams-ranking-pilots"], queryFn: () => rankingFn({}) });
+  const myTeamQ = useQuery({ queryKey: ["my-team-pilots"], queryFn: () => myTeamFn({}) });
+  const myReqsQ = useQuery({ queryKey: ["my-join-requests"], queryFn: () => myReqsFn() });
+  const [busyTeamId, setBusyTeamId] = useState<string | null>(null);
+
+  const inTeamId = myTeamQ.data?.team?.id ?? null;
+
+  type Req = { id: string; team_id: string; status: string };
+  const pendingByTeam = new Map<string, Req>();
+  for (const r of (myReqsQ.data?.requests ?? []) as Req[]) {
+    if (r.status === "pending") pendingByTeam.set(r.team_id, r);
+  }
+
+  async function ask(teamId: string) {
+    setBusyTeamId(teamId);
+    try {
+      await requestFn({ data: { teamId } });
+      await qc.invalidateQueries({ queryKey: ["my-join-requests"] });
+      toast.success("Solicitação enviada ao líder");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusyTeamId(null);
+    }
+  }
+
+  async function cancel(requestId: string, teamId: string) {
+    setBusyTeamId(teamId);
+    try {
+      await cancelFn({ data: { requestId } });
+      await qc.invalidateQueries({ queryKey: ["my-join-requests"] });
+      toast.success("Solicitação cancelada");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusyTeamId(null);
+    }
+  }
+
+  return (
+    <section className="mt-8">
+      <h2 className="font-display text-lg text-accent mb-2 flex items-center gap-2">
+        <Shield className="w-4 h-4" /> Equipes recrutando
+      </h2>
+      <p className="text-xs text-muted-foreground mb-3">
+        Peça para entrar em uma equipe. O líder aprova e você já pode batalhar em quiz (basta 1 membro por lado).
+      </p>
+
+      {inTeamId && (
+        <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2.5 text-xs">
+          Você já está na equipe <b>{myTeamQ.data?.team?.name}</b>.{" "}
+          <Link to="/equipes" className="underline text-accent">Abrir Equipes →</Link>
+        </div>
+      )}
+
+      {teamsQ.isLoading && (
+        <div className="py-6 flex justify-center"><Loader2 className="w-4 h-4 animate-spin text-accent" /></div>
+      )}
+
+      <div className="space-y-2">
+        {(teamsQ.data ?? []).map((t) => {
+          const iAmIn = inTeamId === t.id;
+          const pending = pendingByTeam.get(t.id);
+          const disabled = !!inTeamId || t.members_count >= 50;
+          const busy = busyTeamId === t.id;
+          return (
+            <div key={t.id} className="rounded-xl border border-border/50 bg-black/30 p-3 flex items-center gap-3">
+              <div className="text-2xl leading-none">{t.flag_emoji ?? "🛸"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-display truncate">{t.name}</div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+                  {t.members_count}/50 · {t.score} pts · {t.fichas} fichas
+                </div>
+                {t.description && (
+                  <div className="text-[11px] text-muted-foreground truncate mt-0.5">{t.description}</div>
+                )}
+              </div>
+              {iAmIn ? (
+                <span className="text-[10px] font-mono uppercase text-emerald-400 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+                  membro
+                </span>
+              ) : pending ? (
+                <button
+                  onClick={() => cancel(pending.id, t.id)}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-200 disabled:opacity-50"
+                >
+                  {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Hourglass className="w-3 h-3" />}
+                  Pendente · cancelar
+                </button>
+              ) : (
+                <button
+                  onClick={() => ask(t.id)}
+                  disabled={disabled || busy}
+                  title={t.members_count >= 50 ? "Equipe lotada" : inTeamId ? "Você já está numa equipe" : "Solicitar entrada"}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-full bg-accent text-accent-foreground disabled:opacity-40"
+                >
+                  {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />}
+                  Solicitar
+                </button>
+              )}
+            </div>
+          );
+        })}
+        {!teamsQ.isLoading && (teamsQ.data ?? []).length === 0 && (
+          <div className="text-center text-xs text-muted-foreground py-4">
+            Nenhuma equipe criada ainda.{" "}
+            <Link to="/equipes" className="underline text-accent">Funde a sua →</Link>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
