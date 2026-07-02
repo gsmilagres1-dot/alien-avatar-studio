@@ -52,7 +52,7 @@ function Galeria() {
       toast.error(`Faltam ${RESCUE_COST - fichas} fichas para o resgate`);
       return;
     }
-    if (!confirm(`Resgatar essa identidade perdida no espaço? Custa ${RESCUE_COST} fichas.`)) return;
+    toast.info(`Resgatando identidade — ${RESCUE_COST} fichas`);
     setRescuingId(id);
     try {
       await rescueFn({ data: { identityId: id } });
