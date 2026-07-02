@@ -31,7 +31,7 @@ function speciesEmoji(planetId?: string | null, species?: string | null) {
 
 function PilotosPage() {
   const { auth } = Route.useRouteContext();
-  const currentUserId: string | null = (auth as { user?: { id?: string } } | undefined)?.user?.id ?? null;
+  const currentUserId: string | null = (auth as { userId?: string | null } | undefined)?.userId ?? null;
   const listFn = useServerFn(listPilotsRanking);
   const { data, isLoading } = useQuery({
     queryKey: ["pilots-ranking"],
