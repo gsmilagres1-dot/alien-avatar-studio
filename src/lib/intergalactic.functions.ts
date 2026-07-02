@@ -208,10 +208,10 @@ export const submitQuiz = createServerFn({ method: "POST" })
         final_destination_kind: "fatal",
         completed_at: new Date().toISOString(),
       }).eq("id", journey.id);
-      return { passed: false, score, attemptsLeft: 0, fatal, tier: null };
+      return { passed: false, score, attemptsLeft: 0, fatal, tier: null, correctAnswers: questions.map((q) => q.answer) };
     }
     await supabaseAdmin.from("journeys").update({ attempts_used: newAttempts }).eq("id", journey.id);
-    return { passed: false, score, attemptsLeft: MAX_QUIZ_ATTEMPTS - newAttempts, fatal: null, tier: null };
+    return { passed: false, score, attemptsLeft: MAX_QUIZ_ATTEMPTS - newAttempts, fatal: null, tier: null, correctAnswers: questions.map((q) => q.answer) };
   });
 
 
