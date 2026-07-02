@@ -17,6 +17,7 @@ import {
 import {
   listBattlesForMyTeams, listOpenTeams, createBattleFn, acceptBattleFn, listBattleDestinations,
 } from "@/lib/battles.functions";
+import { listTeamJoinRequests, respondJoinRequest } from "@/lib/team-requests.functions";
 
 export const Route = createFileRoute("/_authenticated/equipes")({
   component: Equipes,
@@ -237,6 +238,8 @@ function MyTeamPanel({ team, role, onChanged }: { team: TeamRow; role: "leader" 
         </div>
       )}
 
+      {role === "leader" && <JoinRequestsPanel teamId={team.id} onChanged={onChanged} />}
+
       <BattlesPanel team={team} role={role} />
 
       <CurrentUserChat teamId={team.id} />
@@ -365,5 +368,74 @@ function CurrentUserChat({ teamId }: { teamId: string }) {
     <div className="mt-2">
       <TeamChat teamId={teamId} currentUserId={uid} />
     </div>
+  );
+}
+
+function JoinRequestsPanel({ teamId, onChanged }: { teamId: string; onChanged: () => void }) {
+  const listFn = useServerFn(listTeamJoinRequests);
+  const respondFn = useServerFn(respondJoinRequest);
+  const q = useQuery({
+    queryKey: ["team-join-requests", teamId],
+    queryFn: () => listFn({ data: { teamId } }),
+    refetchInterval: 15_000,
+  });
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function respond(requestId: string, accept: boolean) {
+    setBusyId(requestId);
+    try {
+      await respondFn({ data: { requestId, accept } });
+      toast.success(accept ? "Piloto aceito na equipe!" : "Solicitação rejeitada");
+      await q.refetch();
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const items = q.data?.requests ?? [];
+  if (items.length === 0) return null;
+
+  return (
+    <section className="mt-4 pt-4 border-t border-accent/15">
+      <h3 className="font-display text-sm flex items-center gap-2 mb-2">
+        <Users className="w-4 h-4 text-accent" /> Solicitações para entrar ({items.length})
+      </h3>
+      <div className="space-y-1.5">
+        {items.map((r) => (
+          <div key={r.id} className="p-2 rounded-lg bg-black/40 border border-accent/15 flex items-center gap-2">
+            <div className="w-9 h-9 rounded-lg overflow-hidden border border-accent/30 bg-black/60 flex items-center justify-center shrink-0">
+              {r.identity?.avatar_url ? (
+                <img src={r.identity.avatar_url} alt="" className="w-full h-full object-cover object-[center_25%]" />
+              ) : (
+                <span className="text-xs">👽</span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-display truncate">{r.identity?.alien_name ?? "Piloto"}</div>
+              <div className="text-[10px] text-muted-foreground truncate">
+                {r.identity?.species ?? "—"} {r.message ? `· "${r.message}"` : ""}
+              </div>
+            </div>
+            <button
+              onClick={() => respond(r.id, true)}
+              disabled={busyId === r.id}
+              className="px-2 py-1 rounded bg-emerald-500 text-white text-[10px] font-bold disabled:opacity-50"
+            >
+              {busyId === r.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Aceitar"}
+            </button>
+            <button
+              onClick={() => respond(r.id, false)}
+              disabled={busyId === r.id}
+              className="px-2 py-1 rounded bg-black/60 border border-white/10 text-white/70 text-[10px] font-bold disabled:opacity-50"
+            >
+              Recusar
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

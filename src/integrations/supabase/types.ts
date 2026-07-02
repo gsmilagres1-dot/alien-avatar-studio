@@ -529,6 +529,47 @@ export type Database = {
           },
         ]
       }
+      team_join_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_join_requests_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string
@@ -783,6 +824,7 @@ export type Database = {
         }
         Returns: number
       }
+      cancel_join_request: { Args: { _request_id: string }; Returns: undefined }
       claim_video_ad_reward: { Args: never; Returns: Json }
       create_battle: {
         Args: {
@@ -827,6 +869,14 @@ export type Database = {
       purchase_upgrade: {
         Args: { _caller_id: string; _upgrade_key: string }
         Returns: number
+      }
+      request_join_team: {
+        Args: { _message?: string; _team_id: string }
+        Returns: string
+      }
+      respond_join_request: {
+        Args: { _accept: boolean; _request_id: string }
+        Returns: undefined
       }
       submit_battle_score: {
         Args: { _battle_id: string; _score: number }
