@@ -73,9 +73,12 @@ function Equipes() {
         ))}
       </div>
 
+      <SubscribersPanel />
+
       <div className="mt-8 text-xs text-muted-foreground text-center">
         <Link to="/galaxia" className="underline">← voltar para a galáxia singular</Link>
       </div>
+
     </main>
   );
 }
