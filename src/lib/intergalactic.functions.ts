@@ -34,12 +34,23 @@ interface QuizQuestion { q: string; choices: string[]; answer: number; level?: n
  * (5 por nível) a partir do banco temático de cada destino.
  * Cada tentativa embaralha o pool — então as 3 chances podem ter perguntas diferentes.
  */
-function buildQuizFromBank(destinationId: string, attemptSeed: number): QuizQuestion[] {
+function buildQuizFromBank(destinationId: string, attemptSeed: number, difficulty?: number): QuizQuestion[] {
   const bank = getBankForAny(destinationId);
   if (bank.length === 0) return [];
 
   const rng = mulberry32(attemptSeed);
   const out: QuizQuestion[] = [];
+
+  // Se o jogador escolheu uma dificuldade, todas as 9 perguntas vêm daquele nível
+  // (com fallback para outros níveis se o pool for pequeno).
+  if (difficulty && difficulty >= 1 && difficulty <= QUIZ_LEVELS) {
+    const primary = bank.filter((q) => q.level === difficulty);
+    const fallback = bank.filter((q) => q.level !== difficulty);
+    const pool = [...shuffle(primary, rng), ...shuffle(fallback, rng)].slice(0, QUESTIONS_PER_QUIZ);
+    return pool.map((q) => ({ q: q.q, choices: q.choices, answer: q.answer, level: q.level }));
+  }
+
+  // Modo padrão: 3 perguntas por nível (fácil/médio/difícil).
   for (let lvl = 1; lvl <= QUIZ_LEVELS; lvl++) {
     const pool = bank.filter((q) => q.level === lvl);
     const picked = shuffle(pool, rng).slice(0, QUESTIONS_PER_LEVEL);
@@ -47,6 +58,7 @@ function buildQuizFromBank(destinationId: string, attemptSeed: number): QuizQues
   }
   return out;
 }
+
 
 function mulberry32(a: number) {
   return function () {
