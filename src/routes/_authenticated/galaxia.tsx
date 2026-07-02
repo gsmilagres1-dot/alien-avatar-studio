@@ -274,7 +274,7 @@ function Galaxia() {
           <button disabled={!allAnswered || quizLoading} onClick={async () => {
             setQuizLoading(true);
             try {
-              const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers } });
+              const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers, ...(quiz.difficulty ? { difficulty: quiz.difficulty } : {}) } });
               setLastResult(r);
               setReview(r.correctAnswers ?? null);
               await qc.invalidateQueries({ queryKey: ["journey", identityId] });
@@ -282,6 +282,7 @@ function Galaxia() {
             } catch (e) { toast.error((e as Error).message); }
             finally { setQuizLoading(false); }
           }}
+
             className="mt-6 w-full px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
             {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Enviar respostas"}
           </button>
