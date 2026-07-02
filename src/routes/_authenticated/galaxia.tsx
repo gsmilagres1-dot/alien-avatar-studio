@@ -62,7 +62,8 @@ function Galaxia() {
   });
 
   const [chosenDestId, setChosenDestId] = useState<string | null>(null);
-  const [quiz, setQuiz] = useState<{ questions: Question[]; level: number; destinationId: string; destinationName: string } | null>(null);
+  const [chosenDifficulty, setChosenDifficulty] = useState<1 | 2 | 3 | null>(null);
+  const [quiz, setQuiz] = useState<{ questions: Question[]; level: number; destinationId: string; destinationName: string; difficulty: 1 | 2 | 3 | null } | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
   const [quizLoading, setQuizLoading] = useState(false);
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null; tier: "bronze" | "silver" | "gold" | null; fichasEarned?: number } | null>(null);
@@ -70,6 +71,7 @@ function Galaxia() {
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
   const [journeyStep, setJourneyStep] = useState<"passport" | "destination" | "ship">("passport");
+
 
   useEffect(() => {
     if (chosenDestId) setJourneyStep("ship");
@@ -190,9 +192,12 @@ function Galaxia() {
         <div className="flex items-start justify-between gap-3 mb-2">
           <div>
             <div className="text-xs text-muted-foreground">Quiz da viagem · {quiz.destinationName}</div>
-            <h1 className="font-display text-xl text-gradient-neon mt-1">15 perguntas · 3 níveis</h1>
-            <p className="text-xs text-muted-foreground">Acerte 70% (11/15) para embarcar. {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s).</p>
+            <h1 className="font-display text-xl text-gradient-neon mt-1">
+              9 perguntas · {quiz.difficulty ? LEVEL_LABEL[quiz.difficulty] : "3 níveis"}
+            </h1>
+            <p className="text-xs text-muted-foreground">Acerte 70% (7/9) para embarcar. {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s).</p>
           </div>
+
           <div className="flex flex-col items-end gap-2">
             <WalletBadge />
             <SOSButton
@@ -269,7 +274,7 @@ function Galaxia() {
           <button disabled={!allAnswered || quizLoading} onClick={async () => {
             setQuizLoading(true);
             try {
-              const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers } });
+              const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers, ...(quiz.difficulty ? { difficulty: quiz.difficulty } : {}) } });
               setLastResult(r);
               setReview(r.correctAnswers ?? null);
               await qc.invalidateQueries({ queryKey: ["journey", identityId] });
@@ -277,6 +282,7 @@ function Galaxia() {
             } catch (e) { toast.error((e as Error).message); }
             finally { setQuizLoading(false); }
           }}
+
             className="mt-6 w-full px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
             {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Enviar respostas"}
           </button>
@@ -363,7 +369,7 @@ function Galaxia() {
             <div className="flex items-start gap-3">
               <Check className="w-6 h-6 text-accent mt-0.5" />
               <div className="flex-1">
-                <div className="font-display text-lg">Passou! {lastResult.score}/{15}</div>
+                <div className="font-display text-lg">Passou! {lastResult.score}/9</div>
                 <div className="text-xs text-muted-foreground">
                   Emblema conquistado: <b className="uppercase">{lastResult.tier === "gold" ? "Ouro (100%)" : lastResult.tier === "silver" ? "Prata (80–90%)" : "Bronze (70%)"}</b>. Embarque agora (grátis) para gravar o selo.
                 </div>
@@ -386,7 +392,7 @@ function Galaxia() {
             <div className="flex items-start gap-3">
               <Skull className="w-6 h-6 text-destructive mt-0.5" />
               <div>
-                <div className="font-display text-lg">Fim de linha · {lastResult.score}/{15}</div>
+                <div className="font-display text-lg">Fim de linha · {lastResult.score}/9</div>
                 <div className="text-xs text-muted-foreground">3 tentativas usadas. Você foi parar em <b>{lastResult.fatal.name}</b> ({lastResult.fatal.transport}).</div>
               </div>
             </div>
@@ -394,7 +400,7 @@ function Galaxia() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-6 h-6 text-orange-400 mt-0.5" />
               <div>
-                <div className="font-display text-lg">Reprovou · {lastResult.score}/{15}</div>
+                <div className="font-display text-lg">Reprovou · {lastResult.score}/9</div>
                 <div className="text-xs text-muted-foreground">{lastResult.attemptsLeft} tentativa(s) grátis restante(s).</div>
               </div>
             </div>
@@ -528,21 +534,44 @@ function Galaxia() {
             )}
           </div>
 
-          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 70% no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 70% (7/9) no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+
+          {/* Seletor de dificuldade */}
+          <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Escolha a dificuldade do quiz</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {([
+                { v: null, label: "Misto", desc: "3+3+3", cls: "border-border" },
+                { v: 1 as const, label: "Fácil", desc: "9 fáceis", cls: "border-green-500/40 text-green-300" },
+                { v: 2 as const, label: "Médio", desc: "9 médias", cls: "border-yellow-500/40 text-yellow-300" },
+                { v: 3 as const, label: "Difícil", desc: "9 difíceis", cls: "border-red-500/40 text-red-300" },
+              ] as const).map((opt) => {
+                const active = chosenDifficulty === opt.v;
+                return (
+                  <button key={String(opt.v)} onClick={() => setChosenDifficulty(opt.v)}
+                    className={`rounded-lg border px-3 py-2 text-left text-xs transition ${opt.cls} ${active ? "ring-2 ring-accent bg-accent/10" : "opacity-70 hover:opacity-100"}`}>
+                    <div className="font-bold">{opt.label}</div>
+                    <div className="text-[10px] text-muted-foreground">{opt.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="mt-5 flex flex-col sm:flex-row gap-2">
             <button disabled={quizLoading} onClick={async () => {
               setQuizLoading(true);
               try {
-                const r = await quizStartFn({ data: { journeyId: journey.id, destinationId: currentDest.id } });
-                setQuiz({ questions: r.questions, level: r.level, destinationId: currentDest.id, destinationName: r.destination.name });
-                setAnswers([]); setLastResult(null);
+                const r = await quizStartFn({ data: { journeyId: journey.id, destinationId: currentDest.id, ...(chosenDifficulty ? { difficulty: chosenDifficulty } : {}) } });
+                setQuiz({ questions: r.questions, level: r.level, destinationId: currentDest.id, destinationName: r.destination.name, difficulty: chosenDifficulty });
+                setAnswers([]); setLastResult(null); setReview(null);
               } catch (e) { toast.error((e as Error).message); }
               finally { setQuizLoading(false); }
             }}
               className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
               {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
             </button>
+
             {lastResult?.passed && lastResult.tier && (
               <button onClick={async () => {
                 try {

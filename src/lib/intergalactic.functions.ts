@@ -34,12 +34,23 @@ interface QuizQuestion { q: string; choices: string[]; answer: number; level?: n
  * (5 por nível) a partir do banco temático de cada destino.
  * Cada tentativa embaralha o pool — então as 3 chances podem ter perguntas diferentes.
  */
-function buildQuizFromBank(destinationId: string, attemptSeed: number): QuizQuestion[] {
+function buildQuizFromBank(destinationId: string, attemptSeed: number, difficulty?: number): QuizQuestion[] {
   const bank = getBankForAny(destinationId);
   if (bank.length === 0) return [];
 
   const rng = mulberry32(attemptSeed);
   const out: QuizQuestion[] = [];
+
+  // Se o jogador escolheu uma dificuldade, todas as 9 perguntas vêm daquele nível
+  // (com fallback para outros níveis se o pool for pequeno).
+  if (difficulty && difficulty >= 1 && difficulty <= QUIZ_LEVELS) {
+    const primary = bank.filter((q) => q.level === difficulty);
+    const fallback = bank.filter((q) => q.level !== difficulty);
+    const pool = [...shuffle(primary, rng), ...shuffle(fallback, rng)].slice(0, QUESTIONS_PER_QUIZ);
+    return pool.map((q) => ({ q: q.q, choices: q.choices, answer: q.answer, level: q.level }));
+  }
+
+  // Modo padrão: 3 perguntas por nível (fácil/médio/difícil).
   for (let lvl = 1; lvl <= QUIZ_LEVELS; lvl++) {
     const pool = bank.filter((q) => q.level === lvl);
     const picked = shuffle(pool, rng).slice(0, QUESTIONS_PER_LEVEL);
@@ -47,6 +58,7 @@ function buildQuizFromBank(destinationId: string, attemptSeed: number): QuizQues
   }
   return out;
 }
+
 
 function mulberry32(a: number) {
   return function () {
@@ -114,6 +126,7 @@ export const startQuiz = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     journeyId: z.string().uuid(),
     destinationId: z.string().min(1).max(64),
+    difficulty: z.number().int().min(1).max(3).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
@@ -129,15 +142,16 @@ export const startQuiz = createServerFn({ method: "POST" })
       .from("visas").select("id").eq("journey_id", journey.id).eq("destination_id", dest.id).maybeSingle();
     if (already) throw new Error("Você já visitou esse destino");
 
-    // Seed varia conforme tentativa: cada chance pode sortear perguntas diferentes do pool.
-    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}`);
-    const questions = buildQuizFromBank(dest.id, seed);
+    // Seed varia conforme tentativa + dificuldade: cada chance pode sortear perguntas diferentes.
+    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}:${data.difficulty ?? 0}`);
+    const questions = buildQuizFromBank(dest.id, seed, data.difficulty);
     if (questions.length === 0) throw new Error("Banco de perguntas indisponível para este destino");
     // O app precisa mostrar na hora se a resposta marcada está certa ou errada,
     // para o botão S.O.S. fazer sentido durante o quiz.
     const safeQuestions = questions.map(({ q, choices, answer, level }) => ({ q, choices, answer, level }));
-    return { questions: safeQuestions, level: dest.level, destination: dest, attemptsUsed: journey.attempts_used };
+    return { questions: safeQuestions, level: dest.level, destination: dest, attemptsUsed: journey.attempts_used, difficulty: data.difficulty ?? null };
   });
+
 
 function hashSeed(s: string): number {
   let h = 2166136261 >>> 0;
@@ -151,6 +165,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
     journeyId: z.string().uuid(),
     destinationId: z.string().min(1).max(64),
     answers: z.array(z.number().min(0).max(3)).length(QUESTIONS_PER_QUIZ),
+    difficulty: z.number().int().min(1).max(3).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
@@ -162,13 +177,14 @@ export const submitQuiz = createServerFn({ method: "POST" })
     if (!dest) throw new Error("Destino inválido");
 
     // Re-derive the exact same quiz the client received (deterministic from
-    // journey + destination + attempt index). Never trust client-supplied
+    // journey + destination + attempt index + difficulty). Never trust client-supplied
     // answer keys.
-    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}`);
-    const questions = buildQuizFromBank(dest.id, seed);
+    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}:${data.difficulty ?? 0}`);
+    const questions = buildQuizFromBank(dest.id, seed, data.difficulty);
     if (questions.length !== QUESTIONS_PER_QUIZ) {
       throw new Error("Banco de perguntas indisponível para este destino");
     }
+
 
     const score = data.answers.reduce(
       (acc, a, i) => acc + (a === questions[i].answer ? 1 : 0),
