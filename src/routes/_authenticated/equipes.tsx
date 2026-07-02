@@ -238,6 +238,8 @@ function MyTeamPanel({ team, role, onChanged }: { team: TeamRow; role: "leader" 
         </div>
       )}
 
+      {role === "leader" && <JoinRequestsPanel teamId={team.id} onChanged={onChanged} />}
+
       <BattlesPanel team={team} role={role} />
 
       <CurrentUserChat teamId={team.id} />
