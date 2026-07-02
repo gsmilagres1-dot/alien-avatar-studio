@@ -11,7 +11,7 @@ export const requestJoinTeam = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: id, error } = await context.supabase.rpc("request_join_team", {
       _team_id: data.teamId,
-      _message: data.message ?? null,
+      _message: data.message ?? undefined,
     });
     if (error) {
       if (error.message.includes("already_member")) throw new Error("Você já faz parte dessa equipe");
