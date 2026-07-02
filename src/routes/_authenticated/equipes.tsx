@@ -17,8 +17,6 @@ import {
 import {
   listBattlesForMyTeams, listOpenTeams, createBattleFn, acceptBattleFn, listBattleDestinations,
 } from "@/lib/battles.functions";
-import { getSubscribersList } from "@/lib/rewards.functions";
-
 
 export const Route = createFileRoute("/_authenticated/equipes")({
   component: Equipes,
@@ -73,12 +71,9 @@ function Equipes() {
         ))}
       </div>
 
-      <SubscribersPanel />
-
       <div className="mt-8 text-xs text-muted-foreground text-center">
         <Link to="/galaxia" className="underline">← voltar para a galáxia singular</Link>
       </div>
-
     </main>
   );
 }
@@ -372,41 +367,3 @@ function CurrentUserChat({ teamId }: { teamId: string }) {
     </div>
   );
 }
-
-function SubscribersPanel() {
-  const fn = useServerFn(getSubscribersList);
-  const q = useQuery({ queryKey: ["public-subscribers"], queryFn: () => fn({}) });
-  return (
-    <section className="mt-8">
-      <div className="flex items-baseline justify-between mb-3">
-        <h2 className="font-display text-lg text-accent flex items-center gap-2">
-          <Users className="w-4 h-4" /> Inscritos no app
-        </h2>
-        <div className="font-display text-2xl text-gradient-neon">
-          {q.isLoading ? "…" : (q.data?.total ?? 0).toLocaleString("pt-BR")}
-        </div>
-      </div>
-      <p className="text-[11px] text-muted-foreground mb-3">
-        Alienígenas cadastrados na Federação Galáctica. Só apelido público + avatar — nenhum dado pessoal é exposto.
-      </p>
-      {q.isLoading ? (
-        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-      ) : (
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-          {(q.data?.subscribers ?? []).map((s) => (
-            <div key={s.user_id} className="glass rounded-xl p-2 border border-accent/15 text-center">
-              {s.avatar_url ? (
-                <img src={s.avatar_url} alt={s.display_name} loading="lazy"
-                  className="w-full aspect-square object-cover rounded-lg mb-1" />
-              ) : (
-                <div className="w-full aspect-square rounded-lg bg-black/40 mb-1 flex items-center justify-center text-2xl">👽</div>
-              )}
-              <div className="text-[10px] truncate font-display">{s.display_name}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-

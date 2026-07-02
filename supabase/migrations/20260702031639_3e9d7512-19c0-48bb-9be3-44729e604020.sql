@@ -1,1 +1,0 @@
-ALTER VIEW public.public_subscribers SET (security_invoker = on);

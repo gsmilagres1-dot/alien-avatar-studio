@@ -635,27 +635,6 @@ export type Database = {
         }
         Relationships: []
       }
-      video_ad_claims: {
-        Row: {
-          created_at: string
-          fichas_awarded: number
-          id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          fichas_awarded?: number
-          id?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          fichas_awarded?: number
-          id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       visas: {
         Row: {
           destination_id: string
@@ -747,27 +726,7 @@ export type Database = {
       }
     }
     Views: {
-      public_subscribers: {
-        Row: {
-          avatar_url: string | null
-          created_at: string | null
-          display_name: string | null
-          user_id: string | null
-        }
-        Insert: {
-          avatar_url?: never
-          created_at?: string | null
-          display_name?: never
-          user_id?: string | null
-        }
-        Update: {
-          avatar_url?: never
-          created_at?: string | null
-          display_name?: never
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       accept_battle: {
@@ -783,7 +742,6 @@ export type Database = {
         }
         Returns: number
       }
-      claim_video_ad_reward: { Args: never; Returns: Json }
       create_battle: {
         Args: {
           _bet_fichas: number
@@ -832,7 +790,6 @@ export type Database = {
         Args: { _battle_id: string; _score: number }
         Returns: undefined
       }
-      subscribers_count: { Args: never; Returns: number }
     }
     Enums: {
       battle_status: "pending" | "active" | "finished" | "cancelled"
