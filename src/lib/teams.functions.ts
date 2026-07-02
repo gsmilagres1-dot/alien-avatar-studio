@@ -35,7 +35,8 @@ export const listTeamsRanking = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("teams")
-      .select("id, name, flag_emoji, country_code, score, fichas, members_count, leader_id, description")
+      .select("id, name, flag_emoji, country_code, score, ranking_points, fichas, members_count, leader_id, description")
+      .order("ranking_points", { ascending: false })
       .order("score", { ascending: false })
       .order("members_count", { ascending: false })
       .limit(100);

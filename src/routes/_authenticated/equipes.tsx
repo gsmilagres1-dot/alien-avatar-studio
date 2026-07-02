@@ -59,17 +59,23 @@ function Equipes() {
         {!ranking.isLoading && (ranking.data?.length ?? 0) === 0 && (
           <p className="text-xs text-muted-foreground text-center py-6">Nenhuma equipe ainda — seja a primeira!</p>
         )}
-        {ranking.data?.map((t, i) => (
-          <div key={t.id} className="glass rounded-xl p-3 border border-accent/20 flex items-center gap-3">
-            <div className="text-accent font-display text-sm w-6">#{i + 1}</div>
-            <div className="text-xl">{t.flag_emoji ?? "🛸"}</div>
-            <div className="flex-1 min-w-0">
-              <div className="font-display text-sm truncate">{t.name}</div>
-              <div className="text-[10px] text-muted-foreground">{t.members_count}/50 membros · {t.fichas} fichas</div>
+        {ranking.data?.map((t, i) => {
+          const rp = (t as unknown as { ranking_points?: number }).ranking_points ?? 0;
+          return (
+            <div key={t.id} className="glass rounded-xl p-3 border border-accent/20 flex items-center gap-3">
+              <div className="text-accent font-display text-sm w-6">#{i + 1}</div>
+              <div className="text-xl">{t.flag_emoji ?? "🛸"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-display text-sm truncate">{t.name}</div>
+                <div className="text-[10px] text-muted-foreground">{t.members_count}/50 membros · {t.fichas} fichas</div>
+              </div>
+              <div className="text-right">
+                <div className="text-accent font-bold text-sm">{rp} pts</div>
+                <div className="text-[9px] text-muted-foreground">ranking</div>
+              </div>
             </div>
-            <div className="text-accent font-bold text-sm">{t.score} pts</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="mt-8 text-xs text-muted-foreground text-center">
