@@ -6,12 +6,14 @@ import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, 
 import { toast } from "sonner";
 import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
 import { getJourneyState, startQuiz, submitQuiz, claimVisa, completeJourney } from "@/lib/intergalactic.functions";
-import { DESTINATIONS, ALL_DESTINATIONS, getAnyDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, TELEPORTER_THRESHOLD, type Destination } from "@/lib/intergalactic";
+import { DESTINATIONS, ALL_DESTINATIONS, getAnyDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, TELEPORTER_THRESHOLD, TELESCOPE_JIMMY_WATH_THRESHOLD, type Destination } from "@/lib/intergalactic";
 import { SHIPS } from "@/lib/alien";
 import { DestinationBadge } from "@/components/DestinationBadge";
 import { TeleporterPrize } from "@/components/TeleporterPrize";
 import { WormholePrize } from "@/components/WormholePrize";
+import { TelescopePrize } from "@/components/TelescopePrize";
 import { SOSButton } from "@/components/SOSButton";
+
 import { WalletBadge } from "@/components/WalletBadge";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
@@ -149,6 +151,12 @@ function Galaxia() {
               <WormholePrize visitedCount={visas.length} variant="reward" />
             </div>
           )}
+          {!fatal && (
+            <div className="mt-4">
+              <TelescopePrize visitedCount={visas.length} totalCount={TELESCOPE_JIMMY_WATH_THRESHOLD} variant={visas.length >= TELESCOPE_JIMMY_WATH_THRESHOLD ? "reward" : "banner"} />
+            </div>
+          )}
+
           {visas.length > 0 && (
             <div className="mt-6">
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
@@ -432,6 +440,8 @@ function Galaxia() {
           {visas.length >= TELEPORTER_THRESHOLD && (
             <WormholePrize visitedCount={visas.length} variant="banner" />
           )}
+          <TelescopePrize visitedCount={visas.length} totalCount={TELESCOPE_JIMMY_WATH_THRESHOLD} variant="banner" />
+
           <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Etapa 3 · Escolha seu destino</h2>
           <p className="text-xs text-muted-foreground mt-1">Passaporte liberado. Agora escolha o destino, depois sua nave e então comece o quiz. Tudo grátis.</p>
 
@@ -625,6 +635,10 @@ function Galaxia() {
               <WormholePrize visitedCount={visas.length} variant="reward" />
             </div>
           )}
+          <div className="mt-4">
+            <TelescopePrize visitedCount={visas.length} totalCount={TELESCOPE_JIMMY_WATH_THRESHOLD} variant={visas.length >= TELESCOPE_JIMMY_WATH_THRESHOLD ? "reward" : "banner"} />
+          </div>
+
         </div>
       )}
     </main>
