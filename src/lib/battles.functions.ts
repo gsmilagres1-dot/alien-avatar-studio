@@ -110,27 +110,46 @@ export const getBattleFn = createServerFn({ method: "POST" })
       .from("battle_participants").select("*").eq("battle_id", data.battleId);
     const dest = getAnyDestination(battle.destination_key);
     const me = (parts ?? []).find((p) => p.user_id === userId);
-    return { battle, participants: parts ?? [], destination: dest, mySubmission: me };
+
+    // Hide individual scores from the opponent while the battle is still active —
+    // only reveal presence (submitted or not) until finalize.
+    const b = battle as unknown as { status: string; active_at: string | null };
+    const revealScores = b.status === "finished";
+    const safeParts = (parts ?? []).map((p) => ({
+      ...p,
+      score: revealScores || p.user_id === userId ? p.score : (p.score != null ? -1 : null),
+    }));
+
+    const deadlineAt =
+      b.active_at ? new Date(new Date(b.active_at).getTime() + 15 * 60 * 1000).toISOString() : null;
+
+    return { battle, participants: safeParts, destination: dest, mySubmission: me, deadlineAt };
   });
+
+function seedFromBattleId(battleId: string) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < battleId.length; i++) { h ^= battleId.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
 
 export const startBattleQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ battleId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { supabase } = context;
     const { data: battle } = await supabase
       .from("battles").select("*").eq("id", data.battleId).maybeSingle();
     if (!battle) throw new Error("Batalha não encontrada");
     if (battle.status !== "active") throw new Error("Batalha não está ativa");
-    // seed per user+battle so same questions on resume
-    let h = 2166136261 >>> 0;
-    const s = `${data.battleId}:${userId}`;
-    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
-    const questions = pickQuestions(battle.destination_key, h >>> 0);
+    // Same seed for BOTH teams → identical questions in the same order.
+    const questions = pickQuestions(battle.destination_key, seedFromBattleId(data.battleId));
     if (!questions.length) throw new Error("Banco de perguntas indisponível");
-    // Strip answer keys from client payload; scoring happens server-side.
     const safe = questions.map(({ q, choices }) => ({ q, choices }));
-    return { questions: safe };
+    const b = battle as unknown as { active_at: string | null };
+    const deadlineAt = b.active_at
+      ? new Date(new Date(b.active_at).getTime() + 15 * 60 * 1000).toISOString()
+      : null;
+    return { questions: safe, deadlineAt };
   });
 
 export const submitBattleScore = createServerFn({ method: "POST" })
@@ -143,17 +162,12 @@ export const submitBattleScore = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Re-derive the same quiz the client received so we score against the
-    // server's answer key, never client-supplied keys.
     const { data: battle } = await supabase
       .from("battles").select("team_a_id, team_b_id, status, destination_key").eq("id", data.battleId).maybeSingle();
     if (!battle) throw new Error("Batalha não encontrada");
     if (battle.status !== "active") throw new Error("Batalha não está ativa");
 
-    let h = 2166136261 >>> 0;
-    const s = `${data.battleId}:${userId}`;
-    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
-    const questions = pickQuestions(battle.destination_key, h >>> 0);
+    const questions = pickQuestions(battle.destination_key, seedFromBattleId(data.battleId));
     if (questions.length !== BATTLE_QUESTIONS) throw new Error("Banco de perguntas indisponível");
 
     const score = data.answers.reduce(
@@ -166,7 +180,6 @@ export const submitBattleScore = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
-    // Try to finalize: if every member of both teams already submitted
     let finalized = false;
     let winnerId: string | null = null;
     const { data: mems } = await supabaseAdmin
@@ -183,6 +196,17 @@ export const submitBattleScore = createServerFn({ method: "POST" })
     }
     return { score, total: BATTLE_QUESTIONS, finalized, winnerId };
   });
+
+export const expireBattleFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ battleId: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: w, error } = await supabaseAdmin.rpc("expire_battle", { _battle_id: data.battleId });
+    if (error) throw new Error(error.message);
+    return { winnerId: (w as string | null) ?? null };
+  });
+
 
 export const finalizeBattleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
