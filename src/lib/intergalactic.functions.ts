@@ -133,8 +133,9 @@ export const startQuiz = createServerFn({ method: "POST" })
     const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}`);
     const questions = buildQuizFromBank(dest.id, seed);
     if (questions.length === 0) throw new Error("Banco de perguntas indisponível para este destino");
-    // Strip answer keys before returning to the client; correctness is decided server-side.
-    const safeQuestions = questions.map(({ q, choices, level }) => ({ q, choices, level }));
+    // O app precisa mostrar na hora se a resposta marcada está certa ou errada,
+    // para o botão S.O.S. fazer sentido durante o quiz.
+    const safeQuestions = questions.map(({ q, choices, answer, level }) => ({ q, choices, answer, level }));
     return { questions: safeQuestions, level: dest.level, destination: dest, attemptsUsed: journey.attempts_used };
   });
 

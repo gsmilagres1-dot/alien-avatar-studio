@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/galaxia")({
   component: Galaxia,
 });
 
-interface Question { q: string; choices: string[]; level?: number }
+interface Question { q: string; choices: string[]; answer?: number; level?: number }
 const LEVEL_LABEL: Record<number, string> = { 1: "Fácil", 2: "Médio", 3: "Difícil" };
 
 function KindIcon({ kind, className }: { kind: Destination["kind"]; className?: string }) {
@@ -229,8 +229,8 @@ function Galaxia() {
                 <div className="space-y-2">
                   {q.choices.map((c, ci) => {
                     const isPicked = picked === ci;
-                    const correctIdx = review?.[qi];
-                    const reviewing = correctIdx !== undefined;
+                    const correctIdx = review?.[qi] ?? q.answer;
+                    const reviewing = picked !== undefined && correctIdx !== undefined;
                     const isCorrect = reviewing && ci === correctIdx;
                     const isWrongPick = reviewing && isPicked && ci !== correctIdx;
                     let cls = "border-border hover:bg-accent/5";
