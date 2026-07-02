@@ -446,6 +446,7 @@ function Galaxia() {
           {visas.length >= TELEPORTER_THRESHOLD && (
             <WormholePrize visitedCount={visas.length} variant="banner" />
           )}
+          <WormholeSurprisePrize visitedCount={visas.length} variant="banner" />
           <TelescopePrize visitedCount={visas.length} totalCount={TELESCOPE_JIMMY_WATH_THRESHOLD} variant="banner" />
 
           <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Etapa 3 · Escolha seu destino</h2>
