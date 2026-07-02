@@ -165,6 +165,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
     journeyId: z.string().uuid(),
     destinationId: z.string().min(1).max(64),
     answers: z.array(z.number().min(0).max(3)).length(QUESTIONS_PER_QUIZ),
+    difficulty: z.number().int().min(1).max(3).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
@@ -176,13 +177,14 @@ export const submitQuiz = createServerFn({ method: "POST" })
     if (!dest) throw new Error("Destino inválido");
 
     // Re-derive the exact same quiz the client received (deterministic from
-    // journey + destination + attempt index). Never trust client-supplied
+    // journey + destination + attempt index + difficulty). Never trust client-supplied
     // answer keys.
-    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}`);
-    const questions = buildQuizFromBank(dest.id, seed);
+    const seed = hashSeed(`${journey.id}:${dest.id}:${journey.attempts_used}:${data.difficulty ?? 0}`);
+    const questions = buildQuizFromBank(dest.id, seed, data.difficulty);
     if (questions.length !== QUESTIONS_PER_QUIZ) {
       throw new Error("Banco de perguntas indisponível para este destino");
     }
+
 
     const score = data.answers.reduce(
       (acc, a, i) => acc + (a === questions[i].answer ? 1 : 0),
