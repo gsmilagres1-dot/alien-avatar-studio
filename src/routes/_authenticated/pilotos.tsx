@@ -2,7 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Loader2, Trophy, X, Rocket, Sparkles, ChevronRight, Users, Trash2, ImagePlus, Check } from "lucide-react";
+import {
+  Loader2, Trophy, X, Rocket, Sparkles, ChevronRight, Users, Trash2, ImagePlus, Check,
+  UserPlus, Shield, Hourglass, XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { listPilotsRanking, getPilotDetail } from "@/lib/pilots.functions";
 import {
@@ -10,6 +13,10 @@ import {
   listMyIdentities,
   setIdentityAvatarFromGallery,
 } from "@/lib/identities.functions";
+import { listTeamsRanking, getMyTeam } from "@/lib/teams.functions";
+import {
+  requestJoinTeam, cancelJoinRequest, listMyJoinRequests,
+} from "@/lib/team-requests.functions";
 
 export const Route = createFileRoute("/_authenticated/pilotos")({ component: PilotosPage });
 
