@@ -62,7 +62,8 @@ function Galaxia() {
   });
 
   const [chosenDestId, setChosenDestId] = useState<string | null>(null);
-  const [quiz, setQuiz] = useState<{ questions: Question[]; level: number; destinationId: string; destinationName: string } | null>(null);
+  const [chosenDifficulty, setChosenDifficulty] = useState<1 | 2 | 3 | null>(null);
+  const [quiz, setQuiz] = useState<{ questions: Question[]; level: number; destinationId: string; destinationName: string; difficulty: 1 | 2 | 3 | null } | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
   const [quizLoading, setQuizLoading] = useState(false);
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null; tier: "bronze" | "silver" | "gold" | null; fichasEarned?: number } | null>(null);
@@ -70,6 +71,7 @@ function Galaxia() {
   const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
   const [journeyStep, setJourneyStep] = useState<"passport" | "destination" | "ship">("passport");
+
 
   useEffect(() => {
     if (chosenDestId) setJourneyStep("ship");
