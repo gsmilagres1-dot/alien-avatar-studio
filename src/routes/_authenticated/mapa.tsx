@@ -13,6 +13,7 @@ import exoplanetImg from "@/assets/map/exoplanet.png";
 import starSystemImg from "@/assets/map/star_system.png";
 import clusterImg from "@/assets/map/cluster.png";
 import quasarImg from "@/assets/map/quasar.png";
+import { SpaceMapPanel } from "@/components/SpaceMapPanel";
 
 export const Route = createFileRoute("/_authenticated/mapa")({
   component: Mapa,
@@ -309,12 +310,15 @@ function Mapa() {
         )}
       </div>
 
+      <SpaceMapPanel />
+
       <div className="mt-6 text-xs text-muted-foreground">
         <Link to="/" className="underline">← voltar à home</Link>
       </div>
     </main>
   );
 }
+
 
 function FilterChip({ active, onClick, icon, children }: { active: boolean; onClick: () => void; icon: React.ReactNode; children: React.ReactNode }) {
   return (
