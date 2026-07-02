@@ -97,3 +97,47 @@ export const earnFichas = createServerFn({ method: "POST" })
     return { balance: balance as number };
   });
 
+/**
+ * Reivindica a recompensa de vídeo (5 fichas) usando o RPC seguro
+ * `claim_video_ad_reward`, que impõe 7 reivindicações a cada 3 horas
+ * por usuário. Se estiver em cooldown, a RPC lança `cooldown_active:<ISO>`.
+ */
+export const claimVideoAdReward = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data, error } = await supabase.rpc("claim_video_ad_reward");
+    if (error) {
+      const msg = error.message ?? "";
+      const m = msg.match(/cooldown_active:(.+)$/);
+      if (m) {
+        const nextAt = m[1].trim();
+        throw new Error(`cooldown:${nextAt}`);
+      }
+      throw new Error(msg);
+    }
+    return data as { balance: number; claims_in_window: number; remaining: number };
+  });
+
+/** Retorna quantas reivindicações restam na janela atual (3h) e quando libera. */
+export const getVideoAdStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const since = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from("video_ad_claims")
+      .select("created_at")
+      .eq("user_id", userId)
+      .gt("created_at", since)
+      .order("created_at", { ascending: true });
+    const claims = data ?? [];
+    const used = claims.length;
+    const remaining = Math.max(0, 7 - used);
+    const nextAt =
+      remaining === 0 && claims[0]
+        ? new Date(new Date(claims[0].created_at).getTime() + 3 * 60 * 60 * 1000).toISOString()
+        : null;
+    return { used, remaining, nextAt };
+  });
+
