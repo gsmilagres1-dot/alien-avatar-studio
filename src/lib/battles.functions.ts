@@ -200,12 +200,13 @@ export const submitBattleScore = createServerFn({ method: "POST" })
 export const expireBattleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ battleId: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: w, error } = await supabaseAdmin.rpc("expire_battle", { _battle_id: data.battleId });
+  .handler(async ({ data, context }) => {
+    // Call as the signed-in user so expire_battle's auth.uid() sees the caller.
+    const { data: w, error } = await context.supabase.rpc("expire_battle", { _battle_id: data.battleId });
     if (error) throw new Error(error.message);
     return { winnerId: (w as string | null) ?? null };
   });
+
 
 
 export const finalizeBattleFn = createServerFn({ method: "POST" })
