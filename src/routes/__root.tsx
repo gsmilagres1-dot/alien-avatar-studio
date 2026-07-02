@@ -135,14 +135,9 @@ function AuthBridge() {
       force((n) => n + 1);
     }
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
-      let s = data.session;
-      if (!s) {
-        const { data: anon } = await supabase.auth.signInAnonymously();
-        s = anon.session;
-      }
-      if (!mounted) return;
+      const s = data.session;
       publish({
         isAuthenticated: !!s,
         userId: s?.user.id ?? null,
@@ -150,6 +145,7 @@ function AuthBridge() {
         loading: false,
       });
     });
+
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, session) => {
       publish({
