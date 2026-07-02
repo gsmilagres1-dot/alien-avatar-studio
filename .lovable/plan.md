@@ -1,55 +1,67 @@
-# Plano — Equipes Alien, Economia de Fichas, Loja, Mapa e S.O.S.
+# Plano — Expansão de Quiz, Prêmios e Mapa Estelar
 
-Sua mensagem cobre ~15 funcionalidades grandes (equipes com chat online, 30 novos destinos com 15 perguntas cada, sistema de fichas/SOS, loja com pagamentos, mapa interativo, upgrades de nave, vídeos premiados, ranking de equipes, etc.). É **muito grande para uma única entrega** — vou dividir em fases para que você veja resultado a cada passo e possa ajustar o rumo. Cada fase é independente e testável.
-
----
-
-## Fase 1 — Home + Economia base de Fichas (S.O.S.)
-- Adicionar **3 ícones centrais na Home**: `Disputar em Equipe`, `Loja de Fichas`, `Mapa Intergaláctico`.
-- Tabela `wallets` (user_id, fichas, aneis, alimentos).
-- Botão **S.O.S. resgate** (estilo da imagem LAUNCH amarelo/preto) no cabeçalho do quiz e da viagem:
-  - Voltar pergunta: 10 fichas (quiz) / 20 fichas (viagem)
-  - Resgate do vácuo: 30 fichas (perdeu 3 chances) / 100 fichas (resgate completo)
-- Recompensa automática ao concluir quiz: ouro 75 / prata 50 / bronze 25 fichas + animação telefone tocando "Old Bells".
-- Animação da **mão alienígena** (6 variantes por raça) colocando ficha no telefone.
-
-## Fase 2 — Loja de Fichas + Vídeos
-- Aba **Loja** com 4 pacotes via Stripe (PIX, cartão): 30/R$1,99 · 60/R$4,99 · 150/R$9,99 · 500/R$24,99.
-- Opção **"Assista e ganhe"** — 5 fichas por vídeo (placeholder de ad SDK; integração real depende de rede de anúncios).
-
-## Fase 3 — 30 novos destinos para Equipes
-- Adicionar 30 destinos galácticos novos (planetas/sóis/estrelas/galáxias) **só visíveis na aba Equipe**.
-- 15 perguntas em 3 níveis para cada um (banco temático), seguindo padrão atual.
-- Singular continua com os 15 destinos atuais (cabine teletransportador intocada).
-
-## Fase 4 — Criar/Gerenciar Equipes
-- Tabelas: `teams` (nome até 16, bandeira/país, líder), `team_members` (até 50), `team_invites` (link único).
-- Aba **Equipes**: ranking geral (nome, bandeira, membros, pontuação, fichas), botão "Solicitar entrada".
-- Tela do líder: editar nome, adicionar/remover, copiar link de convite para baixar o app.
-
-## Fase 5 — Batalha de Equipes online
-- Sala de batalha: 5 destinos sorteados × 9 perguntas, aposta de fichas, vencedor leva o pote + 10 fichas/rodada + 1000° no ranking.
-- **Chat em tempo realtime** dentro da equipe com avatares; clicar no avatar abre a identidade alien daquele membro.
-- Matchmaking aleatório entre equipes.
-
-## Fase 6 — Mapa Intergaláctico
-- Tela mapa estilo "Plants vs. Zombies 2" (referência da sua imagem): 45 nós conectados, nave parada no último destino, trajeto percorrido iluminado, selos por destino.
-- Duas naves no mesmo mapa: a do jogador singular e a da equipe atual.
-- HUD com saldos: fichas, anéis de minhoca, 3 alimentos (líquido/salgado/doce), pontuação, selos.
-
-## Fase 7 — Upgrades de Nave
-- Loja de upgrades: motores 1→4 (sólido/líquido/H₂/plasma) a 200/500/1000/2500 fichas; cores e brilho; anéis (5 segmentos = 1 anel, 100 = troca por apetrechos).
-- Perder upgrade ao errar 3× se não usar S.O.S. — imagem da nave regride.
+Nada do fluxo atual do app será alterado. Tudo é aditivo: novas telas, novas rotas e novos parâmetros nos quizzes já existentes, mantendo compatibilidade com viagens em andamento.
 
 ---
 
-## Pontos que preciso confirmar antes de codar
+## 1. Quiz — 9 perguntas + 3 níveis de dificuldade
 
-1. **Pagamentos reais (Stripe)** — vamos usar a integração Stripe que já existe no projeto, em modo teste primeiro? Para PIX é preciso conta Stripe Brasil ativa.
-2. **Rede de anúncios em vídeo** — você tem alguma (AdMob, Unity Ads)? Sem SDK real, faço apenas um placeholder que credita 5 fichas após um timer.
-3. **Chat em tempo real** — uso Supabase Realtime (recomendado, já temos backend).
-4. **Áudio "Old Bells"** — posso usar um sample royalty-free ou você quer enviar um arquivo?
-5. **30 novos destinos** — gero nomes/perguntas automaticamente (mistura de planetas reais + ficcionais) ou você quer fornecer a lista?
-6. **Começo pela Fase 1**? É o alicerce de todo o resto (sem carteira de fichas, S.O.S./loja/aposta não funcionam).
+**Antes de iniciar cada quiz** (nas 45 viagens atuais e nas novas), o usuário escolhe um dos 3 níveis: **Fácil / Médio / Difícil**.
 
-Responda essas 6 e eu começo pela Fase 1 imediatamente.
+- Quiz passa de 15 → **9 perguntas distintas**, sorteadas do banco daquele destino, filtradas pelo nível escolhido.
+- Regra de aprovação mantida: **≥ 70% de acerto (mínimo 7/9)**, **3 chances**, e o **SOS** já existente continua valendo para "voltar pergunta".
+- **Feedback visual imediato** por pergunta: após responder, a alternativa correta fica em verde e a errada em vermelho, com botão "Próxima". Assim o usuário vê claramente quando errou e pode acionar o **SOS S.O.S. VOLTAR PERGUNTA** antes de avançar.
+- Selos Ouro / Prata / Bronze são recalculados sobre o novo total (9): Bronze 70–79%, Prata 80–90%, Ouro 91–100%.
+
+## 2. Prêmio final dos 45 destinos — Telescópio "Jimmy Wath"
+
+Ao completar os **45 selos (visitas com quiz aprovado)**, o viajante desbloqueia um novo prêmio exclusivo:
+
+- **Telescópio Atômico Jimmy Wath** — brasão/emblema no mesmo estilo heráldico das imagens de referência (águia, coroa, escudo, listras — preto e prata).
+- Fica **oculto** (silhueta + "?" + contador "X / 45 selos") na Galeria até ser conquistado.
+- Ao completar, aparece uma cerimônia de entrega (modal com brasão animado) e o item entra permanentemente no perfil.
+- O telescópio é a **chave de entrada** para o novo módulo (Asteroides / Naves) — quem não tem, vê a área bloqueada com CTA "Complete os 45 destinos".
+
+## 3. Novo módulo — Quizzes de Asteroides, Cometas, Meteoros, Naves e Satélites
+
+Mesma mecânica do quiz atual, mas com bancos temáticos novos:
+
+- **9 perguntas por desafio**, sorteadas de banco de 15+ perguntas distintas por objeto.
+- **3 níveis** escolhidos antes de iniciar.
+- **≥ 70%**, **3 chances**, SOS habilitado.
+- Recompensa em fichas idêntica à atual (Ouro 75 / Prata 50 / Bronze 25).
+- Nova rota `/desafios-cosmicos` (só desbloqueia com o Telescópio Jimmy Wath).
+
+## 4. Novo Mapa Estelar Ampliado
+
+Rota nova `/mapa-estelar` (não substitui o `/mapa` atual). Baseado visualmente nas imagens 2 e 3 anexas (grid de tipos de estrela + mapa de galáxias com labels NGC/HD/UGC):
+
+- **30 objetos tecnológicos** — sondas, naves, foguetes, satélites e rovers reais (Voyager 1/2, Cassini, JWST, Hubble, ISS, Perseverance, Curiosity, New Horizons, Parker Solar Probe, Juno, Kepler, Chang'e, Rosetta, Philae, Pioneer 10/11, Galileo, Mars Odyssey, MRO, MAVEN, Tianwen-1, Ingenuity, Spirit, Opportunity, Sojourner, Luna 2, Apollo 11 LM, Soyuz, SpaceX Dragon, Starlink).
+- **40 corpos celestes** — estrelas (Sol, Sirius, Betelgeuse, Rigel, Vega, Polaris, Proxima Centauri, Alpha Centauri A/B, Antares, Aldebaran, Arcturus, Canopus, Deneb, Altair, VY Canis Majoris, ana vermelha/laranja/amarela/branca/azul/marrom, sub-anã, gigante azul/vermelha, supergigante azul/vermelha, hipergigante, Wolf-Rayet, estrela de nêutrons, pulsar, magnetar, buraco negro, estrela de quark), + asteroides (Ceres, Vesta, Pallas, Bennu, Ryugu, Apophis), cometas (Halley, Hale-Bopp, NEOWISE), meteoros (Perseidas, Leônidas).
+- Cada card tem imagem ilustrativa (geradas via `imagegen` no estilo das referências) + botão "Iniciar quiz" que abre o quiz do módulo novo.
+- Layout: grid tipo mapa estelar com fundo cósmico e labels sutis (padrão da imagem 3).
+
+## 5. Detalhes técnicos
+
+- `src/lib/intergalactic.ts`: `QUESTIONS_PER_QUIZ` 15 → 9, novo tipo `Difficulty = "easy"|"medium"|"hard"`, `QUESTIONS_PER_LEVEL` 5 → 3.
+- `src/lib/intergalactic-questions.ts` e `team-destinations.ts`: cada pergunta ganha `difficulty`. Sorteio filtra por nível.
+- `startQuiz` / `submitQuiz`: aceitam `difficulty` como novo campo; seed inclui difficulty para variar o pool.
+- Componente `<QuizAnswerFeedback>` novo, injetado no fluxo do quiz atual, mostra verde/vermelho + libera SOS.
+- Novo módulo em `src/lib/cosmic.functions.ts` + `src/lib/cosmic-questions.ts` + rota `_authenticated/desafios-cosmicos.tsx`.
+- Galeria: card "Telescópio Jimmy Wath" com estado oculto/desbloqueado; verificação via query em `visas` (count = 45).
+- Migração: nova tabela `cosmic_attempts` (mesma forma de `quiz_attempts`) e coluna `unlocked_telescope` no perfil (ou derivada por count).
+- Imagens: 1 brasão do telescópio (estilo heráldico preto/prata) + 70 miniaturas ilustrativas para o mapa (geradas em lote, salvas via `lovable-assets`).
+
+## 6. Ordem de execução
+
+1. Migração DB + tipos.
+2. Ajuste do quiz existente (9 perguntas + níveis + feedback visual).
+3. Brasão Jimmy Wath + card oculto na Galeria + contador.
+4. Bancos novos (asteroides / naves / satélites / cometas / meteoros).
+5. Rota `/desafios-cosmicos` reaproveitando o componente de quiz.
+6. Rota `/mapa-estelar` com 70 cards ilustrados.
+7. QA visual em cada etapa.
+
+---
+
+Confirma este plano ou quer ajustar algum ponto (ex.: número de perguntas, quais objetos entram no mapa, se o telescópio deve dar fichas bônus, etc.)?
