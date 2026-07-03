@@ -15,8 +15,7 @@ import moonImg from "@/assets/map/moon.png";
 import galaxyImg from "@/assets/map/galaxy.png";
 import clusterImg from "@/assets/map/cluster.png";
 import quasarImg from "@/assets/map/quasar.png";
-
-const SPACE_SEALS_URL = "/__l5e/assets-v1/d1269d6b-1191-497a-b935-beebb4ecd97e/space-achievement-seals.jpg";
+import spaceSealsImg from "@/assets/space-achievement-seals.jpg";
 
 const KIND_IMAGE: Record<SpaceObject["kind"], string> = {
   star: sunImg,
@@ -316,7 +315,7 @@ export function SpaceMapPanel() {
 
       <div className="mt-3 glass rounded-xl p-4 border border-accent/20 flex items-center gap-3">
         <img
-          src={SPACE_SEALS_URL}
+          src={spaceSealsImg}
           alt="Selos de conquistas do mapa espacial"
           loading="lazy"
           className="w-16 h-16 rounded-lg object-cover object-top border border-accent/30 shrink-0"
@@ -465,7 +464,7 @@ function SpaceQuiz({ object, onClose }: { object: SpaceObject; onClose: () => vo
           {showResult && (
             <div className="text-center py-4">
               <img
-                src={SPACE_SEALS_URL}
+                src={spaceSealsImg}
                 alt="Selo de conquista do mapa espacial"
                 loading="lazy"
                 className="w-20 h-20 mx-auto mb-2 rounded-xl object-cover object-top border border-accent/30"
