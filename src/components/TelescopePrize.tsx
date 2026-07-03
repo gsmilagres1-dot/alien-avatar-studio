@@ -1,4 +1,4 @@
-import telescopeImg from "@/assets/prize-jimmy-wath.png";
+import telescopeImg from "@/assets/prize-jimmy-wath-paradox.jpg";
 import { Lock, Sparkles, Telescope } from "lucide-react";
 
 interface Props {
