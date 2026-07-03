@@ -19,7 +19,7 @@ export interface SpaceObject {
   questions: SpaceQuestion[];
 }
 
-export const SPACE_OBJECTS: SpaceObject[] = [
+const SPACE_OBJECTS_SOURCE: SpaceObject[] = [
   {
     id: 'sirius',
     name: 'Sirius',
@@ -1447,6 +1447,18 @@ export const SPACE_OBJECTS: SpaceObject[] = [
     ],
   },
 ];
+
+export const SPACE_OBJECTS: SpaceObject[] = (() => {
+  let celestial = 0;
+  let spacecraft = 0;
+
+  return SPACE_OBJECTS_SOURCE.filter((obj) => {
+    if (obj.kind === 'spacecraft') {
+      return spacecraft++ < 25;
+    }
+    return celestial++ < 30;
+  });
+})();
 
 export const SPACE_OBJECTS_TOTAL = SPACE_OBJECTS.length;
 export const SPACE_MAP_UNLOCK_THRESHOLD = 45;
