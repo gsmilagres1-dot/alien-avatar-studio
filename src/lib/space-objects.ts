@@ -1449,14 +1449,27 @@ const SPACE_OBJECTS_SOURCE: SpaceObject[] = [
 ];
 
 export const SPACE_OBJECTS: SpaceObject[] = (() => {
-  let celestial = 0;
-  let spacecraft = 0;
+  const limits: Record<SpaceObjectKind, number> = {
+    star: 10,
+    asteroid: 5,
+    comet: 5,
+    meteor: 5,
+    dwarf: 5,
+    spacecraft: 25,
+  };
+  const counts: Record<SpaceObjectKind, number> = {
+    star: 0,
+    asteroid: 0,
+    comet: 0,
+    meteor: 0,
+    dwarf: 0,
+    spacecraft: 0,
+  };
 
   return SPACE_OBJECTS_SOURCE.filter((obj) => {
-    if (obj.kind === 'spacecraft') {
-      return spacecraft++ < 25;
-    }
-    return celestial++ < 30;
+    if (counts[obj.kind] >= limits[obj.kind]) return false;
+    counts[obj.kind]++;
+    return true;
   });
 })();
 
