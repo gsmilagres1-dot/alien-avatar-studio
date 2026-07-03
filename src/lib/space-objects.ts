@@ -19,7 +19,7 @@ export interface SpaceObject {
   questions: SpaceQuestion[];
 }
 
-export const SPACE_OBJECTS: SpaceObject[] = [
+const SPACE_OBJECTS_SOURCE: SpaceObject[] = [
   {
     id: 'sirius',
     name: 'Sirius',
@@ -1447,6 +1447,31 @@ export const SPACE_OBJECTS: SpaceObject[] = [
     ],
   },
 ];
+
+export const SPACE_OBJECTS: SpaceObject[] = (() => {
+  const limits: Record<SpaceObjectKind, number> = {
+    star: 10,
+    asteroid: 5,
+    comet: 5,
+    meteor: 5,
+    dwarf: 5,
+    spacecraft: 25,
+  };
+  const counts: Record<SpaceObjectKind, number> = {
+    star: 0,
+    asteroid: 0,
+    comet: 0,
+    meteor: 0,
+    dwarf: 0,
+    spacecraft: 0,
+  };
+
+  return SPACE_OBJECTS_SOURCE.filter((obj) => {
+    if (counts[obj.kind] >= limits[obj.kind]) return false;
+    counts[obj.kind]++;
+    return true;
+  });
+})();
 
 export const SPACE_OBJECTS_TOTAL = SPACE_OBJECTS.length;
 export const SPACE_MAP_UNLOCK_THRESHOLD = 45;
