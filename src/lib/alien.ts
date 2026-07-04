@@ -1,4 +1,4 @@
-// 6 raças alienígenas — atribuídas pela data de nascimento
+// 12 raças alienígenas — atribuídas pela data de nascimento
 export const RACES = [
   {
     id: "starseed",
@@ -59,6 +59,66 @@ export const RACES = [
     trait: "guardião silencioso da galáxia",
     powers: ["Camuflagem avançada", "Força física extrema", "Comunicação telepática", "Controle de bioenergia"],
     purpose: "Observação e manutenção do equilíbrio em regiões estratégicas da galáxia.",
+  },
+  {
+    id: "aviario",
+    name: "Aviário",
+    species: "Guardiões Alados de Antares",
+    origin: "Sistema Antares · Reino dos Céus Estelares",
+    nature: "Benéfica / Guardiã",
+    trait: "mensageiro alado da luz cósmica",
+    powers: ["Voo dimensional", "Visão espiritual aguçada", "Canto de cura", "Portador de mensagens divinas"],
+    purpose: "Proteger e guiar civilizações com sabedoria ancestral dos céus.",
+  },
+  {
+    id: "anunnaki",
+    name: "Anunnaki",
+    species: "Filhos de Nibiru",
+    origin: "Planeta Nibiru · Sistema Solar exterior",
+    nature: "Hierárquica / Ambivalente",
+    trait: "engenheiro genético ancestral",
+    powers: ["Engenharia genética", "Longevidade extrema", "Domínio de tecnologia avançada", "Manipulação política"],
+    purpose: "Moldar civilizações e explorar recursos planetários há milênios.",
+  },
+  {
+    id: "siriano",
+    name: "Siriano",
+    species: "Ser de Sírius",
+    origin: "Sistema Estelar de Sírius A e B",
+    nature: "Benéfica",
+    trait: "mestre da consciência cristalina",
+    powers: ["Cura sônica", "Comunicação telepática", "Ativação de DNA", "Portador do conhecimento sagrado"],
+    purpose: "Elevar a consciência coletiva e ancorar frequências de luz.",
+  },
+  {
+    id: "pleiadiano",
+    name: "Pleiadiano",
+    species: "Ser das Plêiades",
+    origin: "Aglomerado das Plêiades (M45)",
+    nature: "Benéfica",
+    trait: "guardião do amor incondicional",
+    powers: ["Cura emocional", "Empatia amplificada", "Portador de luz dourada", "Sabedoria estelar"],
+    purpose: "Ensinar amor, compaixão e evolução espiritual à humanidade.",
+  },
+  {
+    id: "lyriano",
+    name: "Lyriano",
+    species: "Felino de Lyra",
+    origin: "Constelação de Lyra · Ancestralidade felina",
+    nature: "Nobre / Guerreira",
+    trait: "guerreiro ancestral do orgulho estelar",
+    powers: ["Força física superior", "Coragem inabalável", "Liderança magnética", "Sensos aguçados"],
+    purpose: "Defender civilizações e preservar a linhagem ancestral da galáxia.",
+  },
+  {
+    id: "kashyapa",
+    name: "Kashyapa",
+    species: "Sábio de Kashyapa",
+    origin: "Sistema Kashyapa · Dimensão Esmeralda",
+    nature: "Benéfica / Mística",
+    trait: "sábio ancestral dos cristais",
+    powers: ["Manipulação de cristais", "Sabedoria ancestral", "Cura vibracional", "Meditação profunda"],
+    purpose: "Compartilhar sabedoria milenar e curar através de vibrações cristalinas.",
   },
 ] as const;
 
@@ -168,6 +228,18 @@ const RACE_VISUAL: Record<RaceId, string> = {
     "Draconian/Archon humanoid: imposing reptilian-draconic features, dark obsidian and crimson scales, horns or bony brow ridges, glowing red or violet pupils, ancient hierarchic presence, smoky shadow aura",
   insectoide:
     "Mantis-like insectoid alien: chitinous emerald-green exoskeleton on face and neck, large multifaceted compound eyes, slim antennae from forehead, mandibular jaw hints, bioluminescent veins — keep recognizable facial proportions of the source photo morphed into a praying-mantis humanoid",
+  aviario:
+    "Avian humanoid alien with iridescent feathered crown around the head, sharp elegant beak-like nose transitioning into human features, piercing eagle-like eyes with golden iris, feather patterns along neck and shoulders, luminous star mark on chest, majestic celestial presence",
+  anunnaki:
+    "Anunnaki god-being humanoid: tall regal figure with elongated skull, bronze-golden metallic skin with Sumerian cuneiform tattoos, glowing blue-cyan eyes, ornate golden ceremonial headdress with wing motifs, ancient Mesopotamian majesty",
+  siriano:
+    "Sirian humanoid with luminous pale-blue crystalline skin, large almond-shaped iridescent eyes, softly glowing diamond gem on forehead, ethereal bioluminescent body markings, serene wise expression, cosmic blue nebula presence",
+  pleiadiano:
+    "Pleiadian humanoid with flowing platinum-golden hair, luminous fair skin with soft warm glow, gentle blue or violet eyes, subtle golden halo, glowing amber light emanating from chest, angelic celestial presence",
+  lyriano:
+    "Lyrian feline humanoid: dignified face merging human features with lion/feline traits, golden fur along temples and jaw, amber eyes with vertical highlights, subtle mane framing the face, warrior-noble bearing, cosmic starry background",
+  kashyapa:
+    "Kashyapa mystical humanoid with turquoise-teal skin, crystalline horns or crown-like ridges on the head, glowing cyan gem on forehead and chest, ancient serene expression, emerald cosmic mist background",
 };
 
 export function buildAvatarPrompt(opts: {

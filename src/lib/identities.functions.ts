@@ -12,6 +12,12 @@ import raceGrey from "@/assets/race-grey.jpg";
 import raceReptiliano from "@/assets/race-reptiliano.jpg";
 import raceDraconiano from "@/assets/race-draconiano.jpg";
 import raceInsectoide from "@/assets/race-insectoide.jpg";
+import raceAviario from "@/assets/race-aviario.jpg";
+import raceAnunnaki from "@/assets/race-anunnaki.jpg";
+import raceSiriano from "@/assets/race-siriano.jpg";
+import racePleiadiano from "@/assets/race-pleiadiano.jpg";
+import raceLyriano from "@/assets/race-lyriano.jpg";
+import raceKashyapa from "@/assets/race-kashyapa.jpg";
 
 const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
 
@@ -28,6 +34,12 @@ const FALLBACK_RACE_IMAGES: Record<string, string> = {
   reptiliano: raceReptiliano,
   draconiano: raceDraconiano,
   insectoide: raceInsectoide,
+  aviario: raceAviario,
+  anunnaki: raceAnunnaki,
+  siriano: raceSiriano,
+  pleiadiano: racePleiadiano,
+  lyriano: raceLyriano,
+  kashyapa: raceKashyapa,
 };
 
 function isAiImageUnavailable(message: string) {
