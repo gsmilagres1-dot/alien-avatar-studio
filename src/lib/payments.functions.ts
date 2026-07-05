@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type Stripe from "stripe";
 
 type StripeEnv = "sandbox" | "live";
 
 type Kind = "identity" | "passport" | "visa" | "fichas";
-type StripeClient = Awaited<ReturnType<(typeof import("@/lib/stripe.server"))["createStripeClient"]>>;
+type StripeClient = Stripe;
 
 const PRICES: Record<Exclude<Kind, "fichas">, { lookup: string; amount: number }> = {
   identity: { lookup: "alien_identity_single", amount: 299 },
