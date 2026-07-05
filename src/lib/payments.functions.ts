@@ -5,6 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 type StripeEnv = "sandbox" | "live";
 
 type Kind = "identity" | "passport" | "visa" | "fichas";
+type StripeClient = Awaited<ReturnType<(typeof import("@/lib/stripe.server"))["createStripeClient"]>>;
 
 const PRICES: Record<Exclude<Kind, "fichas">, { lookup: string; amount: number }> = {
   identity: { lookup: "alien_identity_single", amount: 299 },
@@ -30,7 +31,7 @@ const input = z.object({
 type Result = { clientSecret: string; paymentRowId: string } | { error: string };
 
 async function resolveOrCreateCustomer(
-  stripe: ReturnType<typeof createStripeClient>,
+  stripe: StripeClient,
   opts: { email?: string; userId: string },
 ): Promise<string> {
   if (!/^[a-zA-Z0-9_-]+$/.test(opts.userId)) throw new Error("Invalid userId");
