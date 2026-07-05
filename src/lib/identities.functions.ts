@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, getRace, raceFromBirthdate, RACES, SHIPS } from "@/lib/alien";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
@@ -20,6 +19,11 @@ import raceLyriano from "@/assets/race-lyriano.jpg";
 import raceKashyapa from "@/assets/race-kashyapa.jpg";
 
 const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
+
+async function getAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
 
 const FALLBACK_SHIP_IMAGES = {
   esportiva: shipEsportiva,
@@ -82,6 +86,7 @@ async function generateImage(prompt: string, refImageDataUrl?: string): Promise<
 }
 
 async function uploadImage(userId: string, kind: string, bytes: Buffer): Promise<string> {
+  const supabaseAdmin = await getAdmin();
   const path = `${userId}/${kind}-${crypto.randomUUID()}.png`;
   const { error } = await supabaseAdmin.storage
     .from("alien-avatars")
@@ -110,6 +115,7 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => draftInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
 
     // Verify payment belongs to user and has credits
     const { data: pay, error: payErr } = await supabaseAdmin
@@ -177,6 +183,7 @@ export const saveIdentity = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => saveInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     const { data: pay } = await supabaseAdmin
       .from("payment_transactions")
       .select("id, user_id, credits_remaining, status")
@@ -243,6 +250,7 @@ export const generateShipImage = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => shipInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     const { data: ident } = await supabaseAdmin
       .from("identities")
       .select("id, user_id, planet_id")
@@ -286,6 +294,7 @@ export const listMyIdentities = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     const { data, error } = await supabaseAdmin
       .from("identities")
       .select("*")
@@ -310,6 +319,7 @@ export const setIdentityAvatarFromGallery = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => setAvatarInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     const { data: source } = await supabaseAdmin
       .from("identities")
       .select("id, user_id, avatar_url")
@@ -332,6 +342,7 @@ export const deleteIdentity = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     const { data: identity, error: readErr } = await supabaseAdmin
       .from("identities")
       .select("id, avatar_url, ship_image_url")
@@ -360,6 +371,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     let { data } = await supabaseAdmin
       .from("payment_transactions")
       .select("id, status, credits_remaining, created_at")
@@ -432,6 +444,7 @@ export const restartIdentityFlow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
 
     // Lifetime cap on free identity sessions to prevent abuse of free AI generation.
     const { count: totalFree } = await supabaseAdmin
