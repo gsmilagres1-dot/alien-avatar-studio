@@ -18,7 +18,7 @@ import racePleiadiano from "@/assets/race-pleiadiano.jpg";
 import raceLyriano from "@/assets/race-lyriano.jpg";
 import raceKashyapa from "@/assets/race-kashyapa.jpg";
 
-const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
+const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 async function getAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
