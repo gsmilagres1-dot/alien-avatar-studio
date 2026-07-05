@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createStripeClient, getWebhookSecret, type StripeEnv } from "@/lib/stripe.server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+type StripeEnv = "sandbox" | "live";
 
 export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
 
         let event;
         try {
+          const { createStripeClient, getWebhookSecret } = await import("@/lib/stripe.server");
           const stripe = createStripeClient(env);
           event = await stripe.webhooks.constructEventAsync(body, signature, getWebhookSecret(env));
         } catch (e) {
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         }
 
         try {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           if (
             event.type === "checkout.session.completed" ||
             event.type === "checkout.session.async_payment_succeeded"
