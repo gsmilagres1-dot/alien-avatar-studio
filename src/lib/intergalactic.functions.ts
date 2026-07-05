@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   DESTINATIONS,
   ALL_DESTINATIONS,
@@ -24,6 +23,11 @@ function getBankForAny(id: string) {
   const singular = getBankForDestination(id);
   if (singular.length > 0) return singular;
   return getTeamBank(id);
+}
+
+async function getAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
 }
 
 
@@ -82,7 +86,7 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
 
 
 
-async function ensureJourney(userId: string, identityId: string) {
+async function ensureJourney(userId: string, identityId: string, supabaseAdmin: Awaited<ReturnType<typeof getAdmin>>) {
   const { data: existing } = await supabaseAdmin
     .from("journeys").select("*").eq("identity_id", identityId).eq("user_id", userId).maybeSingle();
   if (existing) return existing;
@@ -100,7 +104,8 @@ export const getJourneyState = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ identityId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const journey = await ensureJourney(userId, data.identityId);
+    const supabaseAdmin = await getAdmin();
+    const journey = await ensureJourney(userId, data.identityId, supabaseAdmin);
 
     // Passaporte grátis (auto-emitido)
     let { data: passport } = await supabaseAdmin
@@ -130,6 +135,7 @@ export const startQuiz = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     const { data: journey } = await supabaseAdmin
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey) throw new Error("Viagem não encontrada");
@@ -169,6 +175,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     const { data: journey } = await supabaseAdmin
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey || journey.status !== "active") throw new Error("Viagem inválida");
@@ -240,6 +247,7 @@ export const claimVisa = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     const { data: journey } = await supabaseAdmin
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey || journey.status !== "active") throw new Error("Viagem inválida");
@@ -316,6 +324,7 @@ export const completeJourney = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ journeyId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const supabaseAdmin = await getAdmin();
     const { data: journey } = await supabaseAdmin
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey || journey.status !== "active") throw new Error("Viagem inválida");

@@ -1,10 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { createStripeClient, getStripeErrorMessage, type StripeEnv } from "@/lib/stripe.server";
+import type Stripe from "stripe";
+
+type StripeEnv = "sandbox" | "live";
 
 type Kind = "identity" | "passport" | "visa" | "fichas";
+type StripeClient = Stripe;
 
 const PRICES: Record<Exclude<Kind, "fichas">, { lookup: string; amount: number }> = {
   identity: { lookup: "alien_identity_single", amount: 299 },
@@ -30,7 +32,7 @@ const input = z.object({
 type Result = { clientSecret: string; paymentRowId: string } | { error: string };
 
 async function resolveOrCreateCustomer(
-  stripe: ReturnType<typeof createStripeClient>,
+  stripe: StripeClient,
   opts: { email?: string; userId: string },
 ): Promise<string> {
   if (!/^[a-zA-Z0-9_-]+$/.test(opts.userId)) throw new Error("Invalid userId");
@@ -62,6 +64,10 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<Result> => {
     try {
       const { userId, claims } = context;
+      const [{ supabaseAdmin }, { createStripeClient, getStripeErrorMessage }] = await Promise.all([
+        import("@/integrations/supabase/client.server"),
+        import("@/lib/stripe.server"),
+      ]);
       const env: StripeEnv = data.environment;
       const kind: Kind = data.kind;
 
@@ -123,6 +129,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
       return { clientSecret: session.client_secret ?? "", paymentRowId: row.id };
     } catch (e) {
+      const { getStripeErrorMessage } = await import("@/lib/stripe.server");
       return { error: getStripeErrorMessage(e) };
     }
   });

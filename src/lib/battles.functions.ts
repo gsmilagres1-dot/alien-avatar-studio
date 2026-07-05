@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { ALL_DESTINATIONS, getAnyDestination } from "@/lib/intergalactic";
 import { getBankForDestination } from "@/lib/intergalactic-questions";
 import { getTeamBank } from "@/lib/team-destinations";
