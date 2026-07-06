@@ -55,6 +55,57 @@ function isAiImageUnavailable(message: string) {
   );
 }
 
+function bufferFromImageDataUrl(dataUrl: string): { bytes: Buffer; contentType: string } {
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!match) throw new Error("Imagem inválida");
+  return { bytes: Buffer.from(match[2], "base64"), contentType: match[1] };
+}
+
+function bufferFromImageValue(value: string): Buffer | null {
+  if (value.startsWith("data:image/")) return bufferFromImageDataUrl(value).bytes;
+  if (/^[A-Za-z0-9+/=\s]+$/.test(value) && value.length > 200) return Buffer.from(value.replace(/\s/g, ""), "base64");
+  return null;
+}
+
+function findImageValue(value: unknown, depth = 0): string | null {
+  if (depth > 6 || value == null) return null;
+  if (typeof value === "string") {
+    if (value.startsWith("data:image/")) return value;
+    const match = value.match(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/);
+    return match?.[0] ?? null;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findImageValue(item, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    for (const key of ["b64_json", "url", "image_url", "images", "content", "message", "choices", "data", "output"]) {
+      const found = findImageValue(obj[key], depth + 1);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function extractGeneratedImage(response: unknown): Buffer {
+  const dataUrl = findImageValue(response);
+  if (dataUrl) {
+    const bytes = bufferFromImageValue(dataUrl);
+    if (bytes) return bytes;
+  }
+  const data = (response as { data?: { b64_json?: string; url?: string }[] })?.data;
+  const value = data?.[0]?.b64_json ?? data?.[0]?.url;
+  if (value) {
+    const bytes = bufferFromImageValue(value);
+    if (bytes) return bytes;
+  }
+  throw new Error("IA não retornou imagem");
+}
+
 async function generateImage(prompt: string, refImageDataUrl?: string): Promise<Buffer> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY ausente");
@@ -79,21 +130,24 @@ async function generateImage(prompt: string, refImageDataUrl?: string): Promise<
     if (res.status === 402) throw new Error("Créditos de IA esgotados");
     throw new Error(`Falha na IA (${res.status}): ${text.slice(0, 200)}`);
   }
-  const j = (await res.json()) as { data?: { b64_json?: string }[] };
-  const b64 = j.data?.[0]?.b64_json;
-  if (!b64) throw new Error("IA não retornou imagem");
-  return Buffer.from(b64, "base64");
+  const j = await res.json();
+  return extractGeneratedImage(j);
 }
 
-async function uploadImage(userId: string, kind: string, bytes: Buffer): Promise<string> {
+async function uploadImage(userId: string, kind: string, bytes: Buffer, contentType = "image/png"): Promise<string> {
   const supabaseAdmin = await getAdmin();
   const path = `${userId}/${kind}-${crypto.randomUUID()}.png`;
   const { error } = await supabaseAdmin.storage
     .from("alien-avatars")
-    .upload(path, bytes, { contentType: "image/png", upsert: false });
+    .upload(path, bytes, { contentType, upsert: false });
   if (error) throw new Error(`Upload falhou: ${error.message}`);
   const { data } = supabaseAdmin.storage.from("alien-avatars").getPublicUrl(path);
   return data.publicUrl;
+}
+
+async function uploadOriginalSelfie(userId: string, photoDataUrl: string): Promise<string> {
+  const { bytes, contentType } = bufferFromImageDataUrl(photoDataUrl);
+  return uploadImage(userId, "avatar-selfie", bytes, contentType);
 }
 
 function storagePathFromPublicUrl(publicUrl: string) {
@@ -136,7 +190,8 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
 
     const variant = count ?? 0;
 
-    // Modo grátis: tenta IA; se falhar (créditos/limite), usa imagem padrão da raça.
+    // Tenta IA; se o gateway estiver sem crédito/limite, salva a selfie enviada
+    // como rascunho para o fluxo não perder dados nem bloquear a galeria.
     let url: string;
     let fallbackReason: string | null = null;
     try {
@@ -146,10 +201,14 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
       url = await uploadImage(userId, "avatar", bytes);
     } catch (err) {
       fallbackReason = (err as Error).message;
-      console.warn("AI avatar falhou, usando imagem padrão da raça:", fallbackReason);
-      const raceImg = FALLBACK_RACE_IMAGES[data.planetId];
-      if (!raceImg) throw err;
-      url = raceImg;
+      console.warn("AI avatar falhou, salvando selfie original:", fallbackReason);
+      try {
+        url = await uploadOriginalSelfie(userId, data.photoDataUrl);
+      } catch {
+        const raceImg = FALLBACK_RACE_IMAGES[data.planetId];
+        if (!raceImg) throw err;
+        url = raceImg;
+      }
     }
 
     const { data: draft, error: insErr } = await supabaseAdmin
