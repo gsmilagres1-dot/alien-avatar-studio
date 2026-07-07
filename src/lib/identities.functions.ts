@@ -464,36 +464,26 @@ export const getActivePayment = createServerFn({ method: "GET" })
       drafts = draftRows ?? [];
     }
 
-    // Modo grátis: cria sessão automaticamente apenas se o usuário ainda tem direito.
-    // Apenas 1 sessão vitalícia gratuita. Dono do app (DEV_USER_IDS) tem sessão ilimitada.
-    const dev = isDevUser(userId);
+    // Modo grátis ilimitado: cria uma nova sessão sempre que não houver uma ativa.
     if (!data || (data.credits_remaining < 1 && drafts.length === 0)) {
-      const { count: totalFree } = await supabaseAdmin
+      const ins = await supabaseAdmin
         .from("payment_transactions")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("kind", "identity")
-        .eq("amount_cents", 0);
-
-      if (dev || (totalFree ?? 0) < 1) {
-        const ins = await supabaseAdmin
-          .from("payment_transactions")
-          .insert({
-            user_id: userId,
-            amount_cents: 0,
-            currency: "brl",
-            status: "completed",
-            credits_granted: 1,
-            credits_remaining: 1,
-            env: "sandbox",
-            kind: "identity",
-          })
-          .select("id, status, credits_remaining, created_at")
-          .single();
-        data = ins.data;
-        drafts = [];
-      }
+        .insert({
+          user_id: userId,
+          amount_cents: 0,
+          currency: "brl",
+          status: "completed",
+          credits_granted: 1,
+          credits_remaining: 1,
+          env: "sandbox",
+          kind: "identity",
+        })
+        .select("id, status, credits_remaining, created_at")
+        .single();
+      data = ins.data;
+      drafts = [];
     }
+
 
 
 
