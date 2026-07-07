@@ -125,18 +125,21 @@ async function generateImage(prompt: string, refImageDataUrl?: string): Promise<
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY ausente");
 
-  const content: unknown[] = [{ type: "text", text: prompt }];
+  // Nano Banana 2 Lite usa o body do Vertex generateContent (contents+parts),
+  // não o shape de chat completions. inlineData é base64 puro (sem prefixo).
+  const parts: unknown[] = [{ text: prompt }];
   if (refImageDataUrl) {
-    content.push({ type: "image_url", image_url: { url: refImageDataUrl } });
+    const m = refImageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+    if (m) parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
   }
 
   const res = await fetch(GATEWAY_IMG, {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3.1-flash-image",
-      messages: [{ role: "user", content }],
-      modalities: ["image", "text"],
+      model: "google/gemini-3.1-flash-lite-image",
+      contents: [{ role: "user", parts }],
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
     }),
   });
   if (!res.ok) {
