@@ -149,7 +149,7 @@ function Criar() {
     if (!photo) return toast.error("Adicione uma foto");
     if (!name || !birthdate) return toast.error("Preencha nome e data");
     if (!payment) return toast.error("Aguarde…");
-    if (drafts.length >= 3) return toast.error("Limite de 3 avatares");
+    // Sem limite de avatares por sessão.
     setGenLoading(true);
     try {
       const res = await draftFn({ data: { photoDataUrl: photo, planetId: planet, gender, paymentId: payment.id } });

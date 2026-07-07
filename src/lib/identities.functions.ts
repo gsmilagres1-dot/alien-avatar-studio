@@ -198,17 +198,14 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
     if (payErr || !pay) throw new Error("Pagamento não encontrado");
     if (pay.status !== "completed") throw new Error("Pagamento ainda não confirmado");
 
-    // Count existing drafts for this payment (max 3)
+    // Sem limite de avatares por pagamento (Dev e App Web).
     const { count } = await supabaseAdmin
       .from("avatar_drafts")
       .select("id", { count: "exact", head: true })
       .eq("payment_id", data.paymentId);
-    // Sem limite para o dono (DEV_USER_IDS) para criar avatares de propaganda.
-    if (!isDevUser(userId) && (count ?? 0) >= 3) {
-      throw new Error("Limite de 3 avatares por pagamento atingido");
-    }
 
     const variant = count ?? 0;
+
 
     // Tenta IA; se falhar, usa a imagem padrão da raça em vez de manter a selfie.
     let url: string;
@@ -467,36 +464,26 @@ export const getActivePayment = createServerFn({ method: "GET" })
       drafts = draftRows ?? [];
     }
 
-    // Modo grátis: cria sessão automaticamente apenas se o usuário ainda tem direito.
-    // Apenas 1 sessão vitalícia gratuita. Dono do app (DEV_USER_IDS) tem sessão ilimitada.
-    const dev = isDevUser(userId);
+    // Modo grátis ilimitado: cria uma nova sessão sempre que não houver uma ativa.
     if (!data || (data.credits_remaining < 1 && drafts.length === 0)) {
-      const { count: totalFree } = await supabaseAdmin
+      const ins = await supabaseAdmin
         .from("payment_transactions")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("kind", "identity")
-        .eq("amount_cents", 0);
-
-      if (dev || (totalFree ?? 0) < 1) {
-        const ins = await supabaseAdmin
-          .from("payment_transactions")
-          .insert({
-            user_id: userId,
-            amount_cents: 0,
-            currency: "brl",
-            status: "completed",
-            credits_granted: 1,
-            credits_remaining: 1,
-            env: "sandbox",
-            kind: "identity",
-          })
-          .select("id, status, credits_remaining, created_at")
-          .single();
-        data = ins.data;
-        drafts = [];
-      }
+        .insert({
+          user_id: userId,
+          amount_cents: 0,
+          currency: "brl",
+          status: "completed",
+          credits_granted: 1,
+          credits_remaining: 1,
+          env: "sandbox",
+          kind: "identity",
+        })
+        .select("id, status, credits_remaining, created_at")
+        .single();
+      data = ins.data;
+      drafts = [];
     }
+
 
 
 
@@ -513,48 +500,17 @@ export const getActivePayment = createServerFn({ method: "GET" })
     return { payment: data, drafts, usedAvatarUrls: (usedIdentities ?? []).map((row) => row.avatar_url) };
   });
 
-const FREE_SESSION_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
-const FREE_SESSION_LIFETIME_MAX = 1; // apenas 1 avatar grátis vitalício por usuário
+const FREE_SESSION_COOLDOWN_MS = 0; // sem cooldown
+const FREE_SESSION_LIFETIME_MAX = Number.POSITIVE_INFINITY; // ilimitado
 
 export const restartIdentityFlow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
     const supabaseAdmin = await getAdmin();
-    const dev = isDevUser(userId);
+    // Sem limite vitalício e sem cooldown: qualquer usuário pode reiniciar o fluxo livremente.
 
-    if (!dev) {
-      // Lifetime cap on free identity sessions to prevent abuse of free AI generation.
-      const { count: totalFree } = await supabaseAdmin
-        .from("payment_transactions")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("kind", "identity")
-        .eq("amount_cents", 0);
 
-      if ((totalFree ?? 0) >= FREE_SESSION_LIFETIME_MAX) {
-        throw new Error("Você já usou seu avatar grátis. Compre +1 avatar por 250 fichas na galeria.");
-      }
-
-      // 24h cooldown between free sessions.
-      const { data: lastFree } = await supabaseAdmin
-        .from("payment_transactions")
-        .select("created_at")
-        .eq("user_id", userId)
-        .eq("kind", "identity")
-        .eq("amount_cents", 0)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (lastFree?.created_at) {
-        const elapsed = Date.now() - new Date(lastFree.created_at).getTime();
-        if (elapsed < FREE_SESSION_COOLDOWN_MS) {
-          const waitHours = Math.ceil((FREE_SESSION_COOLDOWN_MS - elapsed) / (60 * 60 * 1000));
-          throw new Error(`Aguarde ${waitHours}h para iniciar outra identidade gratuita.`);
-        }
-      }
-    }
 
 
     const { data: openPayments, error: openErr } = await supabaseAdmin

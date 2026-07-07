@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const EXTRA_PACK_COST = 250;
 export const EXTRA_PACK_SLOTS = 1;
-export const FREE_IDENTITIES_LIMIT = 1;
+export const FREE_IDENTITIES_LIMIT = Number.POSITIVE_INFINITY;
 
 /**
  * Spend fichas to unlock another batch of 3 alien identity slots
