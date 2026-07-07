@@ -12,6 +12,12 @@ export const listIdentitiesWithJourneys = createServerFn({ method: "GET" })
       .from("journeys").select("*").eq("user_id", userId);
     const { data: visas } = await supabaseAdmin
       .from("visas").select("*").eq("user_id", userId).order("issued_at");
+    const { data: drafts } = await supabaseAdmin
+      .from("avatar_drafts")
+      .select("id, avatar_url, variant_index, prompt_seed, payment_id, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    const usedAvatarUrls = new Set((identities ?? []).map((identity) => identity.avatar_url));
     const byIdent = new Map((journeys ?? []).map((j) => [j.identity_id, j]));
     type Visa = NonNullable<typeof visas>[number];
     const visasByJourney = new Map<string, Visa[]>();
@@ -27,5 +33,6 @@ export const listIdentitiesWithJourneys = createServerFn({ method: "GET" })
         const vs = journey ? (visasByJourney.get(journey.id) ?? []) : [];
         return { identity: i, journey, visas: vs };
       }),
+      drafts: (drafts ?? []).filter((draft) => !usedAvatarUrls.has(draft.avatar_url)),
     };
   });
