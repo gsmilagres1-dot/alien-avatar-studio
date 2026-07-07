@@ -198,17 +198,14 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
     if (payErr || !pay) throw new Error("Pagamento não encontrado");
     if (pay.status !== "completed") throw new Error("Pagamento ainda não confirmado");
 
-    // Count existing drafts for this payment (max 3)
+    // Sem limite de avatares por pagamento (Dev e App Web).
     const { count } = await supabaseAdmin
       .from("avatar_drafts")
       .select("id", { count: "exact", head: true })
       .eq("payment_id", data.paymentId);
-    // Sem limite para o dono (DEV_USER_IDS) para criar avatares de propaganda.
-    if (!isDevUser(userId) && (count ?? 0) >= 3) {
-      throw new Error("Limite de 3 avatares por pagamento atingido");
-    }
 
     const variant = count ?? 0;
+
 
     // Tenta IA; se falhar, usa a imagem padrão da raça em vez de manter a selfie.
     let url: string;
