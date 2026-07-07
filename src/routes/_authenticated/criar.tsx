@@ -254,8 +254,8 @@ function Criar() {
                 <div className="mt-4 space-y-3">
                   <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-left">
                     <p className="text-sm text-amber-200/90 leading-relaxed">
-                      <b className="text-amber-300">Você atingiu o limite de 3 identidades gratuitas.</b><br/>
-                      Para criar mais avatares alien, libere um pacote extra de <b>3 avatares por 500 fichas</b>{" "}
+                      <b className="text-amber-300">Você já usou seu avatar grátis.</b><br/>
+                      Para criar mais avatares alien, compre <b>+1 avatar por 250 fichas</b>{" "}
                       na sua galeria. Eles ficam guardados para viagens e batalhas.
                     </p>
                   </div>

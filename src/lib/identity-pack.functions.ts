@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export const EXTRA_PACK_COST = 500;
-export const EXTRA_PACK_SLOTS = 3;
-export const FREE_IDENTITIES_LIMIT = 3;
+export const EXTRA_PACK_COST = 250;
+export const EXTRA_PACK_SLOTS = 1;
+export const FREE_IDENTITIES_LIMIT = 1;
 
 /**
  * Spend fichas to unlock another batch of 3 alien identity slots

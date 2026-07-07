@@ -18,7 +18,22 @@ import racePleiadiano from "@/assets/race-pleiadiano.jpg";
 import raceLyriano from "@/assets/race-lyriano.jpg";
 import raceKashyapa from "@/assets/race-kashyapa.jpg";
 
-const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
+
+/**
+ * Usuários "dev" (dono do app) — leem-se de DEV_USER_IDS (UUIDs separados
+ * por vírgula). Para eles: geração ilimitada, sem cobrança e sem limites,
+ * para criar avatares de propaganda para redes sociais.
+ */
+function isDevUser(userId: string): boolean {
+  const raw = process.env.DEV_USER_IDS ?? "";
+  if (!raw.trim()) return false;
+  return raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(userId.toLowerCase());
+}
 
 async function getAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -110,18 +125,21 @@ async function generateImage(prompt: string, refImageDataUrl?: string): Promise<
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY ausente");
 
-  const content: unknown[] = [{ type: "text", text: prompt }];
+  // Nano Banana 2 Lite usa o body do Vertex generateContent (contents+parts),
+  // não o shape de chat completions. inlineData é base64 puro (sem prefixo).
+  const parts: unknown[] = [{ text: prompt }];
   if (refImageDataUrl) {
-    content.push({ type: "image_url", image_url: { url: refImageDataUrl } });
+    const m = refImageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+    if (m) parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
   }
 
   const res = await fetch(GATEWAY_IMG, {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3.1-flash-image",
-      messages: [{ role: "user", content }],
-      modalities: ["image", "text"],
+      model: "google/gemini-3.1-flash-lite-image",
+      contents: [{ role: "user", parts }],
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
     }),
   });
   if (!res.ok) {
@@ -186,7 +204,10 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
       .from("avatar_drafts")
       .select("id", { count: "exact", head: true })
       .eq("payment_id", data.paymentId);
-    if ((count ?? 0) >= 3) throw new Error("Limite de 3 avatares por pagamento atingido");
+    // Sem limite para o dono (DEV_USER_IDS) para criar avatares de propaganda.
+    if (!isDevUser(userId) && (count ?? 0) >= 3) {
+      throw new Error("Limite de 3 avatares por pagamento atingido");
+    }
 
     const variant = count ?? 0;
 
@@ -453,7 +474,8 @@ export const getActivePayment = createServerFn({ method: "GET" })
     }
 
     // Modo grátis: cria sessão automaticamente apenas se o usuário ainda tem direito.
-    // Limite vitalício de sessões gratuitas é aplicado para prevenir abuso de geração de IA.
+    // Apenas 1 sessão vitalícia gratuita. Dono do app (DEV_USER_IDS) tem sessão ilimitada.
+    const dev = isDevUser(userId);
     if (!data || (data.credits_remaining < 1 && drafts.length === 0)) {
       const { count: totalFree } = await supabaseAdmin
         .from("payment_transactions")
@@ -462,7 +484,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
         .eq("kind", "identity")
         .eq("amount_cents", 0);
 
-      if ((totalFree ?? 0) < 3) {
+      if (dev || (totalFree ?? 0) < 1) {
         const ins = await supabaseAdmin
           .from("payment_transactions")
           .insert({
@@ -483,6 +505,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
     }
 
 
+
     if (!data) {
       return { payment: null, drafts: [], usedAvatarUrls: [] };
     }
@@ -497,44 +520,48 @@ export const getActivePayment = createServerFn({ method: "GET" })
   });
 
 const FREE_SESSION_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
-const FREE_SESSION_LIFETIME_MAX = 3; // total free identity sessions ever issued per user
+const FREE_SESSION_LIFETIME_MAX = 1; // apenas 1 avatar grátis vitalício por usuário
 
 export const restartIdentityFlow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
     const supabaseAdmin = await getAdmin();
+    const dev = isDevUser(userId);
 
-    // Lifetime cap on free identity sessions to prevent abuse of free AI generation.
-    const { count: totalFree } = await supabaseAdmin
-      .from("payment_transactions")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("kind", "identity")
-      .eq("amount_cents", 0);
+    if (!dev) {
+      // Lifetime cap on free identity sessions to prevent abuse of free AI generation.
+      const { count: totalFree } = await supabaseAdmin
+        .from("payment_transactions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("kind", "identity")
+        .eq("amount_cents", 0);
 
-    if ((totalFree ?? 0) >= FREE_SESSION_LIFETIME_MAX) {
-      throw new Error("Limite de 3 identidades gratuitas atingido. Compre +3 avatares por 500 fichas na galeria.");
-    }
+      if ((totalFree ?? 0) >= FREE_SESSION_LIFETIME_MAX) {
+        throw new Error("Você já usou seu avatar grátis. Compre +1 avatar por 250 fichas na galeria.");
+      }
 
-    // 24h cooldown between free sessions.
-    const { data: lastFree } = await supabaseAdmin
-      .from("payment_transactions")
-      .select("created_at")
-      .eq("user_id", userId)
-      .eq("kind", "identity")
-      .eq("amount_cents", 0)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      // 24h cooldown between free sessions.
+      const { data: lastFree } = await supabaseAdmin
+        .from("payment_transactions")
+        .select("created_at")
+        .eq("user_id", userId)
+        .eq("kind", "identity")
+        .eq("amount_cents", 0)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (lastFree?.created_at) {
-      const elapsed = Date.now() - new Date(lastFree.created_at).getTime();
-      if (elapsed < FREE_SESSION_COOLDOWN_MS) {
-        const waitHours = Math.ceil((FREE_SESSION_COOLDOWN_MS - elapsed) / (60 * 60 * 1000));
-        throw new Error(`Aguarde ${waitHours}h para iniciar outra identidade gratuita.`);
+      if (lastFree?.created_at) {
+        const elapsed = Date.now() - new Date(lastFree.created_at).getTime();
+        if (elapsed < FREE_SESSION_COOLDOWN_MS) {
+          const waitHours = Math.ceil((FREE_SESSION_COOLDOWN_MS - elapsed) / (60 * 60 * 1000));
+          throw new Error(`Aguarde ${waitHours}h para iniciar outra identidade gratuita.`);
+        }
       }
     }
+
 
     const { data: openPayments, error: openErr } = await supabaseAdmin
       .from("payment_transactions")
