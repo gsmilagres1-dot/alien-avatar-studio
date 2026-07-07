@@ -18,7 +18,22 @@ import racePleiadiano from "@/assets/race-pleiadiano.jpg";
 import raceLyriano from "@/assets/race-lyriano.jpg";
 import raceKashyapa from "@/assets/race-kashyapa.jpg";
 
-const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
+
+/**
+ * Usuários "dev" (dono do app) — leem-se de DEV_USER_IDS (UUIDs separados
+ * por vírgula). Para eles: geração ilimitada, sem cobrança e sem limites,
+ * para criar avatares de propaganda para redes sociais.
+ */
+function isDevUser(userId: string): boolean {
+  const raw = process.env.DEV_USER_IDS ?? "";
+  if (!raw.trim()) return false;
+  return raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(userId.toLowerCase());
+}
 
 async function getAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
