@@ -474,7 +474,8 @@ export const getActivePayment = createServerFn({ method: "GET" })
     }
 
     // Modo grátis: cria sessão automaticamente apenas se o usuário ainda tem direito.
-    // Limite vitalício de sessões gratuitas é aplicado para prevenir abuso de geração de IA.
+    // Apenas 1 sessão vitalícia gratuita. Dono do app (DEV_USER_IDS) tem sessão ilimitada.
+    const dev = isDevUser(userId);
     if (!data || (data.credits_remaining < 1 && drafts.length === 0)) {
       const { count: totalFree } = await supabaseAdmin
         .from("payment_transactions")
@@ -483,7 +484,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
         .eq("kind", "identity")
         .eq("amount_cents", 0);
 
-      if ((totalFree ?? 0) < 3) {
+      if (dev || (totalFree ?? 0) < 1) {
         const ins = await supabaseAdmin
           .from("payment_transactions")
           .insert({
@@ -502,6 +503,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
         drafts = [];
       }
     }
+
 
 
     if (!data) {
