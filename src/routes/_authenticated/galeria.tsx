@@ -12,7 +12,7 @@ import {
   FREE_IDENTITIES_LIMIT,
 } from "@/lib/identity-pack.functions";
 import { useWallet } from "@/hooks/useWallet";
-import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus } from "lucide-react";
+import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
 import { DestinationBadge } from "@/components/DestinationBadge";
@@ -86,6 +86,7 @@ function Galeria() {
   }
 
   const identityCount = data?.items.length ?? 0;
+  const draftCount = data?.drafts.length ?? 0;
   const reachedFreeLimit = identityCount >= FREE_IDENTITIES_LIMIT;
 
   return (
@@ -121,12 +122,40 @@ function Galeria() {
 
       {isLoading && <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>}
 
-      {!isLoading && (data?.items.length ?? 0) === 0 && (
+      {!isLoading && identityCount === 0 && draftCount === 0 && (
         <div className="glass rounded-2xl p-10 text-center">
           <Rocket className="w-10 h-10 text-accent mx-auto" />
           <p className="font-display mt-3">Nenhuma identidade ainda</p>
           <p className="text-xs text-muted-foreground mt-1">Crie sua primeira grátis.</p>
         </div>
+      )}
+
+      {!isLoading && draftCount > 0 && (
+        <section className="mb-8">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="font-display text-lg text-accent">Avatares salvos para finalizar</h2>
+            <span className="font-mono text-[10px] text-muted-foreground">{draftCount} pendente{draftCount > 1 ? "s" : ""}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {data?.drafts.map((draft) => (
+              <div key={draft.id} className="glass rounded-2xl overflow-hidden">
+                <div className="relative">
+                  <img src={draft.avatar_url} alt={`Avatar salvo #${draft.variant_index}`} className="w-full aspect-square object-cover object-[center_25%]" />
+                  <div className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-background/80 px-2 py-1 text-[10px] font-mono text-accent backdrop-blur">
+                    <ImageIcon className="w-3 h-3" /> #{draft.variant_index}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="font-display text-base text-gradient-neon">Avatar aguardando identidade</div>
+                  <p className="text-xs text-muted-foreground mt-1">Já está salvo na sua conta. Continue para preencher nome/data e confirmar.</p>
+                  <Link to="/criar" className="mt-3 inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-xs font-bold shadow-neon">
+                    <Sparkles className="w-3.5 h-3.5" /> Continuar criação
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
