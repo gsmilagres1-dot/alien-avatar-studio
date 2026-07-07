@@ -209,7 +209,7 @@ export const submitQuiz = createServerFn({ method: "POST" })
 
     if (passed) {
       await supabaseAdmin.from("journeys").update({ attempts_used: 0 }).eq("id", journey.id);
-      const reward = tier === "gold" ? 75 : tier === "silver" ? 50 : 25;
+      const reward = tier === "gold" ? 25 : tier === "silver" ? 10 : 5;
       let fichasBalance: number | null = null;
       try {
         const { data: bal } = await supabaseAdmin.rpc("adjust_fichas", {
