@@ -210,25 +210,20 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
 
     const variant = count ?? 0;
 
-    // Tenta IA; se o gateway estiver sem crédito/limite, salva a selfie enviada
-    // como rascunho para o fluxo não perder dados nem bloquear a galeria.
+    // Tenta IA; se falhar, usa a imagem padrão da raça em vez de manter a selfie.
     let url: string;
     let fallbackReason: string | null = null;
+    const race = getRace(data.planetId);
     try {
-      const race = getRace(data.planetId);
       const prompt = buildAvatarPrompt({ race, gender: data.gender, variant });
       const bytes = await generateImage(prompt, data.photoDataUrl);
       url = await uploadImage(userId, "avatar", bytes);
     } catch (err) {
       fallbackReason = (err as Error).message;
-      console.warn("AI avatar falhou, salvando selfie original:", fallbackReason);
-      try {
-        url = await uploadOriginalSelfie(userId, data.photoDataUrl);
-      } catch {
-        const raceImg = FALLBACK_RACE_IMAGES[data.planetId];
-        if (!raceImg) throw err;
-        url = raceImg;
-      }
+      console.warn("AI avatar falhou, usando imagem padrão da raça:", fallbackReason);
+      const raceImg = FALLBACK_RACE_IMAGES[data.planetId];
+      if (!raceImg) throw err;
+      url = raceImg;
     }
 
     const { data: draft, error: insErr } = await supabaseAdmin
