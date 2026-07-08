@@ -349,13 +349,14 @@ export function SpaceMapPanel() {
 }
 
 // ============ Quiz modal ============
-function SpaceQuiz({ object, onClose }: { object: SpaceObject; onClose: () => void }) {
+function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose: () => void; onSealed: (id: string) => void }) {
   const [difficulty, setDifficulty] = useState<1 | 2 | 3 | null>(null);
   const [questions, setQuestions] = useState<SpaceQuestion[]>([]);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [picked, setPicked] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [sealedThisRun, setSealedThisRun] = useState(false);
 
   const start = (lvl: 1 | 2 | 3) => {
     setDifficulty(lvl);
@@ -364,6 +365,7 @@ function SpaceQuiz({ object, onClose }: { object: SpaceObject; onClose: () => vo
     setAnswers([]);
     setPicked(null);
     setShowResult(false);
+    setSealedThisRun(false);
   };
 
   const current = questions[idx];
@@ -374,10 +376,17 @@ function SpaceQuiz({ object, onClose }: { object: SpaceObject; onClose: () => vo
     if (picked !== null) return;
     setPicked(i);
     setTimeout(() => {
-      setAnswers((a) => [...a, i]);
+      const nextAnswers = [...answers, i];
+      setAnswers(nextAnswers);
       setPicked(null);
-      if (idx + 1 >= questions.length) setShowResult(true);
-      else setIdx(idx + 1);
+      if (idx + 1 >= questions.length) {
+        const finalScore = nextAnswers.filter((a, k) => a === questions[k]?.answer).length;
+        if (!sealedThisRun && finalScore / questions.length >= 0.7) {
+          onSealed(object.id);
+          setSealedThisRun(true);
+        }
+        setShowResult(true);
+      } else setIdx(idx + 1);
     }, 1200);
   };
 
