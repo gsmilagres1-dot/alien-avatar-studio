@@ -9,6 +9,8 @@ import {
   type SpaceQuestion,
 } from "@/lib/space-objects";
 import { getMyVisaCount } from "@/lib/space-map.functions";
+import { SpaceMapPrizes } from "@/components/SpaceMapPrizes";
+import { loadSpaceSeals, addSpaceSeal } from "@/lib/space-map-prizes";
 import sunImg from "@/assets/map/sun.png";
 import planetImg from "@/assets/map/planet.png";
 import moonImg from "@/assets/map/moon.png";
