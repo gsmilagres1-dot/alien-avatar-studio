@@ -101,10 +101,12 @@ export function SpaceMapPanel() {
   const [selected, setSelected] = useState<SpaceObject | null>(null);
   const [quizObject, setQuizObject] = useState<SpaceObject | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [seals, setSeals] = useState<Set<string>>(() => new Set());
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchCount().then((r) => setVisaCount(r.count)).catch(() => setVisaCount(0));
+    setSeals(loadSpaceSeals());
   }, [fetchCount]);
 
   const locked = (visaCount ?? 0) < SPACE_MAP_UNLOCK_THRESHOLD;
