@@ -333,8 +333,16 @@ export function SpaceMapPanel() {
         </div>
       </div>
 
+      {!locked && (
+        <SpaceMapPrizes sealsCount={seals.size} unlocked={!locked} />
+      )}
+
       {quizObject && (
-        <SpaceQuiz object={quizObject} onClose={() => setQuizObject(null)} />
+        <SpaceQuiz
+          object={quizObject}
+          onClose={() => setQuizObject(null)}
+          onSealed={(id) => setSeals(addSpaceSeal(id))}
+        />
       )}
     </section>
   );
