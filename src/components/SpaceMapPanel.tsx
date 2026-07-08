@@ -9,6 +9,8 @@ import {
   type SpaceQuestion,
 } from "@/lib/space-objects";
 import { getMyVisaCount } from "@/lib/space-map.functions";
+import { SpaceMapPrizes } from "@/components/SpaceMapPrizes";
+import { loadSpaceSeals, addSpaceSeal } from "@/lib/space-map-prizes";
 import sunImg from "@/assets/map/sun.png";
 import planetImg from "@/assets/map/planet.png";
 import moonImg from "@/assets/map/moon.png";
@@ -99,10 +101,12 @@ export function SpaceMapPanel() {
   const [selected, setSelected] = useState<SpaceObject | null>(null);
   const [quizObject, setQuizObject] = useState<SpaceObject | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [seals, setSeals] = useState<Set<string>>(() => new Set());
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchCount().then((r) => setVisaCount(r.count)).catch(() => setVisaCount(0));
+    setSeals(loadSpaceSeals());
   }, [fetchCount]);
 
   const locked = (visaCount ?? 0) < SPACE_MAP_UNLOCK_THRESHOLD;
@@ -329,21 +333,30 @@ export function SpaceMapPanel() {
         </div>
       </div>
 
+      {!locked && (
+        <SpaceMapPrizes sealsCount={seals.size} unlocked={!locked} />
+      )}
+
       {quizObject && (
-        <SpaceQuiz object={quizObject} onClose={() => setQuizObject(null)} />
+        <SpaceQuiz
+          object={quizObject}
+          onClose={() => setQuizObject(null)}
+          onSealed={(id) => setSeals(addSpaceSeal(id))}
+        />
       )}
     </section>
   );
 }
 
 // ============ Quiz modal ============
-function SpaceQuiz({ object, onClose }: { object: SpaceObject; onClose: () => void }) {
+function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose: () => void; onSealed: (id: string) => void }) {
   const [difficulty, setDifficulty] = useState<1 | 2 | 3 | null>(null);
   const [questions, setQuestions] = useState<SpaceQuestion[]>([]);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [picked, setPicked] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [sealedThisRun, setSealedThisRun] = useState(false);
 
   const start = (lvl: 1 | 2 | 3) => {
     setDifficulty(lvl);
@@ -352,6 +365,7 @@ function SpaceQuiz({ object, onClose }: { object: SpaceObject; onClose: () => vo
     setAnswers([]);
     setPicked(null);
     setShowResult(false);
+    setSealedThisRun(false);
   };
 
   const current = questions[idx];
@@ -362,10 +376,17 @@ function SpaceQuiz({ object, onClose }: { object: SpaceObject; onClose: () => vo
     if (picked !== null) return;
     setPicked(i);
     setTimeout(() => {
-      setAnswers((a) => [...a, i]);
+      const nextAnswers = [...answers, i];
+      setAnswers(nextAnswers);
       setPicked(null);
-      if (idx + 1 >= questions.length) setShowResult(true);
-      else setIdx(idx + 1);
+      if (idx + 1 >= questions.length) {
+        const finalScore = nextAnswers.filter((a, k) => a === questions[k]?.answer).length;
+        if (!sealedThisRun && finalScore / questions.length >= 0.7) {
+          onSealed(object.id);
+          setSealedThisRun(true);
+        }
+        setShowResult(true);
+      } else setIdx(idx + 1);
     }, 1200);
   };
 
