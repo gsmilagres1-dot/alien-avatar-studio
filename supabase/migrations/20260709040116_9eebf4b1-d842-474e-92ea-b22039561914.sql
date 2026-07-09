@@ -1,0 +1,2 @@
+ALTER TABLE public.space_map_seals DROP CONSTRAINT IF EXISTS space_map_seals_difficulty_check;
+ALTER TABLE public.space_map_seals ADD CONSTRAINT space_map_seals_difficulty_check CHECK (difficulty BETWEEN 0 AND 3);

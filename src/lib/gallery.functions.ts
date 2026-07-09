@@ -17,6 +17,16 @@ export const listIdentitiesWithJourneys = createServerFn({ method: "GET" })
       .select("id, avatar_url, variant_index, prompt_seed, payment_id, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
+    const { data: spaceSeals } = await supabaseAdmin
+      .from("space_map_seals")
+      .select("id, object_id, object_name, object_kind, score, total, difficulty, tier, fichas_earned, issued_at")
+      .eq("user_id", userId)
+      .order("issued_at", { ascending: false });
+    const { data: spacePrizes } = await supabaseAdmin
+      .from("space_map_prizes")
+      .select("id, prize_id, title, threshold, seals_count, image_url, claimed_at")
+      .eq("user_id", userId)
+      .order("claimed_at", { ascending: false });
     const usedAvatarUrls = new Set((identities ?? []).map((identity) => identity.avatar_url));
     const byIdent = new Map((journeys ?? []).map((j) => [j.identity_id, j]));
     type Visa = NonNullable<typeof visas>[number];
@@ -34,5 +44,7 @@ export const listIdentitiesWithJourneys = createServerFn({ method: "GET" })
         return { identity: i, journey, visas: vs };
       }),
       drafts: (drafts ?? []).filter((draft) => !usedAvatarUrls.has(draft.avatar_url)),
+      spaceSeals: spaceSeals ?? [],
+      spacePrizes: spacePrizes ?? [],
     };
   });

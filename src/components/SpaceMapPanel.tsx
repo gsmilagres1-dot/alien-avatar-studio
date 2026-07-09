@@ -8,9 +8,8 @@ import {
   type SpaceObject,
   type SpaceQuestion,
 } from "@/lib/space-objects";
-import { getMyVisaCount } from "@/lib/space-map.functions";
+import { claimSpaceMapSeal, getSpaceMapState } from "@/lib/space-map.functions";
 import { SpaceMapPrizes } from "@/components/SpaceMapPrizes";
-import { loadSpaceSeals, addSpaceSeal } from "@/lib/space-map-prizes";
 import sunImg from "@/assets/map/sun.png";
 import planetImg from "@/assets/map/planet.png";
 import moonImg from "@/assets/map/moon.png";
@@ -82,32 +81,61 @@ function buildNodes(objects: SpaceObject[]): SpaceNode[] {
   });
 }
 
-/** Sorteia 9 perguntas da lista filtradas por dificuldade (fallback: quaisquer 9). */
-function pickQuestions(all: SpaceQuestion[], level: 1 | 2 | 3): SpaceQuestion[] {
+type SpaceDifficulty = 0 | 1 | 2 | 3;
+
+/** Sorteia 9 perguntas da lista filtradas por dificuldade; 0 = misto. */
+function pickQuestions(all: SpaceQuestion[], level: SpaceDifficulty): SpaceQuestion[] {
+  if (level === 0) {
+    const mixed = [1, 2, 3].flatMap((lvl) => all.filter((q) => q.level === lvl).slice(0, 3));
+    const pool = mixed.length >= 9 ? mixed : all;
+    return shuffleQuestions(pool).slice(0, 9);
+  }
   const byLevel = all.filter((q) => q.level === level);
   const pool = byLevel.length >= 9 ? byLevel : all;
+  return shuffleQuestions(pool).slice(0, 9);
+}
+
+function shuffleQuestions(pool: SpaceQuestion[]) {
   const copy = [...pool];
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-  return copy.slice(0, 9);
+  return copy;
 }
 
 export function SpaceMapPanel() {
-  const fetchCount = useServerFn(getMyVisaCount);
+  const fetchState = useServerFn(getSpaceMapState);
+  const claimSeal = useServerFn(claimSpaceMapSeal);
   const [visaCount, setVisaCount] = useState<number | null>(null);
   const [kindFilter, setKindFilter] = useState<SpaceObject["kind"] | "all">("all");
   const [selected, setSelected] = useState<SpaceObject | null>(null);
   const [quizObject, setQuizObject] = useState<SpaceObject | null>(null);
   const [zoom, setZoom] = useState(1);
   const [seals, setSeals] = useState<Set<string>>(() => new Set());
+  const [claimedPrizeIds, setClaimedPrizeIds] = useState<Set<string>>(() => new Set());
+  const [newPrizeIds, setNewPrizeIds] = useState<string[]>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchCount().then((r) => setVisaCount(r.count)).catch(() => setVisaCount(0));
-    setSeals(loadSpaceSeals());
-  }, [fetchCount]);
+    fetchState()
+      .then((r) => {
+        setVisaCount(r.visaCount);
+        setSeals(new Set(r.seals.map((seal) => seal.object_id)));
+        setClaimedPrizeIds(new Set(r.prizes.map((prize) => prize.prize_id)));
+      })
+      .catch(() => setVisaCount(0));
+  }, [fetchState]);
+
+  async function handleSeal(payload: { objectId: string; score: number; total: number; difficulty: SpaceDifficulty }) {
+    const r = await claimSeal({ data: payload });
+    setSeals(new Set(r.seals.map((seal) => seal.object_id)));
+    setClaimedPrizeIds(new Set(r.prizes.map((prize) => prize.prize_id)));
+    setNewPrizeIds(r.newPrizeIds);
+    if (!r.alreadyHadSeal) {
+      toast.success(`Selo ${r.tier} conquistado${r.fichasEarned ? ` · +${r.fichasEarned} fichas` : ""}`);
+    }
+  }
 
   const locked = (visaCount ?? 0) < SPACE_MAP_UNLOCK_THRESHOLD;
   const nodes = useMemo(() => buildNodes(SPACE_OBJECTS), []);
@@ -334,14 +362,14 @@ export function SpaceMapPanel() {
       </div>
 
       {!locked && (
-        <SpaceMapPrizes sealsCount={seals.size} unlocked={!locked} />
+        <SpaceMapPrizes sealsCount={seals.size} unlocked={!locked} claimedPrizeIds={claimedPrizeIds} newPrizeIds={newPrizeIds} />
       )}
 
       {quizObject && (
         <SpaceQuiz
           object={quizObject}
           onClose={() => setQuizObject(null)}
-          onSealed={(id) => setSeals(addSpaceSeal(id))}
+          onSealed={handleSeal}
         />
       )}
     </section>
@@ -349,8 +377,8 @@ export function SpaceMapPanel() {
 }
 
 // ============ Quiz modal ============
-function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose: () => void; onSealed: (id: string) => void }) {
-  const [difficulty, setDifficulty] = useState<1 | 2 | 3 | null>(null);
+function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose: () => void; onSealed: (payload: { objectId: string; score: number; total: number; difficulty: SpaceDifficulty }) => Promise<void> }) {
+  const [difficulty, setDifficulty] = useState<SpaceDifficulty | null>(null);
   const [questions, setQuestions] = useState<SpaceQuestion[]>([]);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -358,7 +386,7 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
   const [showResult, setShowResult] = useState(false);
   const [sealedThisRun, setSealedThisRun] = useState(false);
 
-  const start = (lvl: 1 | 2 | 3) => {
+  const start = (lvl: SpaceDifficulty) => {
     setDifficulty(lvl);
     setQuestions(pickQuestions(object.questions, lvl));
     setIdx(0);
@@ -382,8 +410,9 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
       if (idx + 1 >= questions.length) {
         const finalScore = nextAnswers.filter((a, k) => a === questions[k]?.answer).length;
         if (!sealedThisRun && finalScore / questions.length >= 0.7) {
-          onSealed(object.id);
-          setSealedThisRun(true);
+          onSealed({ objectId: object.id, score: finalScore, total: questions.length, difficulty: difficulty ?? 0 })
+            .then(() => setSealedThisRun(true))
+            .catch((e) => toast.error((e as Error).message));
         }
         setShowResult(true);
       } else setIdx(idx + 1);
@@ -413,16 +442,16 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
               <p className="text-[11px] text-muted-foreground mb-3">
                 Escolha a dificuldade — 9 perguntas sorteadas de um banco de 15.
               </p>
-              <div className="grid grid-cols-3 gap-2">
-                {([1, 2, 3] as const).map((lvl) => (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {([1, 2, 3, 0] as const).map((lvl) => (
                   <button
                     key={lvl}
                     onClick={() => start(lvl)}
                     className="rounded-lg border border-accent/40 bg-accent/10 hover:bg-accent/20 py-3 text-xs font-semibold"
                   >
-                    {lvl === 1 ? "Fácil" : lvl === 2 ? "Médio" : "Difícil"}
+                    {lvl === 0 ? "Misto" : lvl === 1 ? "Fácil" : lvl === 2 ? "Médio" : "Difícil"}
                     <div className="flex justify-center gap-0.5 mt-1">
-                      {Array.from({ length: lvl }).map((_, i) => (
+                      {Array.from({ length: lvl || 3 }).map((_, i) => (
                         <Star key={i} className="w-3 h-3 fill-accent text-accent" />
                       ))}
                     </div>
@@ -432,11 +461,11 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
             </>
           )}
 
-          {difficulty && !showResult && current && (
+          {difficulty !== null && !showResult && current && (
             <>
               <div className="flex items-center justify-between mb-2 text-[10px] font-mono text-muted-foreground">
                 <span>Pergunta {idx + 1}/{questions.length}</span>
-                <span>Nível {difficulty}</span>
+                <span>{difficulty === 0 ? "Misto" : `Nível ${difficulty}`}</span>
               </div>
               <div className="h-1 rounded-full bg-black/50 mb-3 overflow-hidden">
                 <div className="h-full bg-accent" style={{ width: `${(idx / questions.length) * 100}%` }} />

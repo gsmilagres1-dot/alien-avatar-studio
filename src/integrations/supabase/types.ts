@@ -491,6 +491,103 @@ export type Database = {
           },
         ]
       }
+      space_map_prizes: {
+        Row: {
+          claimed_at: string
+          id: string
+          identity_id: string | null
+          image_url: string | null
+          prize_id: string
+          seals_count: number
+          threshold: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          id?: string
+          identity_id?: string | null
+          image_url?: string | null
+          prize_id: string
+          seals_count: number
+          threshold: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          id?: string
+          identity_id?: string | null
+          image_url?: string | null
+          prize_id?: string
+          seals_count?: number
+          threshold?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_map_prizes_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "identities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      space_map_seals: {
+        Row: {
+          difficulty: number
+          fichas_earned: number
+          id: string
+          identity_id: string | null
+          issued_at: string
+          object_id: string
+          object_kind: string
+          object_name: string
+          score: number
+          tier: string
+          total: number
+          user_id: string
+        }
+        Insert: {
+          difficulty: number
+          fichas_earned?: number
+          id?: string
+          identity_id?: string | null
+          issued_at?: string
+          object_id: string
+          object_kind: string
+          object_name: string
+          score: number
+          tier?: string
+          total?: number
+          user_id: string
+        }
+        Update: {
+          difficulty?: number
+          fichas_earned?: number
+          id?: string
+          identity_id?: string | null
+          issued_at?: string
+          object_id?: string
+          object_kind?: string
+          object_name?: string
+          score?: number
+          tier?: string
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_map_seals_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "identities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invites: {
         Row: {
           created_at: string
