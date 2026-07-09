@@ -461,7 +461,7 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
             </>
           )}
 
-          {difficulty && !showResult && current && (
+          {difficulty !== null && !showResult && current && (
             <>
               <div className="flex items-center justify-between mb-2 text-[10px] font-mono text-muted-foreground">
                 <span>Pergunta {idx + 1}/{questions.length}</span>
