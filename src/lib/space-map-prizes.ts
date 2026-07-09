@@ -22,9 +22,9 @@ export const SPACE_MAP_PRIZES: SpaceMapPrize[] = [
     title: "Pilha de Bagdá",
     subtitle: "Mesosfera alcançada",
     message:
-      "Você alastrou o seu mapa até a Mesosfera e ganhou uma Pilha de Bagdá. Aproveite e recarregue seus vagalumes para iluminação no espaço escuro.",
+      "Você alastrou o seu mapa até a Mesosfera e ganhou uma Pilha de Bagdá com 7 vagalumes cintilando. Se faltar luz na nave, use os vagalumes recarregáveis.",
     extra:
-      "A Pilha de Bagdá é um artefato arqueológico de ~2.000 anos: um jarro de cerâmica com um cilindro de cobre e uma haste de ferro que, com um eletrólito ácido, produz uma pequena voltagem. Uma bateria antes da bateria.",
+      "A Pilha de Bagdá é um artefato antigo em forma de jarro com cobre e ferro, lembrado como uma possível bateria primitiva — perfeita para carregar luz de emergência espacial.",
     image: baghdadImg,
     accent: "border-yellow-400 shadow-[0_0_28px_-6px_oklch(0.85_0.2_90)]",
   },
@@ -32,11 +32,11 @@ export const SPACE_MAP_PRIZES: SpaceMapPrize[] = [
     id: "warp-pistol",
     threshold: 10,
     title: "Pistola Ativadora de Dobras Warp",
-    subtitle: "Novo estágio · Via Láctea",
+    subtitle: "Transporte por dobra Warp",
     message:
-      "Você atingiu um novo estágio na constelação da Via Láctea. Receba uma Pistola Ativadora de Dobras Warp para viagens instantâneas pelos céus.",
+      "Você atingiu um novo estágio na constelação da Via Láctea. Transporte por dobra Warp liberado para viajar na velocidade da luz e buscar um café quente em Marte.",
     extra:
-      "A dobra Warp comprime o espaço-tempo à frente da nave e o expande atrás dela, criando uma 'bolha' que se desloca mais rápido que a luz — sem que a nave, dentro da bolha, chegue a ultrapassar a velocidade da luz localmente. Teorizada por Miguel Alcubierre em 1994.",
+      "A dobra Warp é a ideia de curvar o espaço-tempo ao redor da nave: em vez de correr pelo espaço, a nave pega um atalho cósmico dentro de uma bolha de viagem.",
     image: warpImg,
     accent: "border-cyan-400 shadow-[0_0_28px_-6px_oklch(0.85_0.2_220)]",
   },
@@ -44,11 +44,11 @@ export const SPACE_MAP_PRIZES: SpaceMapPrize[] = [
     id: "photonic-candles",
     threshold: 15,
     title: "Velas Fotônicas",
-    subtitle: "Viagem interestelar",
+    subtitle: "Expedição solar",
     message:
-      "Você recebeu Velas Fotônicas para sua próxima viagem interestelar, para que seu corpo não apodreça no caminho.",
+      "Você recebeu Velas Fotônicas para seguir em expedição solar e ainda se bronzear com elegância durante a viagem.",
     extra:
-      "Velas fotônicas (light sails) são acionadas pela pressão de radiação de fótons — o mesmo princípio da vela solar. Combinadas com hibernação/estase, permitem cobrir distâncias interestelares dentro do tempo de vida do viajante.",
+      "Velas fotônicas usam a pressão da luz para empurrar uma nave, como uma vela comum usa o vento — só que o vento aqui são fótons vindos das estrelas.",
     image: candlesImg,
     accent: "border-amber-300 shadow-[0_0_28px_-6px_oklch(0.9_0.18_80)]",
   },
@@ -56,63 +56,25 @@ export const SPACE_MAP_PRIZES: SpaceMapPrize[] = [
     id: "haarp-helmet",
     threshold: 20,
     title: "Capacete de Alumínio Anti-HAARP",
-    subtitle: "Escudo eletromagnético",
+    subtitle: "Proteção anti-antenas",
     message:
-      "Você recebeu um Capacete de Alumínio para se proteger dos ataques das antenas HAARP.",
+      "Você recebeu um Capacete Anti-Antenas HAARP para se proteger de perturbações por ondas sônicas em viagens espaciais.",
     extra:
-      "O HAARP (High-frequency Active Auroral Research Program) é um conjunto real de antenas no Alasca operado para estudar a ionosfera, injetando ondas de rádio de alta frequência na alta atmosfera. Vira alvo recorrente de teorias de conspiração sobre controle climático e mental — daí o clima 'capacete de alumínio' do prêmio.",
+      "O HAARP é um projeto real de antenas usado para estudar a ionosfera com ondas de rádio. No app, o capacete entra no modo humorado: blindagem galáctica contra ruídos, teorias e sustos da viagem.",
     image: haarpImg,
     accent: "border-slate-300 shadow-[0_0_28px_-6px_oklch(0.85_0.05_240)]",
   },
   {
     id: "chronovisor-goggles",
     threshold: 25,
-    title: "Óculos Galácticos do Cronovisor",
-    subtitle: "Novo nível de consciência",
+    title: "Óculos Portátil do Cronovisor",
+    subtitle: "Passado remoto",
     message:
-      "Você atingiu um novo nível de conhecimento e consciência. Receba um par de Óculos Galácticos para assistir aos eventos passados gravados no cronovisor.",
+      "Você atingiu um novo nível de conhecimento e consciência. Receba os Óculos Portáteis do Cronovisor para ver o passado remoto.",
     extra:
-      "O 'cronovisor' é uma lenda atribuída ao padre italiano Pellegrino Ernetti: uma máquina capaz de captar sons e imagens do passado a partir de resíduos eletromagnéticos deixados no tempo. Nunca comprovado — perfeito para viajantes galácticos.",
+      "O cronovisor é uma lenda sobre uma máquina capaz de captar imagens e sons do passado. Aqui virou equipamento portátil para arqueologia cósmica e curiosidade intergaláctica.",
     image: chronoImg,
     accent: "border-fuchsia-400 shadow-[0_0_28px_-6px_oklch(0.75_0.24_320)]",
   },
 ];
 
-const STORAGE_KEY = "space-map-seals-v1";
-const CLAIMED_KEY = "space-map-prize-claimed-v1";
-
-function safeGet(): Record<string, true> {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  } catch {
-    return {};
-  }
-}
-function safeSet(v: Record<string, true>) {
-  if (typeof window === "undefined") return;
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); } catch { /* ignore */ }
-}
-
-export function loadSpaceSeals(): Set<string> {
-  return new Set(Object.keys(safeGet()));
-}
-export function addSpaceSeal(objectId: string): Set<string> {
-  const cur = safeGet();
-  cur[objectId] = true;
-  safeSet(cur);
-  return new Set(Object.keys(cur));
-}
-
-export function loadClaimedPrizes(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    return new Set(JSON.parse(localStorage.getItem(CLAIMED_KEY) || "[]"));
-  } catch { return new Set(); }
-}
-export function markPrizeClaimed(id: string) {
-  if (typeof window === "undefined") return;
-  const s = loadClaimedPrizes();
-  s.add(id);
-  try { localStorage.setItem(CLAIMED_KEY, JSON.stringify([...s])); } catch { /* ignore */ }
-}
