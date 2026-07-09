@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react";
 import { Lock, Sparkles, X, Trophy } from "lucide-react";
-import {
-  SPACE_MAP_PRIZES,
-  loadClaimedPrizes,
-  markPrizeClaimed,
-  type SpaceMapPrize,
-} from "@/lib/space-map-prizes";
+import { SPACE_MAP_PRIZES, type SpaceMapPrize } from "@/lib/space-map-prizes";
 
 interface Props {
   /** Selos conquistados no NOVO mapa (mapa espacial). */
   sealsCount: number;
   /** Se o mapa espacial já foi liberado (45/45 do mapa principal). */
   unlocked: boolean;
+  claimedPrizeIds?: Set<string>;
+  newPrizeIds?: string[];
 }
 
 /**
@@ -19,20 +16,16 @@ interface Props {
  * Cada prêmio é uma surpresa (imagem borrada + "?") até o usuário
  * atingir o threshold, quando abre um modal celebrando a conquista.
  */
-export function SpaceMapPrizes({ sealsCount, unlocked }: Props) {
+export function SpaceMapPrizes({ sealsCount, unlocked, claimedPrizeIds = new Set(), newPrizeIds = [] }: Props) {
   const [reveal, setReveal] = useState<SpaceMapPrize | null>(null);
 
   useEffect(() => {
     if (!unlocked) return;
-    const claimed = loadClaimedPrizes();
-    const next = SPACE_MAP_PRIZES.find(
-      (p) => sealsCount >= p.threshold && !claimed.has(p.id),
-    );
+    const next = SPACE_MAP_PRIZES.find((p) => newPrizeIds.includes(p.id));
     if (next) {
-      markPrizeClaimed(next.id);
       setReveal(next);
     }
-  }, [sealsCount, unlocked]);
+  }, [newPrizeIds, unlocked]);
 
   return (
     <section className="mt-4">
@@ -46,7 +39,14 @@ export function SpaceMapPrizes({ sealsCount, unlocked }: Props) {
 
       <div className="grid gap-3">
         {SPACE_MAP_PRIZES.map((p) => (
-          <PrizeBanner key={p.id} prize={p} sealsCount={sealsCount} unlocked={unlocked} onOpen={() => setReveal(p)} />
+          <PrizeBanner
+            key={p.id}
+            prize={p}
+            sealsCount={sealsCount}
+            unlocked={unlocked}
+            claimed={claimedPrizeIds.has(p.id)}
+            onOpen={() => setReveal(p)}
+          />
         ))}
       </div>
 
@@ -60,10 +60,12 @@ function PrizeBanner({
   sealsCount,
   unlocked,
   onOpen,
+  claimed,
 }: {
   prize: SpaceMapPrize;
   sealsCount: number;
   unlocked: boolean;
+  claimed: boolean;
   onOpen: () => void;
 }) {
   const achieved = unlocked && sealsCount >= prize.threshold;
@@ -102,13 +104,13 @@ function PrizeBanner({
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
-            {prize.threshold} selos · {achieved ? "conquistado" : `faltam ${remaining}`}
+            {prize.threshold} selos · {achieved ? (claimed ? "salvo na galeria" : "conquistado") : `faltam ${remaining}`}
           </div>
           <div className={`font-display text-sm truncate ${achieved ? "text-gradient-neon" : "text-muted-foreground"}`}>
             {achieved ? prize.title : "?? ??? surpresa ???"}
           </div>
           <div className="text-[11px] text-muted-foreground leading-snug line-clamp-2 mt-0.5">
-            {achieved ? prize.subtitle : `Complete ${prize.threshold} objetivos do novo mapa para revelar.`}
+            {achieved ? prize.subtitle : `Complete ${prize.threshold} objetivos do segundo mapa para revelar.`}
           </div>
           <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
             <div
