@@ -158,6 +158,33 @@ function Galeria() {
         </section>
       )}
 
+      {!isLoading && (data?.spacePrizes.length ?? 0) > 0 && (
+        <section className="mb-8">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="font-display text-lg text-accent">Prêmios do Mapa Espacial</h2>
+            <span className="font-mono text-[10px] text-muted-foreground">{data?.spaceSeals.length ?? 0} selo(s)</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {data?.spacePrizes.map((prize) => (
+              <div key={prize.id} className="glass rounded-2xl overflow-hidden border border-accent/20">
+                {prize.image_url && (
+                  <img src={prize.image_url} alt={prize.title} className="w-full aspect-square object-cover" loading="lazy" />
+                )}
+                <div className="p-4">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+                    {prize.threshold} selos · salvo na galeria
+                  </div>
+                  <div className="font-display text-base text-gradient-neon mt-1">{prize.title}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Desbloqueado com {prize.seals_count} selo(s) do segundo mapa.
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {data?.items.map(({ identity: i, journey, visas }) => {
           const fatal = journey?.final_destination_kind === "fatal";
