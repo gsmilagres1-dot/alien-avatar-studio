@@ -155,7 +155,7 @@ function Criar() {
       const res = await draftFn({ data: { photoDataUrl: photo, planetId: planet, gender, paymentId: payment.id } });
       await qc.invalidateQueries({ queryKey: ["active-payment"] });
       if (res?.fallback) {
-        toast.warning("Modo teste: sem créditos de IA, usamos sua foto original como avatar. Adicione créditos para gerar a forma alien transformada.", { duration: 6000 });
+        toast.warning("Modo teste: sem créditos de IA, usamos a imagem padrão da raça alienígena.", { duration: 6000 });
       } else {
         toast.success("Avatar alien gerado!");
       }
@@ -395,7 +395,7 @@ function Criar() {
               </div>
 
               <button onClick={genDraft} disabled={genLoading} className="mt-6 w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full bg-alien-grad text-primary-foreground font-display font-bold shadow-neon disabled:opacity-60">
-                {genLoading ? <><Loader2 className="w-5 h-5 animate-spin" />Transmutando DNA...</> : <><Wand2 className="w-5 h-5" />Gerar avatar alien (1/3)</>}
+                {genLoading ? <><Loader2 className="w-5 h-5 animate-spin" />Transmutando DNA...</> : <><Wand2 className="w-5 h-5" />Gerar avatar alien</>}
               </button>
 
               <div className="mt-3 flex flex-col sm:flex-row gap-2">
@@ -414,7 +414,7 @@ function Criar() {
           {step === "drafts" && payment && (
             <section>
               <h2 className="font-display text-xl text-center mb-1 text-gradient-neon">Escolha seu avatar final</h2>
-              <p className="text-center text-xs text-muted-foreground mb-5">{availableDrafts.length} opção(ões) disponíveis desta selfie — você pode criar até 3 versões sem tirar outra foto.</p>
+              <p className="text-center text-xs text-muted-foreground mb-5">{availableDrafts.length} opção(ões) disponíveis desta selfie — você pode criar novas versões sem limite.</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
                 {availableDrafts.map((d) => (
@@ -438,9 +438,9 @@ function Criar() {
                 <button onClick={() => setStep("form")} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full glass">
                   <CalendarIcon className="w-4 h-4" /> {hasForm ? "Editar dados" : "Preencher dados"}
                 </button>
-                {drafts.length < 3 && photo && (
+                {photo && (
                   <button onClick={() => setStep("form")} disabled={genLoading} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full glass">
-                    <RotateCcw className="w-4 h-4" /> Gerar mais 1 com a mesma selfie ({drafts.length}/3)
+                    <RotateCcw className="w-4 h-4" /> Gerar mais 1 com a mesma selfie
                   </button>
                 )}
                 <button onClick={confirmFinal} disabled={!selectedDraft || genLoading} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-display font-bold shadow-neon disabled:opacity-50">
@@ -464,7 +464,7 @@ function Criar() {
               shipLoading={shipLoading}
               onGenShip={genShip}
               onNew={createAnotherFromSamePhoto}
-              canCreateAnother={availableDrafts.length > 0 || (drafts.length < 3 && !!photo)}
+              canCreateAnother={availableDrafts.length > 0 || !!photo}
               onTravel={() => navigate({ to: "/galaxia", search: { identityId: savedIdentity.id } })}
             />
           )}
