@@ -1,178 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, getRace, raceFromBirthdate, RACES, SHIPS } from "@/lib/alien";
-import shipEsportiva from "@/assets/ship-esportiva.jpg";
-import shipOffroad from "@/assets/ship-offroad.jpg";
-import shipCorrida from "@/assets/ship-corrida.jpg";
-import raceStarseed from "@/assets/race-starseed.jpg";
-import raceNordico from "@/assets/race-nordico.jpg";
-import raceGrey from "@/assets/race-grey.jpg";
-import raceReptiliano from "@/assets/race-reptiliano.jpg";
-import raceDraconiano from "@/assets/race-draconiano.jpg";
-import raceInsectoide from "@/assets/race-insectoide.jpg";
-import raceAviario from "@/assets/race-aviario.jpg";
-import raceAnunnaki from "@/assets/race-anunnaki.jpg";
-import raceSiriano from "@/assets/race-siriano.jpg";
-import racePleiadiano from "@/assets/race-pleiadiano.jpg";
-import raceLyriano from "@/assets/race-lyriano.jpg";
-import raceKashyapa from "@/assets/race-kashyapa.jpg";
-
-const GATEWAY_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
-
-/**
- * Usuários "dev" (dono do app) — leem-se de DEV_USER_IDS (UUIDs separados
- * por vírgula). Para eles: geração ilimitada, sem cobrança e sem limites,
- * para criar avatares de propaganda para redes sociais.
- */
-function isDevUser(userId: string): boolean {
-  const raw = process.env.DEV_USER_IDS ?? "";
-  if (!raw.trim()) return false;
-  return raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean)
-    .includes(userId.toLowerCase());
-}
-
-async function getAdmin() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
-}
-
-const FALLBACK_SHIP_IMAGES = {
-  esportiva: shipEsportiva,
-  offroad: shipOffroad,
-  corrida: shipCorrida,
-} satisfies Record<"esportiva" | "offroad" | "corrida", string>;
-
-const FALLBACK_RACE_IMAGES: Record<string, string> = {
-  starseed: raceStarseed,
-  nordico: raceNordico,
-  grey: raceGrey,
-  reptiliano: raceReptiliano,
-  draconiano: raceDraconiano,
-  insectoide: raceInsectoide,
-  aviario: raceAviario,
-  anunnaki: raceAnunnaki,
-  siriano: raceSiriano,
-  pleiadiano: racePleiadiano,
-  lyriano: raceLyriano,
-  kashyapa: raceKashyapa,
-};
-
-function isAiImageUnavailable(message: string) {
-  return (
-    message === "Créditos de IA esgotados" ||
-    message === "Muitos pedidos à IA — espere um momento" ||
-    message === "IA não retornou imagem" ||
-    message.startsWith("Falha na IA (")
-  );
-}
-
-function bufferFromImageDataUrl(dataUrl: string): { bytes: Buffer; contentType: string } {
-  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
-  if (!match) throw new Error("Imagem inválida");
-  return { bytes: Buffer.from(match[2], "base64"), contentType: match[1] };
-}
-
-function bufferFromImageValue(value: string): Buffer | null {
-  if (value.startsWith("data:image/")) return bufferFromImageDataUrl(value).bytes;
-  if (/^[A-Za-z0-9+/=\s]+$/.test(value) && value.length > 200) return Buffer.from(value.replace(/\s/g, ""), "base64");
-  return null;
-}
-
-function findImageValue(value: unknown, depth = 0): string | null {
-  if (depth > 6 || value == null) return null;
-  if (typeof value === "string") {
-    if (value.startsWith("data:image/")) return value;
-    const match = value.match(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/);
-    return match?.[0] ?? null;
-  }
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = findImageValue(item, depth + 1);
-      if (found) return found;
-    }
-    return null;
-  }
-  if (typeof value === "object") {
-    const obj = value as Record<string, unknown>;
-    for (const key of ["b64_json", "url", "image_url", "images", "content", "message", "choices", "data", "output"]) {
-      const found = findImageValue(obj[key], depth + 1);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-function extractGeneratedImage(response: unknown): Buffer {
-  const dataUrl = findImageValue(response);
-  if (dataUrl) {
-    const bytes = bufferFromImageValue(dataUrl);
-    if (bytes) return bytes;
-  }
-  const data = (response as { data?: { b64_json?: string; url?: string }[] })?.data;
-  const value = data?.[0]?.b64_json ?? data?.[0]?.url;
-  if (value) {
-    const bytes = bufferFromImageValue(value);
-    if (bytes) return bytes;
-  }
-  throw new Error("IA não retornou imagem");
-}
-
-async function generateImage(prompt: string, refImageDataUrl?: string): Promise<Buffer> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("LOVABLE_API_KEY ausente");
-
-  // gemini-3.1-flash-image (Nano Banana 2) usa o shape de chat completions
-  // com messages + modalities. imagens vão como image_url data URL.
-  const content: unknown[] = [{ type: "text", text: prompt }];
-  if (refImageDataUrl) {
-    content.push({ type: "image_url", image_url: { url: refImageDataUrl } });
-  }
-
-  const res = await fetch(GATEWAY_IMG, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-3.1-flash-image",
-      messages: [{ role: "user", content }],
-      modalities: ["image", "text"],
-    }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    if (res.status === 429) throw new Error("Muitos pedidos à IA — espere um momento");
-    if (res.status === 402) throw new Error("Créditos de IA esgotados");
-    throw new Error(`Falha na IA (${res.status}): ${text.slice(0, 200)}`);
-  }
-  const j = await res.json();
-  return extractGeneratedImage(j);
-}
-
-async function uploadImage(userId: string, kind: string, bytes: Buffer, contentType = "image/png"): Promise<string> {
-  const supabaseAdmin = await getAdmin();
-  const path = `${userId}/${kind}-${crypto.randomUUID()}.png`;
-  const { error } = await supabaseAdmin.storage
-    .from("alien-avatars")
-    .upload(path, bytes, { contentType, upsert: false });
-  if (error) throw new Error(`Upload falhou: ${error.message}`);
-  const { data } = supabaseAdmin.storage.from("alien-avatars").getPublicUrl(path);
-  return data.publicUrl;
-}
-
-async function uploadOriginalSelfie(userId: string, photoDataUrl: string): Promise<string> {
-  const { bytes, contentType } = bufferFromImageDataUrl(photoDataUrl);
-  return uploadImage(userId, "avatar-selfie", bytes, contentType);
-}
-
-function storagePathFromPublicUrl(publicUrl: string) {
-  const marker = "/storage/v1/object/public/alien-avatars/";
-  const idx = publicUrl.indexOf(marker);
-  if (idx === -1) return null;
-  return decodeURIComponent(publicUrl.slice(idx + marker.length));
-}
+import { generateAlienIdentity } from "@/lib/alien";
+import {
+  FALLBACK_RACE_IMAGES as serverFallbackRaceImages,
+  FALLBACK_SHIP_IMAGES as serverFallbackShipImages,
+  buildAvatarPromptForRace,
+  buildShipPromptForRace,
+  generateImage as serverGenerateImage,
+  getAdmin,
+  isAiImageUnavailable as serverIsAiImageUnavailable,
+  storagePathFromPublicUrl as serverStoragePathFromPublicUrl,
+  uploadImage as serverUploadImage,
+} from "@/lib/identities.server";
 
 const draftInput = z.object({
   photoDataUrl: z.string().startsWith("data:image/").max(15_000_000),
@@ -186,10 +26,10 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => draftInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
+    const { supabase } = context;
 
     // Verify payment belongs to user and has credits
-    const { data: pay, error: payErr } = await supabaseAdmin
+    const { data: pay, error: payErr } = await supabase
       .from("payment_transactions")
       .select("id, user_id, status, credits_remaining")
       .eq("id", data.paymentId)
@@ -199,7 +39,7 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
     if (pay.status !== "completed") throw new Error("Pagamento ainda não confirmado");
 
     // Sem limite de avatares por pagamento (Dev e App Web).
-    const { count } = await supabaseAdmin
+    const { count } = await supabase
       .from("avatar_drafts")
       .select("id", { count: "exact", head: true })
       .eq("payment_id", data.paymentId);
@@ -210,20 +50,19 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
     // Tenta IA; se falhar, usa a imagem padrão da raça em vez de manter a selfie.
     let url: string;
     let fallbackReason: string | null = null;
-    const race = getRace(data.planetId);
     try {
-      const prompt = buildAvatarPrompt({ race, gender: data.gender, variant });
-      const bytes = await generateImage(prompt, data.photoDataUrl);
-      url = await uploadImage(userId, "avatar", bytes);
+      const prompt = buildAvatarPromptForRace(data.planetId, data.gender, variant);
+      const bytes = await serverGenerateImage(prompt, data.photoDataUrl);
+      url = await serverUploadImage(supabase, userId, "avatar", bytes);
     } catch (err) {
       fallbackReason = (err as Error).message;
       console.warn("AI avatar falhou, usando imagem padrão da raça:", fallbackReason);
-      const raceImg = FALLBACK_RACE_IMAGES[data.planetId];
+      const raceImg = serverFallbackRaceImages[data.planetId];
       if (!raceImg) throw err;
       url = raceImg;
     }
 
-    const { data: draft, error: insErr } = await supabaseAdmin
+    const { data: draft, error: insErr } = await supabase
       .from("avatar_drafts")
       .insert({
         user_id: userId,
@@ -254,8 +93,8 @@ export const saveIdentity = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => saveInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data: pay } = await supabaseAdmin
+    const { supabase } = context;
+    const { data: pay } = await supabase
       .from("payment_transactions")
       .select("id, user_id, credits_remaining, status")
       .eq("id", data.paymentId)
@@ -263,22 +102,13 @@ export const saveIdentity = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!pay || pay.status !== "completed") throw new Error("Pagamento inválido");
 
-    const { data: draft } = await supabaseAdmin
+    const { data: draft } = await supabase
       .from("avatar_drafts")
       .select("id, avatar_url, user_id, payment_id, prompt_seed")
       .eq("id", data.draftId)
       .eq("user_id", userId)
       .maybeSingle();
     if (!draft || draft.payment_id !== data.paymentId) throw new Error("Avatar inválido");
-
-    const { data: alreadyCreated } = await supabaseAdmin
-      .from("identities")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("payment_id", data.paymentId)
-      .eq("avatar_url", draft.avatar_url)
-      .maybeSingle();
-    if (alreadyCreated) throw new Error("Esse avatar já virou uma identidade");
 
     const id = generateAlienIdentity({
       name: data.humanName,
@@ -287,7 +117,7 @@ export const saveIdentity = createServerFn({ method: "POST" })
       gender: data.gender,
     });
 
-    const { data: ident, error: insErr } = await supabaseAdmin
+    const { data: ident, error: insErr } = await supabase
       .from("identities")
       .insert({
         user_id: userId,
@@ -308,6 +138,12 @@ export const saveIdentity = createServerFn({ method: "POST" })
       .single();
     if (insErr) throw new Error(insErr.message);
 
+    await supabase
+      .from("avatar_drafts")
+      .delete()
+      .eq("id", data.draftId)
+      .eq("user_id", userId);
+
     return { identity: ident };
   });
 
@@ -321,8 +157,8 @@ export const generateShipImage = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => shipInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data: ident } = await supabaseAdmin
+    const { supabase } = context;
+    const { data: ident } = await supabase
       .from("identities")
       .select("id, user_id, planet_id")
       .eq("id", data.identityId)
@@ -330,20 +166,19 @@ export const generateShipImage = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!ident) throw new Error("Identidade não encontrada");
 
-    const race = getRace(ident.planet_id);
-    const prompt = buildShipPrompt(data.category, race.origin);
+    const prompt = buildShipPromptForRace(data.category, ident.planet_id);
     
     let bytes: Buffer;
     let fallbackReason: string | null = null;
     try {
-      bytes = await generateImage(prompt);
+      bytes = await serverGenerateImage(prompt);
     } catch (err) {
       fallbackReason = (err as Error).message;
-      if (!isAiImageUnavailable(fallbackReason)) throw err;
+      if (!serverIsAiImageUnavailable(fallbackReason)) throw err;
       console.warn("AI ship falhou, usando versão padrão:", fallbackReason);
-      const url = FALLBACK_SHIP_IMAGES[data.category];
+      const url = serverFallbackShipImages[data.category];
 
-      await supabaseAdmin
+      await supabase
         .from("identities")
         .update({ ship_category: data.category, ship_image_url: url })
         .eq("id", data.identityId);
@@ -351,9 +186,9 @@ export const generateShipImage = createServerFn({ method: "POST" })
       return { shipImageUrl: url, category: data.category, fallback: fallbackReason };
     }
     
-    const url = await uploadImage(userId, "ship", bytes);
+    const url = await serverUploadImage(supabase, userId, "ship", bytes);
 
-    await supabaseAdmin
+    await supabase
       .from("identities")
       .update({ ship_category: data.category, ship_image_url: url })
       .eq("id", data.identityId);
@@ -365,8 +200,8 @@ export const listMyIdentities = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data, error } = await supabaseAdmin
+    const { supabase } = context;
+    const { data, error } = await supabase
       .from("identities")
       .select("*")
       .eq("user_id", userId)
@@ -390,8 +225,8 @@ export const setIdentityAvatarFromGallery = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => setAvatarInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data: source } = await supabaseAdmin
+    const { supabase } = context;
+    const { data: source } = await supabase
       .from("identities")
       .select("id, user_id, avatar_url")
       .eq("id", data.sourceIdentityId)
@@ -399,7 +234,7 @@ export const setIdentityAvatarFromGallery = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!source?.avatar_url) throw new Error("Avatar de origem não encontrado");
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from("identities")
       .update({ avatar_url: source.avatar_url, updated_at: new Date().toISOString() })
       .eq("id", data.identityId)
@@ -413,8 +248,8 @@ export const deleteIdentity = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data: identity, error: readErr } = await supabaseAdmin
+    const { supabase } = context;
+    const { data: identity, error: readErr } = await supabase
       .from("identities")
       .select("id, avatar_url, ship_image_url")
       .eq("id", data.id)
@@ -423,16 +258,16 @@ export const deleteIdentity = createServerFn({ method: "POST" })
     if (readErr) throw new Error(readErr.message);
     if (!identity) throw new Error("Identidade não encontrada");
 
-    const { error } = await supabaseAdmin.from("identities").delete().eq("id", data.id).eq("user_id", userId);
+    const { error } = await supabase.from("identities").delete().eq("id", data.id).eq("user_id", userId);
     if (error) throw new Error(error.message);
 
     const paths = [identity.avatar_url, identity.ship_image_url]
       .filter((value): value is string => Boolean(value))
-      .map(storagePathFromPublicUrl)
+      .map(serverStoragePathFromPublicUrl)
       .filter((value): value is string => Boolean(value));
 
     if (paths.length > 0) {
-      await supabaseAdmin.storage.from("alien-avatars").remove(paths);
+      await supabase.storage.from("alien-avatars").remove(paths);
     }
 
     return { ok: true };
@@ -442,8 +277,8 @@ export const getActivePayment = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    let { data } = await supabaseAdmin
+    const { supabase } = context;
+    let { data } = await supabase
       .from("payment_transactions")
       .select("id, status, credits_remaining, created_at")
       .eq("user_id", userId)
@@ -455,7 +290,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
 
     let drafts: { id: string; avatar_url: string; variant_index: number; created_at: string; prompt_seed: string | null }[] = [];
     if (data) {
-      const { data: draftRows } = await supabaseAdmin
+      const { data: draftRows } = await supabase
         .from("avatar_drafts")
         .select("id, avatar_url, variant_index, created_at, prompt_seed")
         .eq("payment_id", data.id)
@@ -466,6 +301,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
 
     // Modo grátis ilimitado: cria uma nova sessão sempre que não houver uma ativa.
     if (!data || (data.credits_remaining < 1 && drafts.length === 0)) {
+      const supabaseAdmin = await getAdmin();
       const ins = await supabaseAdmin
         .from("payment_transactions")
         .insert({
@@ -490,14 +326,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
     if (!data) {
       return { payment: null, drafts: [], usedAvatarUrls: [] };
     }
-
-    const { data: usedIdentities } = await supabaseAdmin
-      .from("identities")
-      .select("avatar_url")
-      .eq("payment_id", data.id)
-      .eq("user_id", userId);
-
-    return { payment: data, drafts, usedAvatarUrls: (usedIdentities ?? []).map((row) => row.avatar_url) };
+    return { payment: data, drafts, usedAvatarUrls: [] };
   });
 
 const FREE_SESSION_COOLDOWN_MS = 0; // sem cooldown

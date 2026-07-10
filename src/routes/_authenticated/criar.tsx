@@ -69,7 +69,7 @@ function Criar() {
   const galleryRef = useRef<HTMLInputElement>(null);
   const payment = active?.payment ?? null;
   const drafts = active?.drafts ?? [];
-  const usedAvatarUrls = active?.usedAvatarUrls ?? [];
+  const usedAvatarUrls = (active?.usedAvatarUrls ?? []) as string[];
   const hasForm = name.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(birthdate);
   const availableDrafts = drafts.filter((draft) => !usedAvatarUrls.includes(draft.avatar_url));
 
