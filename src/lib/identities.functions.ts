@@ -110,15 +110,6 @@ export const saveIdentity = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!draft || draft.payment_id !== data.paymentId) throw new Error("Avatar inválido");
 
-    const { data: alreadyCreated } = await supabase
-      .from("identities")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("payment_id", data.paymentId)
-      .eq("avatar_url", draft.avatar_url)
-      .maybeSingle();
-    if (alreadyCreated) throw new Error("Esse avatar já virou uma identidade");
-
     const id = generateAlienIdentity({
       name: data.humanName,
       birthdate: data.birthdate,
@@ -146,6 +137,12 @@ export const saveIdentity = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (insErr) throw new Error(insErr.message);
+
+    await supabase
+      .from("avatar_drafts")
+      .delete()
+      .eq("id", data.draftId)
+      .eq("user_id", userId);
 
     return { identity: ident };
   });
@@ -329,14 +326,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
     if (!data) {
       return { payment: null, drafts: [], usedAvatarUrls: [] };
     }
-
-    const { data: usedIdentities } = await supabase
-      .from("identities")
-      .select("avatar_url")
-      .eq("payment_id", data.id)
-      .eq("user_id", userId);
-
-    return { payment: data, drafts, usedAvatarUrls: (usedIdentities ?? []).map((row) => row.avatar_url) };
+    return { payment: data, drafts, usedAvatarUrls: [] };
   });
 
 const FREE_SESSION_COOLDOWN_MS = 0; // sem cooldown
