@@ -2,6 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildAvatarPrompt, buildShipPrompt, generateAlienIdentity, getRace, raceFromBirthdate, RACES, SHIPS } from "@/lib/alien";
+import {
+  FALLBACK_RACE_IMAGES as serverFallbackRaceImages,
+  FALLBACK_SHIP_IMAGES as serverFallbackShipImages,
+  buildAvatarPromptForRace,
+  buildShipPromptForRace,
+  generateImage as serverGenerateImage,
+  isAiImageUnavailable as serverIsAiImageUnavailable,
+  storagePathFromPublicUrl as serverStoragePathFromPublicUrl,
+  uploadImage as serverUploadImage,
+} from "@/lib/identities.server";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
