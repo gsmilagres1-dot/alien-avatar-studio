@@ -196,10 +196,10 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => draftInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
+    const { supabase } = context;
 
     // Verify payment belongs to user and has credits
-    const { data: pay, error: payErr } = await supabaseAdmin
+    const { data: pay, error: payErr } = await supabase
       .from("payment_transactions")
       .select("id, user_id, status, credits_remaining")
       .eq("id", data.paymentId)
@@ -209,7 +209,7 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
     if (pay.status !== "completed") throw new Error("Pagamento ainda não confirmado");
 
     // Sem limite de avatares por pagamento (Dev e App Web).
-    const { count } = await supabaseAdmin
+    const { count } = await supabase
       .from("avatar_drafts")
       .select("id", { count: "exact", head: true })
       .eq("payment_id", data.paymentId);
@@ -220,20 +220,19 @@ export const createAvatarDraft = createServerFn({ method: "POST" })
     // Tenta IA; se falhar, usa a imagem padrão da raça em vez de manter a selfie.
     let url: string;
     let fallbackReason: string | null = null;
-    const race = getRace(data.planetId);
     try {
-      const prompt = buildAvatarPrompt({ race, gender: data.gender, variant });
-      const bytes = await generateImage(prompt, data.photoDataUrl);
-      url = await uploadImage(userId, "avatar", bytes);
+      const prompt = buildAvatarPromptForRace(data.planetId, data.gender, variant);
+      const bytes = await serverGenerateImage(prompt, data.photoDataUrl);
+      url = await serverUploadImage(supabase, userId, "avatar", bytes);
     } catch (err) {
       fallbackReason = (err as Error).message;
       console.warn("AI avatar falhou, usando imagem padrão da raça:", fallbackReason);
-      const raceImg = FALLBACK_RACE_IMAGES[data.planetId];
+      const raceImg = serverFallbackRaceImages[data.planetId];
       if (!raceImg) throw err;
       url = raceImg;
     }
 
-    const { data: draft, error: insErr } = await supabaseAdmin
+    const { data: draft, error: insErr } = await supabase
       .from("avatar_drafts")
       .insert({
         user_id: userId,
@@ -264,8 +263,8 @@ export const saveIdentity = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => saveInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data: pay } = await supabaseAdmin
+    const { supabase } = context;
+    const { data: pay } = await supabase
       .from("payment_transactions")
       .select("id, user_id, credits_remaining, status")
       .eq("id", data.paymentId)
@@ -273,7 +272,7 @@ export const saveIdentity = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!pay || pay.status !== "completed") throw new Error("Pagamento inválido");
 
-    const { data: draft } = await supabaseAdmin
+    const { data: draft } = await supabase
       .from("avatar_drafts")
       .select("id, avatar_url, user_id, payment_id, prompt_seed")
       .eq("id", data.draftId)
@@ -281,7 +280,7 @@ export const saveIdentity = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!draft || draft.payment_id !== data.paymentId) throw new Error("Avatar inválido");
 
-    const { data: alreadyCreated } = await supabaseAdmin
+    const { data: alreadyCreated } = await supabase
       .from("identities")
       .select("id")
       .eq("user_id", userId)
@@ -297,7 +296,7 @@ export const saveIdentity = createServerFn({ method: "POST" })
       gender: data.gender,
     });
 
-    const { data: ident, error: insErr } = await supabaseAdmin
+    const { data: ident, error: insErr } = await supabase
       .from("identities")
       .insert({
         user_id: userId,
@@ -331,8 +330,8 @@ export const generateShipImage = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => shipInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data: ident } = await supabaseAdmin
+    const { supabase } = context;
+    const { data: ident } = await supabase
       .from("identities")
       .select("id, user_id, planet_id")
       .eq("id", data.identityId)
@@ -340,20 +339,19 @@ export const generateShipImage = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!ident) throw new Error("Identidade não encontrada");
 
-    const race = getRace(ident.planet_id);
-    const prompt = buildShipPrompt(data.category, race.origin);
+    const prompt = buildShipPromptForRace(data.category, ident.planet_id);
     
     let bytes: Buffer;
     let fallbackReason: string | null = null;
     try {
-      bytes = await generateImage(prompt);
+      bytes = await serverGenerateImage(prompt);
     } catch (err) {
       fallbackReason = (err as Error).message;
-      if (!isAiImageUnavailable(fallbackReason)) throw err;
+      if (!serverIsAiImageUnavailable(fallbackReason)) throw err;
       console.warn("AI ship falhou, usando versão padrão:", fallbackReason);
-      const url = FALLBACK_SHIP_IMAGES[data.category];
+      const url = serverFallbackShipImages[data.category];
 
-      await supabaseAdmin
+      await supabase
         .from("identities")
         .update({ ship_category: data.category, ship_image_url: url })
         .eq("id", data.identityId);
@@ -361,9 +359,9 @@ export const generateShipImage = createServerFn({ method: "POST" })
       return { shipImageUrl: url, category: data.category, fallback: fallbackReason };
     }
     
-    const url = await uploadImage(userId, "ship", bytes);
+    const url = await serverUploadImage(supabase, userId, "ship", bytes);
 
-    await supabaseAdmin
+    await supabase
       .from("identities")
       .update({ ship_category: data.category, ship_image_url: url })
       .eq("id", data.identityId);
@@ -375,8 +373,8 @@ export const listMyIdentities = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data, error } = await supabaseAdmin
+    const { supabase } = context;
+    const { data, error } = await supabase
       .from("identities")
       .select("*")
       .eq("user_id", userId)
@@ -400,8 +398,8 @@ export const setIdentityAvatarFromGallery = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => setAvatarInput.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data: source } = await supabaseAdmin
+    const { supabase } = context;
+    const { data: source } = await supabase
       .from("identities")
       .select("id, user_id, avatar_url")
       .eq("id", data.sourceIdentityId)
@@ -409,7 +407,7 @@ export const setIdentityAvatarFromGallery = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!source?.avatar_url) throw new Error("Avatar de origem não encontrado");
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from("identities")
       .update({ avatar_url: source.avatar_url, updated_at: new Date().toISOString() })
       .eq("id", data.identityId)
@@ -423,8 +421,8 @@ export const deleteIdentity = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    const { data: identity, error: readErr } = await supabaseAdmin
+    const { supabase } = context;
+    const { data: identity, error: readErr } = await supabase
       .from("identities")
       .select("id, avatar_url, ship_image_url")
       .eq("id", data.id)
@@ -433,16 +431,16 @@ export const deleteIdentity = createServerFn({ method: "POST" })
     if (readErr) throw new Error(readErr.message);
     if (!identity) throw new Error("Identidade não encontrada");
 
-    const { error } = await supabaseAdmin.from("identities").delete().eq("id", data.id).eq("user_id", userId);
+    const { error } = await supabase.from("identities").delete().eq("id", data.id).eq("user_id", userId);
     if (error) throw new Error(error.message);
 
     const paths = [identity.avatar_url, identity.ship_image_url]
       .filter((value): value is string => Boolean(value))
-      .map(storagePathFromPublicUrl)
+      .map(serverStoragePathFromPublicUrl)
       .filter((value): value is string => Boolean(value));
 
     if (paths.length > 0) {
-      await supabaseAdmin.storage.from("alien-avatars").remove(paths);
+      await supabase.storage.from("alien-avatars").remove(paths);
     }
 
     return { ok: true };
@@ -452,8 +450,8 @@ export const getActivePayment = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
-    let { data } = await supabaseAdmin
+    const { supabase } = context;
+    let { data } = await supabase
       .from("payment_transactions")
       .select("id, status, credits_remaining, created_at")
       .eq("user_id", userId)
@@ -465,7 +463,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
 
     let drafts: { id: string; avatar_url: string; variant_index: number; created_at: string; prompt_seed: string | null }[] = [];
     if (data) {
-      const { data: draftRows } = await supabaseAdmin
+      const { data: draftRows } = await supabase
         .from("avatar_drafts")
         .select("id, avatar_url, variant_index, created_at, prompt_seed")
         .eq("payment_id", data.id)
@@ -476,7 +474,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
 
     // Modo grátis ilimitado: cria uma nova sessão sempre que não houver uma ativa.
     if (!data || (data.credits_remaining < 1 && drafts.length === 0)) {
-      const ins = await supabaseAdmin
+      const ins = await supabase
         .from("payment_transactions")
         .insert({
           user_id: userId,
@@ -501,7 +499,7 @@ export const getActivePayment = createServerFn({ method: "GET" })
       return { payment: null, drafts: [], usedAvatarUrls: [] };
     }
 
-    const { data: usedIdentities } = await supabaseAdmin
+    const { data: usedIdentities } = await supabase
       .from("identities")
       .select("avatar_url")
       .eq("payment_id", data.id)
@@ -517,13 +515,13 @@ export const restartIdentityFlow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const supabaseAdmin = await getAdmin();
+    const { supabase } = context;
     // Sem limite vitalício e sem cooldown: qualquer usuário pode reiniciar o fluxo livremente.
 
 
 
 
-    const { data: openPayments, error: openErr } = await supabaseAdmin
+    const { data: openPayments, error: openErr } = await supabase
       .from("payment_transactions")
       .select("id")
       .eq("user_id", userId)
@@ -535,14 +533,14 @@ export const restartIdentityFlow = createServerFn({ method: "POST" })
 
     const ids = openPayments?.map((payment) => payment.id) ?? [];
     if (ids.length > 0) {
-      const { error: closeErr } = await supabaseAdmin
+      const { error: closeErr } = await supabase
         .from("payment_transactions")
         .update({ credits_remaining: 0 })
         .in("id", ids);
       if (closeErr) throw new Error(closeErr.message);
     }
 
-    const { data: payment, error } = await supabaseAdmin
+    const { data: payment, error } = await supabase
       .from("payment_transactions")
       .insert({
         user_id: userId,
