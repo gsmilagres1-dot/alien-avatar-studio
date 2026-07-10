@@ -8,6 +8,7 @@ import {
   buildAvatarPromptForRace,
   buildShipPromptForRace,
   generateImage as serverGenerateImage,
+  getAdmin,
   isAiImageUnavailable as serverIsAiImageUnavailable,
   storagePathFromPublicUrl as serverStoragePathFromPublicUrl,
   uploadImage as serverUploadImage,
@@ -303,7 +304,8 @@ export const getActivePayment = createServerFn({ method: "GET" })
 
     // Modo grátis ilimitado: cria uma nova sessão sempre que não houver uma ativa.
     if (!data || (data.credits_remaining < 1 && drafts.length === 0)) {
-      const ins = await supabase
+      const supabaseAdmin = await getAdmin();
+      const ins = await supabaseAdmin
         .from("payment_transactions")
         .insert({
           user_id: userId,
@@ -344,13 +346,13 @@ export const restartIdentityFlow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { supabase } = context;
+    const supabaseAdmin = await getAdmin();
     // Sem limite vitalício e sem cooldown: qualquer usuário pode reiniciar o fluxo livremente.
 
 
 
 
-    const { data: openPayments, error: openErr } = await supabase
+    const { data: openPayments, error: openErr } = await supabaseAdmin
       .from("payment_transactions")
       .select("id")
       .eq("user_id", userId)
@@ -362,14 +364,14 @@ export const restartIdentityFlow = createServerFn({ method: "POST" })
 
     const ids = openPayments?.map((payment) => payment.id) ?? [];
     if (ids.length > 0) {
-      const { error: closeErr } = await supabase
+      const { error: closeErr } = await supabaseAdmin
         .from("payment_transactions")
         .update({ credits_remaining: 0 })
         .in("id", ids);
       if (closeErr) throw new Error(closeErr.message);
     }
 
-    const { data: payment, error } = await supabase
+    const { data: payment, error } = await supabaseAdmin
       .from("payment_transactions")
       .insert({
         user_id: userId,
