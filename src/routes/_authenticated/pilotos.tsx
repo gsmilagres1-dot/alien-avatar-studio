@@ -3,15 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
-  Loader2, Trophy, X, Rocket, Sparkles, ChevronRight, Users, Trash2, ImagePlus, Check,
+  Loader2, Trophy, X, Rocket, Sparkles, ChevronRight, Users, Trash2,
   UserPlus, Shield, Hourglass,
 } from "lucide-react";
 import { toast } from "sonner";
 import { listPilotsRanking, getPilotDetail } from "@/lib/pilots.functions";
 import {
   deleteIdentity,
-  listMyIdentities,
-  setIdentityAvatarFromGallery,
 } from "@/lib/identities.functions";
 import { listTeamsRanking, getMyTeam } from "@/lib/teams.functions";
 import {
@@ -148,22 +146,14 @@ function PilotosPage() {
 function PilotDetailModal({ userId, isSelf, onClose }: { userId: string; isSelf: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const detailFn = useServerFn(getPilotDetail);
-  const listMineFn = useServerFn(listMyIdentities);
-  const swapFn = useServerFn(setIdentityAvatarFromGallery);
   const deleteFn = useServerFn(deleteIdentity);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pilot-detail", userId],
     queryFn: () => detailFn({ data: { userId } }),
   });
-  const { data: mine } = useQuery({
-    queryKey: ["my-identities-gallery"],
-    queryFn: () => listMineFn(),
-    enabled: isSelf,
-  });
 
   const identity = data?.identity ?? null;
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function refreshAll() {
@@ -171,24 +161,9 @@ function PilotDetailModal({ userId, isSelf, onClose }: { userId: string; isSelf:
       qc.invalidateQueries({ queryKey: ["pilot-detail", userId] }),
       qc.invalidateQueries({ queryKey: ["pilots-ranking"] }),
       qc.invalidateQueries({ queryKey: ["identities-with-journeys"] }),
-      qc.invalidateQueries({ queryKey: ["my-identities-gallery"] }),
     ]);
   }
 
-  async function handleSwap(sourceIdentityId: string) {
-    if (!identity) return;
-    setBusy(true);
-    try {
-      await swapFn({ data: { identityId: identity.id, sourceIdentityId } });
-      await refreshAll();
-      setPickerOpen(false);
-      toast.success("Avatar trocado");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function handleDelete() {
     if (!identity) return;
@@ -271,72 +246,15 @@ function PilotDetailModal({ userId, isSelf, onClose }: { userId: string; isSelf:
 
             {isSelf && (
               <div className="space-y-2 pt-1">
-                {!pickerOpen && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => setPickerOpen(true)}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-accent/15 border border-accent/40 text-accent text-xs font-bold disabled:opacity-50"
-                    >
-                      <ImagePlus className="w-3.5 h-3.5" /> Trocar avatar
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={handleDelete}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-destructive/90 text-destructive-foreground text-xs font-bold disabled:opacity-50"
-                    >
-                      {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                      Apagar perfil
-                    </button>
-                  </div>
-                )}
-                {pickerOpen && (
-                  <div className="rounded-xl border border-accent/30 bg-black/40 p-2">
-                    <div className="flex items-center justify-between px-1 pb-2">
-                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
-                        Escolher avatar da galeria
-                      </div>
-                      <button type="button" onClick={() => setPickerOpen(false)} className="text-[10px] text-muted-foreground hover:text-accent">
-                        cancelar
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2 max-h-56 overflow-auto">
-                      {(mine?.identities ?? []).map((it) => {
-                        const active = it.avatar_url === identity.avatar_url;
-                        return (
-                          <button
-                            key={it.id}
-                            type="button"
-                            disabled={busy || active}
-                            onClick={() => handleSwap(it.id)}
-                            className={`relative aspect-square rounded-lg overflow-hidden border-2 ${active ? "border-accent" : "border-transparent hover:border-accent/50"} disabled:opacity-60`}
-                            title={it.alien_name ?? ""}
-                          >
-                            {it.avatar_url ? (
-                              <img src={it.avatar_url} alt={it.alien_name ?? ""} loading="lazy" className="w-full h-full object-cover object-[center_25%]" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-black/60">
-                                <Rocket className="w-4 h-4 text-accent/60" />
-                              </div>
-                            )}
-                            {active && (
-                              <div className="absolute inset-0 bg-accent/30 flex items-center justify-center">
-                                <Check className="w-4 h-4 text-accent-foreground" />
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                      {(mine?.identities ?? []).length === 0 && (
-                        <div className="col-span-4 text-center text-xs text-muted-foreground py-6">
-                          Nenhum avatar salvo na galeria.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={handleDelete}
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-destructive/90 text-destructive-foreground text-xs font-bold disabled:opacity-50"
+                >
+                  {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  Apagar perfil
+                </button>
                 <Link
                   to="/galeria"
                   className="block text-center text-[11px] font-mono uppercase tracking-widest text-muted-foreground hover:text-accent"

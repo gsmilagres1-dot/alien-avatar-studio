@@ -2,10 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2, Sun, Moon, Globe2, Flag } from "lucide-react";
+import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2, Sun, Moon, Globe2 } from "lucide-react";
 import { toast } from "sonner";
 import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
-import { getJourneyState, startQuiz, submitQuiz, claimVisa, completeJourney } from "@/lib/intergalactic.functions";
+import { getJourneyState, startQuiz, submitQuiz, claimVisa } from "@/lib/intergalactic.functions";
 import { DESTINATIONS, ALL_DESTINATIONS, getAnyDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, TELEPORTER_THRESHOLD, TELESCOPE_JIMMY_WATH_THRESHOLD, WORMHOLE_SURPRISE_THRESHOLD, type Destination } from "@/lib/intergalactic";
 import { SHIPS } from "@/lib/alien";
 import { DestinationBadge } from "@/components/DestinationBadge";
@@ -51,7 +51,7 @@ function Galaxia() {
   const quizStartFn = useServerFn(startQuiz);
   const quizSubmitFn = useServerFn(submitQuiz);
   const claimVisaFn = useServerFn(claimVisa);
-  const completeFn = useServerFn(completeJourney);
+  
   const shipFn = useServerFn(generateShipImage);
 
   const { data: ids, isLoading: idsLoading } = useQuery({
@@ -209,7 +209,7 @@ function Galaxia() {
             <h1 className="font-display text-xl text-gradient-neon mt-1">
               9 perguntas · {quiz.difficulty ? LEVEL_LABEL[quiz.difficulty] : "3 níveis"}
             </h1>
-            <p className="text-xs text-muted-foreground">Acerte 70% (7/9) para embarcar. {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s).</p>
+            <p className="text-xs text-muted-foreground">Acerte 60% (6/9) para embarcar. {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s).</p>
           </div>
 
           <div className="flex flex-col items-end gap-2">
@@ -279,28 +279,22 @@ function Galaxia() {
             );
           })}
         </div>
-        {review ? (
-          <button onClick={() => { setReview(null); setQuiz(null); setAnswers([]); }}
-            className="mt-6 w-full px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold">
-            Fechar revisão
-          </button>
-        ) : (
-          <button disabled={!allAnswered || quizLoading} onClick={async () => {
-            setQuizLoading(true);
-            try {
-              const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers, ...(quiz.difficulty ? { difficulty: quiz.difficulty } : {}) } });
-              setLastResult(r);
-              setReview(r.correctAnswers ?? null);
-              await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-              await qc.invalidateQueries({ queryKey: ["wallet"] });
-            } catch (e) { toast.error((e as Error).message); }
-            finally { setQuizLoading(false); }
-          }}
-
-            className="mt-6 w-full px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
-            {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Enviar respostas"}
-          </button>
-        )}
+        <button disabled={!allAnswered || quizLoading} onClick={async () => {
+          setQuizLoading(true);
+          try {
+            const r = await quizSubmitFn({ data: { journeyId: journey.id, destinationId: quiz.destinationId, answers, ...(quiz.difficulty ? { difficulty: quiz.difficulty } : {}) } });
+            setLastResult(r);
+            await qc.invalidateQueries({ queryKey: ["journey", identityId] });
+            await qc.invalidateQueries({ queryKey: ["wallet"] });
+            setQuiz(null);
+            setAnswers([]);
+            setReview(null);
+          } catch (e) { toast.error((e as Error).message); }
+          finally { setQuizLoading(false); }
+        }}
+          className="mt-6 w-full px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
+          {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Enviar respostas"}
+        </button>
       </main>
     );
   }
@@ -385,7 +379,7 @@ function Galaxia() {
               <div className="flex-1">
                 <div className="font-display text-lg">Passou! {lastResult.score}/9</div>
                 <div className="text-xs text-muted-foreground">
-                  Emblema conquistado: <b className="uppercase">{lastResult.tier === "gold" ? "Ouro (100%)" : lastResult.tier === "silver" ? "Prata (80–90%)" : "Bronze (70%)"}</b>. Embarque agora (grátis) para gravar o selo.
+                  Emblema conquistado: <b className="uppercase">{lastResult.tier === "gold" ? "Ouro (9/9)" : lastResult.tier === "silver" ? "Prata (8/9)" : "Bronze (6–7/9)"}</b>. Embarque agora com o selo ou refaça o quiz para tentar uma nota melhor.
                 </div>
                 {lastResult.fichasEarned ? (
                   <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-[11px] font-bold animate-pulse">
@@ -456,42 +450,23 @@ function Galaxia() {
             <div className="mt-5 text-center">
               <Sparkles className="w-10 h-10 text-accent mx-auto" />
               <p className="font-display text-lg mt-2">Você visitou todos os destinos!</p>
-              <button onClick={async () => {
-                try {
-                  await completeFn({ data: { journeyId: journey.id } });
-                  await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-                } catch (e) { toast.error((e as Error).message); }
-              }} className="mt-4 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
-                Finalizar viagem
-              </button>
+              <p className="text-xs text-muted-foreground mt-2">Novos destinos serão liberados em breve — sua viagem continua.</p>
             </div>
           ) : (
-            <>
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {remaining.map((d) => (
-                  <button key={d.id} onClick={() => setChosenDestId(d.id)}
-                    className="rounded-xl border border-border bg-input/50 hover:border-accent hover:bg-accent/5 p-3 text-left transition">
-                    <div className="flex items-center gap-2">
-                      <KindIcon kind={d.kind} className="w-4 h-4 text-accent" />
-                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{KIND_LABEL[d.kind]}</span>
-                    </div>
-                    <div className="font-display text-sm mt-1">{d.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{d.transport}</div>
-                    <div className="text-[10px] text-accent mt-1">Dificuldade {d.level}/5</div>
-                  </button>
-                ))}
-              </div>
-              {visas.length > 0 && (
-                <button onClick={async () => {
-                  try {
-                    await completeFn({ data: { journeyId: journey.id } });
-                    await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-                  } catch (e) { toast.error((e as Error).message); }
-                }} className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-accent/40 hover:bg-accent/10 text-xs">
-                  <Flag className="w-3.5 h-3.5" /> Encerrar viagem aqui
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {remaining.map((d) => (
+                <button key={d.id} onClick={() => setChosenDestId(d.id)}
+                  className="rounded-xl border border-border bg-input/50 hover:border-accent hover:bg-accent/5 p-3 text-left transition">
+                  <div className="flex items-center gap-2">
+                    <KindIcon kind={d.kind} className="w-4 h-4 text-accent" />
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{KIND_LABEL[d.kind]}</span>
+                  </div>
+                  <div className="font-display text-sm mt-1">{d.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{d.transport}</div>
+                  <div className="text-[10px] text-accent mt-1">Dificuldade {d.level}/5</div>
                 </button>
-              )}
-            </>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -551,7 +526,7 @@ function Galaxia() {
             )}
           </div>
 
-          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 70% (7/9) no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 60% (6/9) no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
 
           {/* Seletor de dificuldade */}
           <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
@@ -586,7 +561,7 @@ function Galaxia() {
               finally { setQuizLoading(false); }
             }}
               className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
-              {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
+              {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : (lastResult?.passed ? "Refazer quiz" : "Iniciar quiz")}
             </button>
 
             {lastResult?.passed && lastResult.tier && (

@@ -1,4 +1,4 @@
-import wormholeImg from "@/assets/wormhole-prize.jpg";
+import wormholeImg from "@/assets/wormhole-spiral.jpg";
 import { Lock, Sparkles, Trophy } from "lucide-react";
 import { WORMHOLE_RING_THRESHOLDS, WORMHOLE_RING_TOTAL } from "@/lib/intergalactic";
 
