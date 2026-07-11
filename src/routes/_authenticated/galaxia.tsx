@@ -51,7 +51,7 @@ function Galaxia() {
   const quizStartFn = useServerFn(startQuiz);
   const quizSubmitFn = useServerFn(submitQuiz);
   const claimVisaFn = useServerFn(claimVisa);
-  const completeFn = useServerFn(completeJourney);
+  
   const shipFn = useServerFn(generateShipImage);
 
   const { data: ids, isLoading: idsLoading } = useQuery({
