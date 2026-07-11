@@ -40,7 +40,8 @@ export const FATAL_DESTINATIONS = [
 ] as const;
 
 export const MAX_QUIZ_ATTEMPTS = 3;
-export const QUIZ_PASS_RATIO = 0.7;
+// Aprovação passa a valer com 6/9 (~60%). 6–7 acertos = bronze, 8 = prata, 9 = ouro.
+export const QUIZ_PASS_RATIO = 6 / 9;
 // Quiz agora tem 9 perguntas distintas por destino. Se o usuário escolher
 // um nível de dificuldade antes de iniciar, todas as 9 perguntas vêm daquele
 // nível; caso contrário, mantemos 3 níveis × 3 perguntas cada.
@@ -61,15 +62,14 @@ export const TELESCOPE_JIMMY_WATH_THRESHOLD = 45;
 
 export type BadgeTier = "bronze" | "silver" | "gold";
 
-/** Tier do emblema conforme acerto no quiz (15 perguntas).
- *  - 70%–79% → bronze
- *  - 80%–90% → prata
- *  - 91%–100% → ouro
+/** Tier do emblema conforme acerto no quiz (9 perguntas).
+ *  - 6–7 acertos  → bronze
+ *  - 8 acertos    → prata
+ *  - 9 acertos    → ouro
  */
-export function tierFromScore(score: number, total: number = QUESTIONS_PER_QUIZ): BadgeTier {
-  const pct = (score / total) * 100;
-  if (pct >= 91) return "gold";
-  if (pct >= 80) return "silver";
+export function tierFromScore(score: number, _total: number = QUESTIONS_PER_QUIZ): BadgeTier {
+  if (score >= 9) return "gold";
+  if (score >= 8) return "silver";
   return "bronze";
 }
 
