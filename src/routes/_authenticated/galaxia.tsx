@@ -561,7 +561,7 @@ function Galaxia() {
               finally { setQuizLoading(false); }
             }}
               className="flex-1 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold disabled:opacity-50">
-              {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Iniciar quiz"}
+              {quizLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : (lastResult?.passed ? "Refazer quiz" : "Iniciar quiz")}
             </button>
 
             {lastResult?.passed && lastResult.tier && (
