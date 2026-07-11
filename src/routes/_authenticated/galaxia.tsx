@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2, Sun, Moon, Globe2, Flag } from "lucide-react";
+import { Loader2, Rocket, Stamp, MapPin, AlertTriangle, Sparkles, Skull, Check, ArrowRight, Plus, Wand2, Sun, Moon, Globe2 } from "lucide-react";
 import { toast } from "sonner";
 import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
 import { getJourneyState, startQuiz, submitQuiz, claimVisa, completeJourney } from "@/lib/intergalactic.functions";
