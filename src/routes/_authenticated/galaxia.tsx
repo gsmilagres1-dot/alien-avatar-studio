@@ -209,7 +209,7 @@ function Galaxia() {
             <h1 className="font-display text-xl text-gradient-neon mt-1">
               9 perguntas · {quiz.difficulty ? LEVEL_LABEL[quiz.difficulty] : "3 níveis"}
             </h1>
-            <p className="text-xs text-muted-foreground">Acerte 70% (7/9) para embarcar. {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s).</p>
+            <p className="text-xs text-muted-foreground">Acerte 60% (6/9) para embarcar. {MAX_QUIZ_ATTEMPTS - journey.attempts_used} chance(s).</p>
           </div>
 
           <div className="flex flex-col items-end gap-2">
