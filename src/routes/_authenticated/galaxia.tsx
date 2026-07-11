@@ -379,7 +379,7 @@ function Galaxia() {
               <div className="flex-1">
                 <div className="font-display text-lg">Passou! {lastResult.score}/9</div>
                 <div className="text-xs text-muted-foreground">
-                  Emblema conquistado: <b className="uppercase">{lastResult.tier === "gold" ? "Ouro (100%)" : lastResult.tier === "silver" ? "Prata (80–90%)" : "Bronze (70%)"}</b>. Embarque agora (grátis) para gravar o selo.
+                  Emblema conquistado: <b className="uppercase">{lastResult.tier === "gold" ? "Ouro (9/9)" : lastResult.tier === "silver" ? "Prata (8/9)" : "Bronze (6–7/9)"}</b>. Embarque agora com o selo ou refaça o quiz para tentar uma nota melhor.
                 </div>
                 {lastResult.fichasEarned ? (
                   <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-[11px] font-bold animate-pulse">
