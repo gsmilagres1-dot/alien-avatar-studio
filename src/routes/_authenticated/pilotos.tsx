@@ -146,22 +146,14 @@ function PilotosPage() {
 function PilotDetailModal({ userId, isSelf, onClose }: { userId: string; isSelf: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const detailFn = useServerFn(getPilotDetail);
-  const listMineFn = useServerFn(listMyIdentities);
-  const swapFn = useServerFn(setIdentityAvatarFromGallery);
   const deleteFn = useServerFn(deleteIdentity);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pilot-detail", userId],
     queryFn: () => detailFn({ data: { userId } }),
   });
-  const { data: mine } = useQuery({
-    queryKey: ["my-identities-gallery"],
-    queryFn: () => listMineFn(),
-    enabled: isSelf,
-  });
 
   const identity = data?.identity ?? null;
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function refreshAll() {
@@ -169,24 +161,9 @@ function PilotDetailModal({ userId, isSelf, onClose }: { userId: string; isSelf:
       qc.invalidateQueries({ queryKey: ["pilot-detail", userId] }),
       qc.invalidateQueries({ queryKey: ["pilots-ranking"] }),
       qc.invalidateQueries({ queryKey: ["identities-with-journeys"] }),
-      qc.invalidateQueries({ queryKey: ["my-identities-gallery"] }),
     ]);
   }
 
-  async function handleSwap(sourceIdentityId: string) {
-    if (!identity) return;
-    setBusy(true);
-    try {
-      await swapFn({ data: { identityId: identity.id, sourceIdentityId } });
-      await refreshAll();
-      setPickerOpen(false);
-      toast.success("Avatar trocado");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function handleDelete() {
     if (!identity) return;
