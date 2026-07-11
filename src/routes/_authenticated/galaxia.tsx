@@ -450,42 +450,23 @@ function Galaxia() {
             <div className="mt-5 text-center">
               <Sparkles className="w-10 h-10 text-accent mx-auto" />
               <p className="font-display text-lg mt-2">Você visitou todos os destinos!</p>
-              <button onClick={async () => {
-                try {
-                  await completeFn({ data: { journeyId: journey.id } });
-                  await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-                } catch (e) { toast.error((e as Error).message); }
-              }} className="mt-4 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
-                Finalizar viagem
-              </button>
+              <p className="text-xs text-muted-foreground mt-2">Novos destinos serão liberados em breve — sua viagem continua.</p>
             </div>
           ) : (
-            <>
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {remaining.map((d) => (
-                  <button key={d.id} onClick={() => setChosenDestId(d.id)}
-                    className="rounded-xl border border-border bg-input/50 hover:border-accent hover:bg-accent/5 p-3 text-left transition">
-                    <div className="flex items-center gap-2">
-                      <KindIcon kind={d.kind} className="w-4 h-4 text-accent" />
-                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{KIND_LABEL[d.kind]}</span>
-                    </div>
-                    <div className="font-display text-sm mt-1">{d.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{d.transport}</div>
-                    <div className="text-[10px] text-accent mt-1">Dificuldade {d.level}/5</div>
-                  </button>
-                ))}
-              </div>
-              {visas.length > 0 && (
-                <button onClick={async () => {
-                  try {
-                    await completeFn({ data: { journeyId: journey.id } });
-                    await qc.invalidateQueries({ queryKey: ["journey", identityId] });
-                  } catch (e) { toast.error((e as Error).message); }
-                }} className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-accent/40 hover:bg-accent/10 text-xs">
-                  <Flag className="w-3.5 h-3.5" /> Encerrar viagem aqui
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {remaining.map((d) => (
+                <button key={d.id} onClick={() => setChosenDestId(d.id)}
+                  className="rounded-xl border border-border bg-input/50 hover:border-accent hover:bg-accent/5 p-3 text-left transition">
+                  <div className="flex items-center gap-2">
+                    <KindIcon kind={d.kind} className="w-4 h-4 text-accent" />
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{KIND_LABEL[d.kind]}</span>
+                  </div>
+                  <div className="font-display text-sm mt-1">{d.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{d.transport}</div>
+                  <div className="text-[10px] text-accent mt-1">Dificuldade {d.level}/5</div>
                 </button>
-              )}
-            </>
+              ))}
+            </div>
           )}
         </div>
       )}
