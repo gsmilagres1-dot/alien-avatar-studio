@@ -3,15 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
-  Loader2, Trophy, X, Rocket, Sparkles, ChevronRight, Users, Trash2, ImagePlus, Check,
+  Loader2, Trophy, X, Rocket, Sparkles, ChevronRight, Users, Trash2,
   UserPlus, Shield, Hourglass,
 } from "lucide-react";
 import { toast } from "sonner";
 import { listPilotsRanking, getPilotDetail } from "@/lib/pilots.functions";
 import {
   deleteIdentity,
-  listMyIdentities,
-  setIdentityAvatarFromGallery,
 } from "@/lib/identities.functions";
 import { listTeamsRanking, getMyTeam } from "@/lib/teams.functions";
 import {
