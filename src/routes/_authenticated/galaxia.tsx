@@ -526,7 +526,7 @@ function Galaxia() {
             )}
           </div>
 
-          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 70% (7/9) no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
+          <div className="text-xs mt-4">Etapa 5 · Precisa de ≥ 60% (6/9) no quiz. Tentativas restantes: <b>{attemptsLeft}</b>/{MAX_QUIZ_ATTEMPTS}</div>
 
           {/* Seletor de dificuldade */}
           <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
