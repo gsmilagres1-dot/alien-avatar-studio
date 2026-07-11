@@ -409,7 +409,7 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
       setPicked(null);
       if (idx + 1 >= questions.length) {
         const finalScore = nextAnswers.filter((a, k) => a === questions[k]?.answer).length;
-        if (!sealedThisRun && finalScore / questions.length >= 0.7) {
+        if (!sealedThisRun && finalScore / questions.length >= 6 / 9) {
           onSealed({ objectId: object.id, score: finalScore, total: questions.length, difficulty: difficulty ?? 0 })
             .then(() => setSealedThisRun(true))
             .catch((e) => toast.error((e as Error).message));
