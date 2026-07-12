@@ -12,7 +12,7 @@ import {
   FREE_IDENTITIES_LIMIT,
 } from "@/lib/identity-pack.functions";
 import { useWallet } from "@/hooks/useWallet";
-import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus, ImageIcon } from "lucide-react";
+import { Loader2, Trash2, Plus, Rocket, Skull, MapPin, LifeBuoy, UserPlus, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
 import { DestinationBadge } from "@/components/DestinationBadge";
@@ -189,7 +189,7 @@ function Galeria() {
         {data?.items.map(({ identity: i, journey, visas }) => {
           const fatal = journey?.final_destination_kind === "fatal";
           const active = journey?.status === "active";
-          const done = journey?.status === "completed";
+          const done = false;
           return (
             <div key={i.id} className="glass rounded-2xl overflow-hidden">
               <div className="relative">
@@ -214,12 +214,10 @@ function Galeria() {
 
                 <div className={`mt-3 rounded-lg p-2 text-xs flex items-start gap-2 ${fatal ? "bg-destructive/10 border border-destructive/30" : done ? "bg-accent/10 border border-accent/30" : "bg-muted/30"}`}>
                   {fatal ? <Skull className="w-3.5 h-3.5 mt-0.5 text-destructive" />
-                    : done ? <Sparkles className="w-3.5 h-3.5 mt-0.5 text-accent" />
                     : <MapPin className="w-3.5 h-3.5 mt-0.5 text-muted-foreground" />}
                   <div className="flex-1">
                     {fatal && <><b>Perdido em</b> {journey.final_destination_name}</>}
-                    {done && <><b>Chegou em</b> {journey.final_destination_name}</>}
-                    {active && <>Em viagem · nível {journey.current_level}/5</>}
+                    {active && <>Em viagem · {visas.length}/45 selos</>}
                     {!journey && <>Sem viagem iniciada</>}
                   </div>
                 </div>
