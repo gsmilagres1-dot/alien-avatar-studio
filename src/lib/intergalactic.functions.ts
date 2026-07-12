@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
-  DESTINATIONS,
   ALL_DESTINATIONS,
   MAX_QUIZ_ATTEMPTS,
   QUESTIONS_PER_QUIZ,
