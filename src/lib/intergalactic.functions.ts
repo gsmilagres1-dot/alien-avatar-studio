@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
-  DESTINATIONS,
   ALL_DESTINATIONS,
   MAX_QUIZ_ATTEMPTS,
   QUESTIONS_PER_QUIZ,
@@ -139,7 +138,7 @@ export const startQuiz = createServerFn({ method: "POST" })
     const { data: journey } = await supabaseAdmin
       .from("journeys").select("*").eq("id", data.journeyId).eq("user_id", userId).maybeSingle();
     if (!journey) throw new Error("Viagem não encontrada");
-    if (journey.status !== "active") throw new Error("Esta viagem já terminou");
+    if (journey.status !== "active") throw new Error("Esta viagem precisa ser resgatada para continuar");
 
     const dest = getAnyDestination(data.destinationId);
     if (!dest) throw new Error("Destino inválido");
@@ -269,6 +268,26 @@ export const claimVisa = createServerFn({ method: "POST" })
     if (!best) throw new Error("Você precisa passar no quiz deste destino antes de embarcar");
     const tier = tierFromScore(best.score, best.total);
 
+    const { data: existingVisa } = await supabaseAdmin
+      .from("visas")
+      .select("id, tier")
+      .eq("journey_id", journey.id)
+      .eq("destination_id", dest.id)
+      .maybeSingle();
+
+    if (existingVisa) {
+      const tierRank = { bronze: 1, silver: 2, gold: 3 } as const;
+      const oldTier = (existingVisa.tier ?? "bronze") as keyof typeof tierRank;
+      if (tierRank[tier] > tierRank[oldTier]) {
+        const { error } = await supabaseAdmin
+          .from("visas")
+          .update({ tier })
+          .eq("id", existingVisa.id);
+        if (error) throw new Error(error.message);
+      }
+      return { ok: true, surpriseCall: null };
+    }
+
     const { error } = await supabaseAdmin.from("visas").insert({
       user_id: userId, journey_id: journey.id, destination_id: dest.id,
       destination_name: dest.name, transport: dest.transport, kind: "normal",
@@ -302,19 +321,14 @@ export const claimVisa = createServerFn({ method: "POST" })
     }
 
     const newLevel = journey.current_level + 1;
-    if (newLevel > ALL_DESTINATIONS.length) {
-      await supabaseAdmin.from("journeys").update({
-        status: "completed",
-        current_level: newLevel,
-        final_destination_name: dest.name,
-        final_destination_kind: "normal",
-        completed_at: new Date().toISOString(),
-      }).eq("id", journey.id);
-    } else {
-      await supabaseAdmin.from("journeys").update({
-        current_level: newLevel, attempts_used: 0,
-      }).eq("id", journey.id);
-    }
+    await supabaseAdmin.from("journeys").update({
+      status: "active",
+      current_level: newLevel,
+      attempts_used: 0,
+      final_destination_name: null,
+      final_destination_kind: null,
+      completed_at: null,
+    }).eq("id", journey.id);
     return { ok: true, surpriseCall };
   });
 
@@ -332,10 +346,10 @@ export const completeJourney = createServerFn({ method: "POST" })
       .from("visas").select("destination_name").eq("journey_id", journey.id).order("issued_at", { ascending: false }).limit(1);
     const last = visas?.[0]?.destination_name ?? "Casa";
     await supabaseAdmin.from("journeys").update({
-      status: "completed",
-      final_destination_name: last,
-      final_destination_kind: "normal",
-      completed_at: new Date().toISOString(),
+      status: "active",
+      final_destination_name: null,
+      final_destination_kind: null,
+      completed_at: null,
     }).eq("id", journey.id);
-    return { ok: true };
+    return { ok: true, continuedFrom: last };
   });

@@ -128,16 +128,14 @@ function Galaxia() {
   const currentDest = chosenDestId ? getAnyDestination(chosenDestId) ?? null : null;
   const attemptsLeft = MAX_QUIZ_ATTEMPTS - journey.attempts_used;
 
-  // Journey ended (completed or lost)
+  // Journey lost
   if (journey.status !== "active") {
     const fatal = journey.final_destination_kind === "fatal";
     return (
       <main className="px-4 py-10 max-w-2xl mx-auto">
         <div className={`glass rounded-2xl p-8 text-center ${fatal ? "border-2 border-destructive" : "border-2 border-accent"}`}>
           {fatal ? <Skull className="w-12 h-12 text-destructive mx-auto" /> : <Sparkles className="w-12 h-12 text-accent mx-auto" />}
-          <h1 className="font-display text-2xl mt-3">
-            {fatal ? "Perdido no espaço" : "Viagem completa!"}
-          </h1>
+          <h1 className="font-display text-2xl mt-3">Perdido no espaço</h1>
           <p className="text-sm mt-2">
             {identity?.alien_name} {fatal ? "acabou em" : "chegou em"}{" "}
             <span className="font-bold text-gradient-neon">{journey.final_destination_name}</span>
@@ -240,7 +238,7 @@ function Galaxia() {
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${q.level === 1 ? "bg-green-500/20 text-green-400" : q.level === 2 ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
                       Nível {q.level} · {LEVEL_LABEL[q.level!]}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">5 perguntas</span>
+                    <span className="text-[10px] text-muted-foreground">3 perguntas</span>
                   </div>
                 )}
                 <div className="glass rounded-xl p-4">
@@ -446,11 +444,14 @@ function Galaxia() {
           <h2 className="font-display text-xl text-gradient-neon flex items-center gap-2"><MapPin className="w-5 h-5" /> Etapa 3 · Escolha seu destino</h2>
           <p className="text-xs text-muted-foreground mt-1">Passaporte liberado. Agora escolha o destino, depois sua nave e então comece o quiz. Tudo grátis.</p>
 
-          {remaining.length === 0 ? (
+           {remaining.length === 0 ? (
             <div className="mt-5 text-center">
               <Sparkles className="w-10 h-10 text-accent mx-auto" />
-              <p className="font-display text-lg mt-2">Você visitou todos os destinos!</p>
-              <p className="text-xs text-muted-foreground mt-2">Novos destinos serão liberados em breve — sua viagem continua.</p>
+               <p className="font-display text-lg mt-2">45/45 selos conquistados</p>
+               <p className="text-xs text-muted-foreground mt-2">Sua viagem continua no segundo mapa.</p>
+               <Link to="/mapa" className="mt-4 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-neon">
+                 Seguir para o Mapa Espacial <ArrowRight className="w-3.5 h-3.5" />
+               </Link>
             </div>
           ) : (
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">

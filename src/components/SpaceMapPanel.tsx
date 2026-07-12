@@ -331,9 +331,9 @@ export function SpaceMapPanel() {
                   onClick={() => locked ? toast.info(`Complete os ${SPACE_MAP_UNLOCK_THRESHOLD} destinos para liberar este quiz.`) : setQuizObject(selected)}
                   className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-accent text-accent-foreground font-bold"
                 >
-                  <Rocket className="w-3 h-3" /> Ir fazer o quiz
+                  <Rocket className="w-3 h-3" /> {seals.has(selected.id) ? "Refazer quiz" : "Ir fazer o quiz"}
                 </button>
-                <span className="text-[10px] text-muted-foreground">15 perguntas no banco · 9 sorteadas</span>
+                <span className="text-[10px] text-muted-foreground">{seals.has(selected.id) ? "Selo já conquistado · tente melhorar" : "6/9 para selo · 9 sorteadas"}</span>
               </div>
             </div>
           </div>
@@ -436,7 +436,7 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
         </header>
 
         <div className="p-4">
-          {!difficulty && (
+          {difficulty === null && (
             <>
               <p className="text-xs text-foreground/80 mb-3">{object.fact}</p>
               <p className="text-[11px] text-muted-foreground mb-3">
@@ -521,7 +521,7 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
               />
               <p className="font-display text-lg">{score}/{questions.length} acertos</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {score >= 7 ? "Excelente! Você domina este objeto." : score >= 5 ? "Boa! Vale revisar os detalhes." : "Continue explorando — a galáxia é vasta."}
+                {score >= 6 ? "Selo conquistado ou atualizado: 6/9 bronze, 8/9 prata, 9/9 ouro." : "Ainda faltou para o selo — precisa acertar 6/9."}
               </p>
               <div className="mt-4 flex gap-2 justify-center">
                 <button

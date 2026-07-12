@@ -24,8 +24,8 @@ const TIER_TEXT: Record<BadgeTier, string> = {
 
 const TIER_LABEL: Record<BadgeTier, string> = {
   gold: "OURO · 100%",
-  silver: "PRATA · 80–90%",
-  bronze: "BRONZE · 70%",
+  silver: "PRATA · 8/9",
+  bronze: "BRONZE · 6–7/9",
 };
 
 const TIER_GLOW: Record<BadgeTier, string> = {

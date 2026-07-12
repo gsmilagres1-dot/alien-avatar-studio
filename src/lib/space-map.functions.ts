@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { SPACE_OBJECTS } from "@/lib/space-objects";
 import { SPACE_MAP_PRIZES } from "@/lib/space-map-prizes";
-import { tierFromScore } from "@/lib/intergalactic";
+import { QUESTIONS_PER_QUIZ, QUIZ_PASS_RATIO, tierFromScore } from "@/lib/intergalactic";
 
 /** Retorna o total de selos (visas) do usuário para desbloquear o Mapa Espacial. */
 export const getMyVisaCount = createServerFn({ method: "POST" })
@@ -47,7 +47,7 @@ export const claimSpaceMapSeal = createServerFn({ method: "POST" })
     z.object({
       objectId: z.string().min(1).max(80),
       score: z.number().int().min(0).max(9),
-      total: z.number().int().min(1).max(9).default(9),
+      total: z.number().int().min(1).max(QUESTIONS_PER_QUIZ).default(QUESTIONS_PER_QUIZ),
       difficulty: z.number().int().min(0).max(3),
     }).parse(d),
   )
@@ -55,7 +55,7 @@ export const claimSpaceMapSeal = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const object = SPACE_OBJECTS.find((item) => item.id === data.objectId);
     if (!object) throw new Error("Objeto espacial inválido");
-    if (data.score / data.total < 0.7) throw new Error("É preciso acertar pelo menos 70% para receber o selo");
+    if (data.score / data.total < QUIZ_PASS_RATIO) throw new Error("É preciso acertar pelo menos 60% (6/9) para receber o selo");
 
     const { data: existing } = await supabaseAdmin
       .from("space_map_seals")
