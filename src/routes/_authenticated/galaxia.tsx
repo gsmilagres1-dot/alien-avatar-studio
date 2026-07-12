@@ -238,7 +238,7 @@ function Galaxia() {
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${q.level === 1 ? "bg-green-500/20 text-green-400" : q.level === 2 ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
                       Nível {q.level} · {LEVEL_LABEL[q.level!]}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">5 perguntas</span>
+                    <span className="text-[10px] text-muted-foreground">3 perguntas</span>
                   </div>
                 )}
                 <div className="glass rounded-xl p-4">

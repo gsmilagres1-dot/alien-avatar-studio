@@ -436,7 +436,7 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
         </header>
 
         <div className="p-4">
-          {!difficulty && (
+          {difficulty === null && (
             <>
               <p className="text-xs text-foreground/80 mb-3">{object.fact}</p>
               <p className="text-[11px] text-muted-foreground mb-3">
