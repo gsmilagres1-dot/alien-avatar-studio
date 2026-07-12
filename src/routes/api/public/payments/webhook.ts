@@ -124,18 +124,14 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                   user_id: userIdMeta, journey_id: journey.id, destination_id: dest.id,
                   destination_name: dest.name, transport: dest.transport, payment_id: payRowId, kind: "normal",
                 }).then(() => {}, () => {});
-                if (journey.current_level >= DESTINATIONS.length) {
-                  await supabaseAdmin.from("journeys").update({
-                    status: "completed",
-                    final_destination_name: dest.name,
-                    final_destination_kind: "normal",
-                    completed_at: new Date().toISOString(),
-                  }).eq("id", journey.id);
-                } else {
-                  await supabaseAdmin.from("journeys").update({
-                    current_level: journey.current_level + 1, attempts_used: 0,
-                  }).eq("id", journey.id);
-                }
+                await supabaseAdmin.from("journeys").update({
+                  status: "active",
+                  current_level: journey.current_level + 1,
+                  attempts_used: 0,
+                  final_destination_name: null,
+                  final_destination_kind: null,
+                  completed_at: null,
+                }).eq("id", journey.id);
                 await supabaseAdmin.from("payment_transactions").update({ credits_remaining: 0 }).eq("id", payRowId);
               }
             }
