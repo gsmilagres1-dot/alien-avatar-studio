@@ -118,7 +118,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
               const { data: journey } = await supabaseAdmin
                 .from("journeys").select("*").eq("id", journeyMetaId).eq("user_id", userIdMeta).maybeSingle();
               if (journey && journey.status === "active") {
-                const { DESTINATIONS, destinationForLevel } = await import("@/lib/intergalactic");
+                const { destinationForLevel } = await import("@/lib/intergalactic");
                 const dest = destinationForLevel(journey.current_level);
                 await supabaseAdmin.from("visas").insert({
                   user_id: userIdMeta, journey_id: journey.id, destination_id: dest.id,
