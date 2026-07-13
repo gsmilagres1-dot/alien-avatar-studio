@@ -280,6 +280,12 @@ function Galeria() {
           );
         })}
       </div>
+      <STLPreviewModal
+        open={!!stlPreview}
+        onClose={() => setStlPreview(null)}
+        imageUrl={stlPreview?.url ?? ""}
+        filenameBase={stlPreview?.name ?? "avatar"}
+      />
     </main>
   );
 }
