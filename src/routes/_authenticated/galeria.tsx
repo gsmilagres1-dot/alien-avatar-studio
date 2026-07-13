@@ -13,7 +13,7 @@ import {
 } from "@/lib/identity-pack.functions";
 import { useWallet } from "@/hooks/useWallet";
 import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus, ImageIcon, Box } from "lucide-react";
-import { downloadAvatarSTL } from "@/lib/stl-export";
+import { STLPreviewModal } from "@/components/STLPreviewModal";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
 import { DestinationBadge } from "@/components/DestinationBadge";
