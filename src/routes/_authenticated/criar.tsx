@@ -530,19 +530,11 @@ function FinalView(props: {
             <Rocket className="w-3.5 h-3.5" /> Viajar pela galáxia
           </button>
           <button
-            onClick={async () => {
-              const t = toast.loading("Gerando molde 3D (.stl)...");
-              try {
-                const size = await downloadAvatarSTL(props.avatarUrl, props.identity.alienName, { widthMm: 80 });
-                toast.success(`Molde 3D pronto (${(size / 1024).toFixed(0)} KB). Abra no Bambu Studio, FlashPrint ou Creality Print.`, { id: t });
-              } catch (e) {
-                toast.error((e as Error).message, { id: t });
-              }
-            }}
+            onClick={() => setStlOpen(true)}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-xs"
-            title="Baixar .stl para impressoras 3D (Bambu, Flashforge, Creality)"
+            title="Prévia 3D e download .stl para impressoras 3D (Bambu, Flashforge, Creality)"
           >
-            <Box className="w-3.5 h-3.5" /> Imprimir molde 3D (.stl)
+            <Box className="w-3.5 h-3.5" /> Prévia 3D · molde (.stl)
           </button>
           {props.canCreateAnother && (
             <button onClick={props.onNew} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-xs shadow-neon">
