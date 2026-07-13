@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Printer, ImageIcon } from "lucide-react";
+import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Box, ImageIcon } from "lucide-react";
+import { downloadAvatarSTL } from "@/lib/stl-export";
 import techScanBtn from "@/assets/tech-scan-btn.png";
 import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
@@ -527,8 +528,20 @@ function FinalView(props: {
           <button onClick={props.onTravel} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-alien-grad text-primary-foreground font-bold text-xs shadow-neon">
             <Rocket className="w-3.5 h-3.5" /> Viajar pela galáxia
           </button>
-          <button onClick={() => window.print()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-xs">
-            <Printer className="w-3.5 h-3.5" /> Imprimir crachá
+          <button
+            onClick={async () => {
+              const t = toast.loading("Gerando molde 3D (.stl)...");
+              try {
+                const size = await downloadAvatarSTL(props.avatarUrl, props.identity.alienName, { widthMm: 80 });
+                toast.success(`Molde 3D pronto (${(size / 1024).toFixed(0)} KB). Abra no Bambu Studio, FlashPrint ou Creality Print.`, { id: t });
+              } catch (e) {
+                toast.error((e as Error).message, { id: t });
+              }
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-xs"
+            title="Baixar .stl para impressoras 3D (Bambu, Flashforge, Creality)"
+          >
+            <Box className="w-3.5 h-3.5" /> Imprimir molde 3D (.stl)
           </button>
           {props.canCreateAnother && (
             <button onClick={props.onNew} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-xs shadow-neon">

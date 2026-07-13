@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Camera, Rocket, Sparkles, Stamp, MapPin, Cpu, Radar, Satellite, Users, Coins, Map, Gauge, Zap, Shield, Signal, Swords, Wrench } from "lucide-react";
+import { Camera, Rocket, Sparkles, Stamp, MapPin, Cpu, Radar, Satellite, Users, Coins, Map, Gauge, Zap, Shield, Signal, Swords, Wrench, Box } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useUpgradeStats } from "@/hooks/useUpgradeStats";
 import cockpitView from "@/assets/cockpit-view.jpg";
@@ -125,8 +125,13 @@ function Landing() {
               <Camera className="w-4 h-4" />
               Criar identidade
             </Link>
-            <Link to="/galeria" className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl glass text-xs">
-              Galeria
+            <Link
+              to="/galeria"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl glass text-xs"
+              title="Baixar molde 3D dos avatares para Bambu, Flashforge, Creality"
+            >
+              <Box className="w-3.5 h-3.5" />
+              Molde 3D
             </Link>
           </div>
         </div>
