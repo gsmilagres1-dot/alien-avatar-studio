@@ -489,6 +489,7 @@ function FinalView(props: {
   onTravel: () => void;
 }) {
   const url = typeof window !== "undefined" ? window.location.origin : "";
+  const [stlOpen, setStlOpen] = useState(false);
   return (
     <section>
       <div className="text-center mb-6">
