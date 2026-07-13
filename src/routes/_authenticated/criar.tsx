@@ -543,6 +543,12 @@ function FinalView(props: {
           )}
         </div>
       </div>
+      <STLPreviewModal
+        open={stlOpen}
+        onClose={() => setStlOpen(false)}
+        imageUrl={props.avatarUrl}
+        filenameBase={props.identity.alienName}
+      />
     </section>
   );
 }
