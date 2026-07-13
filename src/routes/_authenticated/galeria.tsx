@@ -264,19 +264,11 @@ function Galeria() {
                   <ShareProfileImage identity={i} />
                   <button
                     type="button"
-                    onClick={async () => {
-                      const t = toast.loading("Gerando molde 3D (.stl)...");
-                      try {
-                        const size = await downloadAvatarSTL(i.avatar_url, i.alien_name, { widthMm: 80 });
-                        toast.success(`Molde 3D pronto (${(size / 1024).toFixed(0)} KB) — Bambu · Flashforge · Creality.`, { id: t });
-                      } catch (e) {
-                        toast.error((e as Error).message, { id: t });
-                      }
-                    }}
+                    onClick={() => setStlPreview({ url: i.avatar_url, name: i.alien_name })}
                     className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
-                    title="Baixar .stl para impressoras 3D (Bambu, Flashforge, Creality)"
+                    title="Prévia 3D e download .stl para impressoras 3D (Bambu, Flashforge, Creality)"
                   >
-                    <Box className="w-3 h-3" /> Molde 3D
+                    <Box className="w-3 h-3" /> Prévia 3D
                   </button>
                   <button type="button" disabled={removingId === i.id} onClick={() => remove(i.id)} className="inline-flex items-center gap-1.5 text-xs text-destructive hover:underline disabled:opacity-50">
                     {removingId === i.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />} Apagar
