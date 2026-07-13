@@ -31,6 +31,7 @@ function Galeria() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [rescuingId, setRescuingId] = useState<string | null>(null);
   const [buyingPack, setBuyingPack] = useState(false);
+  const [stlPreview, setStlPreview] = useState<{ url: string; name: string } | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ["identities-with-journeys"], queryFn: () => list() });
 
