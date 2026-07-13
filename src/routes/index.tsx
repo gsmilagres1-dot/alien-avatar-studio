@@ -125,8 +125,13 @@ function Landing() {
               <Camera className="w-4 h-4" />
               Criar identidade
             </Link>
-            <Link to="/galeria" className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl glass text-xs">
-              Galeria
+            <Link
+              to="/galeria"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl glass text-xs"
+              title="Baixar molde 3D dos avatares para Bambu, Flashforge, Creality"
+            >
+              <Box className="w-3.5 h-3.5" />
+              Molde 3D
             </Link>
           </div>
         </div>
