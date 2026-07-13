@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Box, ImageIcon } from "lucide-react";
-import { downloadAvatarSTL } from "@/lib/stl-export";
+import { STLPreviewModal } from "@/components/STLPreviewModal";
 import techScanBtn from "@/assets/tech-scan-btn.png";
 import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
@@ -489,6 +489,7 @@ function FinalView(props: {
   onTravel: () => void;
 }) {
   const url = typeof window !== "undefined" ? window.location.origin : "";
+  const [stlOpen, setStlOpen] = useState(false);
   return (
     <section>
       <div className="text-center mb-6">
@@ -529,19 +530,11 @@ function FinalView(props: {
             <Rocket className="w-3.5 h-3.5" /> Viajar pela galáxia
           </button>
           <button
-            onClick={async () => {
-              const t = toast.loading("Gerando molde 3D (.stl)...");
-              try {
-                const size = await downloadAvatarSTL(props.avatarUrl, props.identity.alienName, { widthMm: 80 });
-                toast.success(`Molde 3D pronto (${(size / 1024).toFixed(0)} KB). Abra no Bambu Studio, FlashPrint ou Creality Print.`, { id: t });
-              } catch (e) {
-                toast.error((e as Error).message, { id: t });
-              }
-            }}
+            onClick={() => setStlOpen(true)}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-xs"
-            title="Baixar .stl para impressoras 3D (Bambu, Flashforge, Creality)"
+            title="Prévia 3D e download .stl para impressoras 3D (Bambu, Flashforge, Creality)"
           >
-            <Box className="w-3.5 h-3.5" /> Imprimir molde 3D (.stl)
+            <Box className="w-3.5 h-3.5" /> Prévia 3D · molde (.stl)
           </button>
           {props.canCreateAnother && (
             <button onClick={props.onNew} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground font-bold text-xs shadow-neon">
@@ -550,6 +543,12 @@ function FinalView(props: {
           )}
         </div>
       </div>
+      <STLPreviewModal
+        open={stlOpen}
+        onClose={() => setStlOpen(false)}
+        imageUrl={props.avatarUrl}
+        filenameBase={props.identity.alienName}
+      />
     </section>
   );
 }

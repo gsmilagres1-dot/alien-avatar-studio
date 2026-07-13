@@ -13,7 +13,7 @@ import {
 } from "@/lib/identity-pack.functions";
 import { useWallet } from "@/hooks/useWallet";
 import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus, ImageIcon, Box } from "lucide-react";
-import { downloadAvatarSTL } from "@/lib/stl-export";
+import { STLPreviewModal } from "@/components/STLPreviewModal";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
 import { DestinationBadge } from "@/components/DestinationBadge";
@@ -31,6 +31,7 @@ function Galeria() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [rescuingId, setRescuingId] = useState<string | null>(null);
   const [buyingPack, setBuyingPack] = useState(false);
+  const [stlPreview, setStlPreview] = useState<{ url: string; name: string } | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ["identities-with-journeys"], queryFn: () => list() });
 
@@ -264,19 +265,11 @@ function Galeria() {
                   <ShareProfileImage identity={i} />
                   <button
                     type="button"
-                    onClick={async () => {
-                      const t = toast.loading("Gerando molde 3D (.stl)...");
-                      try {
-                        const size = await downloadAvatarSTL(i.avatar_url, i.alien_name, { widthMm: 80 });
-                        toast.success(`Molde 3D pronto (${(size / 1024).toFixed(0)} KB) — Bambu · Flashforge · Creality.`, { id: t });
-                      } catch (e) {
-                        toast.error((e as Error).message, { id: t });
-                      }
-                    }}
+                    onClick={() => setStlPreview({ url: i.avatar_url, name: i.alien_name })}
                     className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
-                    title="Baixar .stl para impressoras 3D (Bambu, Flashforge, Creality)"
+                    title="Prévia 3D e download .stl para impressoras 3D (Bambu, Flashforge, Creality)"
                   >
-                    <Box className="w-3 h-3" /> Molde 3D
+                    <Box className="w-3 h-3" /> Prévia 3D
                   </button>
                   <button type="button" disabled={removingId === i.id} onClick={() => remove(i.id)} className="inline-flex items-center gap-1.5 text-xs text-destructive hover:underline disabled:opacity-50">
                     {removingId === i.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />} Apagar
@@ -287,6 +280,12 @@ function Galeria() {
           );
         })}
       </div>
+      <STLPreviewModal
+        open={!!stlPreview}
+        onClose={() => setStlPreview(null)}
+        imageUrl={stlPreview?.url ?? ""}
+        filenameBase={stlPreview?.name ?? "avatar"}
+      />
     </main>
   );
 }
