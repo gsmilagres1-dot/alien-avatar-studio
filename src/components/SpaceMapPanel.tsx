@@ -10,21 +10,15 @@ import {
 } from "@/lib/space-objects";
 import { claimSpaceMapSeal, getSpaceMapState } from "@/lib/space-map.functions";
 import { SpaceMapPrizes } from "@/components/SpaceMapPrizes";
-import sunImg from "@/assets/map/sun.png";
-import planetImg from "@/assets/map/planet.png";
-import moonImg from "@/assets/map/moon.png";
-import galaxyImg from "@/assets/map/galaxy.png";
-import clusterImg from "@/assets/map/cluster.png";
-import quasarImg from "@/assets/map/quasar.png";
 import spaceSealsImg from "@/assets/space-achievement-seals.jpg";
 
-const KIND_IMAGE: Record<SpaceObject["kind"], string> = {
-  star: sunImg,
-  asteroid: planetImg,
-  comet: quasarImg,
-  meteor: clusterImg,
-  dwarf: moonImg,
-  spacecraft: galaxyImg,
+const KIND_EMOJI: Record<SpaceObject["kind"], string> = {
+  star: "🌟",
+  asteroid: "🪨",
+  comet: "☄️",
+  meteor: "💫",
+  dwarf: "🌑",
+  spacecraft: "🛰️",
 };
 
 const KIND_LABEL: Record<SpaceObject["kind"], string> = {
