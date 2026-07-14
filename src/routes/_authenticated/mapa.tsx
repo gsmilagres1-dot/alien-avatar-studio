@@ -14,6 +14,7 @@ import starSystemImg from "@/assets/map/star_system.png";
 import clusterImg from "@/assets/map/cluster.png";
 import quasarImg from "@/assets/map/quasar.png";
 import { SpaceMapPanel } from "@/components/SpaceMapPanel";
+import { CinemaMapPanel } from "@/components/CinemaMapPanel";
 
 export const Route = createFileRoute("/_authenticated/mapa")({
   component: Mapa,
