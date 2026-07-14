@@ -259,7 +259,7 @@ export function SpaceMapPanel() {
           </svg>
 
           {visible.map((node) => {
-            const src = KIND_IMAGE[node.kind];
+            const emoji = KIND_EMOJI[node.kind];
             const isSelected = selected?.id === node.id;
             return (
               <button
@@ -269,16 +269,16 @@ export function SpaceMapPanel() {
                 style={{ left: `${node.x}%`, top: `${node.y}%`, width: `${node.size}%` }}
                 aria-label={node.name}
               >
-                <div className="relative aspect-square">
-                  <img
-                    src={src}
-                    alt={node.name}
-                    loading="lazy"
-                    className={`w-full h-full object-contain drop-shadow-[0_0_18px_rgba(167,139,250,0.55)] transition-transform group-hover:scale-110 ${isSelected ? "scale-110" : ""} ${locked ? "grayscale opacity-55" : ""}`}
-                  />
-                  {isSelected && <div className="absolute inset-0 rounded-full ring-2 ring-accent animate-pulse" />}
+                <div className={`relative aspect-square flex items-center justify-center rounded-full bg-black/30 border border-accent/30 transition-transform group-hover:scale-110 ${isSelected ? "scale-110 ring-2 ring-accent" : ""} ${locked ? "grayscale opacity-55" : ""}`}>
+                  <span
+                    aria-hidden
+                    className="drop-shadow-[0_0_10px_rgba(167,139,250,0.7)] leading-none"
+                    style={{ fontSize: "clamp(18px, 4.5vw, 42px)" }}
+                  >
+                    {emoji}
+                  </span>
                   {locked && (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
                       <Lock className="w-4 h-4 text-accent drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
                     </div>
                   )}
