@@ -304,12 +304,9 @@ export function SpaceMapPanel() {
       <div className="mt-3 glass rounded-xl p-4 border border-accent/20 min-h-[96px]">
         {selected ? (
           <div className="flex gap-3">
-            <img
-              src={KIND_IMAGE[selected.kind]}
-              alt=""
-              loading="lazy"
-              className="w-16 h-16 object-contain shrink-0 drop-shadow-[0_0_12px_rgba(167,139,250,0.6)]"
-            />
+            <div className="w-16 h-16 flex items-center justify-center rounded-xl bg-black/40 border border-accent/30 shrink-0 text-[36px] leading-none drop-shadow-[0_0_10px_rgba(167,139,250,0.6)]">
+              <span aria-hidden>{KIND_EMOJI[selected.kind]}</span>
+            </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-display text-sm truncate">{locked ? "Objetivo bloqueado" : selected.name}</h3>
