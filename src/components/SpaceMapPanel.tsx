@@ -410,13 +410,13 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
     }, 1200);
   };
 
-  const objectImage = KIND_IMAGE[object.kind];
+  const objectEmoji = KIND_EMOJI[object.kind];
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-lg bg-card rounded-2xl border border-accent/40 max-h-[90vh] overflow-y-auto">
         <header className="p-3 flex items-center gap-2 border-b border-white/10 sticky top-0 bg-black/80 backdrop-blur z-10">
-          <img src={objectImage} alt="" className="w-9 h-9 object-contain" />
+          <span aria-hidden className="text-2xl leading-none">{objectEmoji}</span>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] uppercase tracking-wider text-accent">{KIND_LABEL[object.kind]}</div>
             <div className="font-display text-sm truncate">{object.name}</div>
