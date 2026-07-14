@@ -10,21 +10,15 @@ import {
 } from "@/lib/space-objects";
 import { claimSpaceMapSeal, getSpaceMapState } from "@/lib/space-map.functions";
 import { SpaceMapPrizes } from "@/components/SpaceMapPrizes";
-import sunImg from "@/assets/map/sun.png";
-import planetImg from "@/assets/map/planet.png";
-import moonImg from "@/assets/map/moon.png";
-import galaxyImg from "@/assets/map/galaxy.png";
-import clusterImg from "@/assets/map/cluster.png";
-import quasarImg from "@/assets/map/quasar.png";
 import spaceSealsImg from "@/assets/space-achievement-seals.jpg";
 
-const KIND_IMAGE: Record<SpaceObject["kind"], string> = {
-  star: sunImg,
-  asteroid: planetImg,
-  comet: quasarImg,
-  meteor: clusterImg,
-  dwarf: moonImg,
-  spacecraft: galaxyImg,
+const KIND_EMOJI: Record<SpaceObject["kind"], string> = {
+  star: "🌟",
+  asteroid: "🪨",
+  comet: "☄️",
+  meteor: "💫",
+  dwarf: "🌑",
+  spacecraft: "🛰️",
 };
 
 const KIND_LABEL: Record<SpaceObject["kind"], string> = {
@@ -265,7 +259,7 @@ export function SpaceMapPanel() {
           </svg>
 
           {visible.map((node) => {
-            const src = KIND_IMAGE[node.kind];
+            const emoji = KIND_EMOJI[node.kind];
             const isSelected = selected?.id === node.id;
             return (
               <button
@@ -275,16 +269,16 @@ export function SpaceMapPanel() {
                 style={{ left: `${node.x}%`, top: `${node.y}%`, width: `${node.size}%` }}
                 aria-label={node.name}
               >
-                <div className="relative aspect-square">
-                  <img
-                    src={src}
-                    alt={node.name}
-                    loading="lazy"
-                    className={`w-full h-full object-contain drop-shadow-[0_0_18px_rgba(167,139,250,0.55)] transition-transform group-hover:scale-110 ${isSelected ? "scale-110" : ""} ${locked ? "grayscale opacity-55" : ""}`}
-                  />
-                  {isSelected && <div className="absolute inset-0 rounded-full ring-2 ring-accent animate-pulse" />}
+                <div className={`relative aspect-square flex items-center justify-center rounded-full bg-black/30 border border-accent/30 transition-transform group-hover:scale-110 ${isSelected ? "scale-110 ring-2 ring-accent" : ""} ${locked ? "grayscale opacity-55" : ""}`}>
+                  <span
+                    aria-hidden
+                    className="drop-shadow-[0_0_10px_rgba(167,139,250,0.7)] leading-none"
+                    style={{ fontSize: "clamp(18px, 4.5vw, 42px)" }}
+                  >
+                    {emoji}
+                  </span>
                   {locked && (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
                       <Lock className="w-4 h-4 text-accent drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
                     </div>
                   )}
@@ -310,12 +304,9 @@ export function SpaceMapPanel() {
       <div className="mt-3 glass rounded-xl p-4 border border-accent/20 min-h-[96px]">
         {selected ? (
           <div className="flex gap-3">
-            <img
-              src={KIND_IMAGE[selected.kind]}
-              alt=""
-              loading="lazy"
-              className="w-16 h-16 object-contain shrink-0 drop-shadow-[0_0_12px_rgba(167,139,250,0.6)]"
-            />
+            <div className="w-16 h-16 flex items-center justify-center rounded-xl bg-black/40 border border-accent/30 shrink-0 text-[36px] leading-none drop-shadow-[0_0_10px_rgba(167,139,250,0.6)]">
+              <span aria-hidden>{KIND_EMOJI[selected.kind]}</span>
+            </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-display text-sm truncate">{locked ? "Objetivo bloqueado" : selected.name}</h3>
@@ -419,13 +410,13 @@ function SpaceQuiz({ object, onClose, onSealed }: { object: SpaceObject; onClose
     }, 1200);
   };
 
-  const objectImage = KIND_IMAGE[object.kind];
+  const objectEmoji = KIND_EMOJI[object.kind];
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-lg bg-card rounded-2xl border border-accent/40 max-h-[90vh] overflow-y-auto">
         <header className="p-3 flex items-center gap-2 border-b border-white/10 sticky top-0 bg-black/80 backdrop-blur z-10">
-          <img src={objectImage} alt="" className="w-9 h-9 object-contain" />
+          <span aria-hidden className="text-2xl leading-none">{objectEmoji}</span>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] uppercase tracking-wider text-accent">{KIND_LABEL[object.kind]}</div>
             <div className="font-display text-sm truncate">{object.name}</div>
