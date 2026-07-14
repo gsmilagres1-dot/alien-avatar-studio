@@ -313,6 +313,8 @@ function Mapa() {
 
       <SpaceMapPanel />
 
+      <CinemaMapPanel />
+
       <div className="mt-6 text-xs text-muted-foreground">
         <Link to="/" className="underline">← voltar à home</Link>
       </div>
