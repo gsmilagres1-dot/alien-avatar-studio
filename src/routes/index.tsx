@@ -56,14 +56,14 @@ function Landing() {
   const stats = useUpgradeStats();
   return (
     <main className="relative z-10 min-h-screen overflow-hidden">
-      {/* ===== COCKPIT VIEWPORT (arched window) ===== */}
+      {/* ===== COCKPIT VIEWPORT (arched window) — larger, no hero text ===== */}
       <section className="relative">
-        <div className="relative aspect-[16/10] w-full">
+        <div className="relative aspect-[4/3] w-full">
           <img
             src={cockpitView}
             alt="Vista do cockpit da nave alien"
             width={1536}
-            height={896}
+            height={1152}
             className="absolute inset-0 w-full h-full object-cover"
           />
           {/* HUD overlay top */}
@@ -74,18 +74,7 @@ function Landing() {
             <LanguageSwitcher />
           </div>
 
-          {/* Center hero text — projected on viewport */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pointer-events-none">
-            <h1 className="font-display text-4xl sm:text-6xl font-bold leading-none drop-shadow-[0_2px_18px_rgba(0,0,0,0.9)]">
-              <span className="text-gradient-alien">Vire um</span>{" "}
-              <span className="text-gradient-neon">alien</span>
-            </h1>
-            <p className="mt-2 text-[11px] sm:text-sm text-white/90 max-w-xs drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-              Selfie → passaporte → nave → 45 destinos. 100% grátis.
-            </p>
-          </div>
-
-          {/* Side readouts on viewport frame */}
+          {/* Side readouts on viewport frame — upgrade gauges */}
           <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 w-[88px]">
             <Readout icon={Gauge} label="Velocidade" value={stats.speedC} color="#22d3ee" />
             <Readout icon={Zap}   label="Reator"    value={stats.reactor}    color="#34d399" />
@@ -115,29 +104,29 @@ function Landing() {
           </div>
         </div>
 
-        {/* Primary CTA bar */}
-        <div className="rounded-2xl p-[2px] bg-gradient-to-r from-amber-300 via-orange-400 to-yellow-500 shadow-[0_4px_20px_rgba(251,146,60,0.4)] mb-3">
-          <div className="rounded-2xl bg-black/85 backdrop-blur p-3 flex gap-2">
+        {/* Primary CTA bar — 20% smaller */}
+        <div className="rounded-2xl p-[2px] bg-gradient-to-r from-amber-300 via-orange-400 to-yellow-500 shadow-[0_4px_20px_rgba(251,146,60,0.4)] mb-2.5">
+          <div className="rounded-2xl bg-black/85 backdrop-blur p-2 flex gap-1.5">
             <Link
               to="/criar"
-              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-accent text-accent-foreground font-display font-bold text-sm shadow-neon hover:scale-[1.02] transition"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-accent text-accent-foreground font-display font-bold text-[11px] shadow-neon hover:scale-[1.02] transition"
             >
-              <Camera className="w-4 h-4" />
+              <Camera className="w-3 h-3" />
               Criar identidade
             </Link>
             <Link
               to="/galeria"
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl glass text-xs"
+              className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl glass text-[10px]"
               title="Baixar molde 3D dos avatares para Bambu, Flashforge, Creality"
             >
-              <Box className="w-3.5 h-3.5" />
+              <Box className="w-3 h-3" />
               Molde 3D
             </Link>
           </div>
         </div>
 
-        {/* 4 manual tasks — console tiles */}
-        <div className="grid grid-cols-2 gap-2 text-left">
+        {/* 4 manual tasks — console tiles (20% smaller) */}
+        <div className="grid grid-cols-2 gap-1.5 text-left">
           {TASKS.map((t) => {
             const m = METAL[t.metal];
             return (
@@ -146,17 +135,17 @@ function Landing() {
                 to={t.to}
                 className={`relative rounded-xl p-[2px] bg-gradient-to-br ${m.ring} shadow-[0_4px_14px_rgba(0,0,0,0.6)] active:scale-[0.98] transition`}
               >
-                <div className="rounded-xl bg-gradient-to-b from-black/90 via-black/75 to-black/90 p-2.5 h-full">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className={`text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-gradient-to-b ${m.chip} text-black tracking-widest`}>
+                <div className="rounded-xl bg-gradient-to-b from-black/90 via-black/75 to-black/90 p-2 h-full">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-[7px] font-mono font-bold px-1 py-0.5 rounded bg-gradient-to-b ${m.chip} text-black tracking-widest`}>
                       {t.step}
                     </span>
-                    <span className="text-[7px] font-mono text-white/40 tracking-widest">{t.hint}</span>
+                    <span className="text-[6px] font-mono text-white/40 tracking-widest">{t.hint}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className={`relative w-9 h-9 shrink-0 rounded-full p-[2px] bg-gradient-to-br ${m.ring}`}>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`relative w-7 h-7 shrink-0 rounded-full p-[2px] bg-gradient-to-br ${m.ring}`}>
                       <div className="w-full h-full rounded-full bg-black/85 flex items-center justify-center">
-                        <t.icon className={`w-4 h-4 ${m.accent}`} />
+                        <t.icon className={`w-3 h-3 ${m.accent}`} />
                       </div>
                       <span
                         className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse"
@@ -164,8 +153,8 @@ function Landing() {
                       />
                     </div>
                     <div className="min-w-0">
-                      <div className="font-display text-xs text-foreground leading-tight truncate">{t.title}</div>
-                      <div className="text-[9px] text-white/55 leading-tight truncate">{t.desc}</div>
+                      <div className="font-display text-[10px] text-foreground leading-tight truncate">{t.title}</div>
+                      <div className="text-[8px] text-white/55 leading-tight truncate">{t.desc}</div>
                     </div>
                   </div>
                 </div>
@@ -175,7 +164,7 @@ function Landing() {
         </div>
 
         {/* divider rivets */}
-        <div className="my-3 flex items-center gap-2 px-1">
+        <div className="my-2.5 flex items-center gap-2 px-1">
           <span className="w-1 h-1 rounded-full bg-white/30" />
           <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
           <span className="text-[8px] font-mono text-white/40 tracking-widest">HUBS · DESTINOS</span>
@@ -183,8 +172,8 @@ function Landing() {
           <span className="w-1 h-1 rounded-full bg-white/30" />
         </div>
 
-        {/* 6 hub buttons — futuristic console style */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* 6 hub buttons — 20% smaller */}
+        <div className="grid grid-cols-3 gap-1.5">
           {[
             { to: "/equipes",  icon: Users,  label: "Equipe",   sub: "Intergaláctica", metal: "gold"   as const, hint: "TEAM-Σ" },
             { to: "/loja",     icon: Coins,  label: "Fichas",   sub: "Loja · S.O.S.",  metal: "gold"   as const, hint: "FIC-€"  },
@@ -200,24 +189,25 @@ function Landing() {
                 to={h.to}
                 className={`relative rounded-xl p-[2px] bg-gradient-to-br ${m.ring} shadow-[0_4px_14px_rgba(0,0,0,0.6)] active:scale-[0.97] hover:scale-[1.02] transition`}
               >
-                <div className="rounded-xl bg-gradient-to-b from-black/90 via-black/75 to-black/90 p-2 h-full flex flex-col items-center text-center">
-                  <span className="text-[7px] font-mono text-white/40 tracking-widest self-end">{h.hint}</span>
-                  <div className={`relative w-9 h-9 rounded-full p-[2px] bg-gradient-to-br ${m.ring} mb-1`}>
+                <div className="rounded-xl bg-gradient-to-b from-black/90 via-black/75 to-black/90 p-1.5 h-full flex flex-col items-center text-center">
+                  <span className="text-[6px] font-mono text-white/40 tracking-widest self-end">{h.hint}</span>
+                  <div className={`relative w-7 h-7 rounded-full p-[2px] bg-gradient-to-br ${m.ring} mb-0.5`}>
                     <div className="w-full h-full rounded-full bg-black/85 flex items-center justify-center">
-                      <h.icon className={`w-4 h-4 ${m.accent}`} />
+                      <h.icon className={`w-3 h-3 ${m.accent}`} />
                     </div>
                     <span
                       className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse"
                       style={{ backgroundColor: m.glow, boxShadow: `0 0 6px ${m.glow}` }}
                     />
                   </div>
-                  <div className="font-display text-[11px] text-foreground leading-tight">{h.label}</div>
-                  <div className="text-[8px] text-white/55 leading-tight">{h.sub}</div>
+                  <div className="font-display text-[10px] text-foreground leading-tight">{h.label}</div>
+                  <div className="text-[7px] text-white/55 leading-tight">{h.sub}</div>
                 </div>
               </Link>
             );
           })}
         </div>
+
 
 
         {/* Bottom status strip */}
