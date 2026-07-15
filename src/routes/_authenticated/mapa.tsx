@@ -15,6 +15,7 @@ import clusterImg from "@/assets/map/cluster.png";
 import quasarImg from "@/assets/map/quasar.png";
 import { SpaceMapPanel } from "@/components/SpaceMapPanel";
 import { CinemaMapPanel } from "@/components/CinemaMapPanel";
+import galaxyBg from "@/assets/galaxy-bg.jpg.asset.json";
 
 export const Route = createFileRoute("/_authenticated/mapa")({
   component: Mapa,
@@ -167,8 +168,10 @@ function Mapa() {
           height: "70vh",
           maxHeight: 680,
           touchAction: "pan-x pan-y pinch-zoom",
-          background:
-            "radial-gradient(ellipse at top, rgba(167,139,250,0.18), transparent 60%), radial-gradient(ellipse at bottom, rgba(34,211,238,0.15), transparent 55%), #05010f",
+          backgroundImage: `radial-gradient(ellipse at top, rgba(167,139,250,0.25), transparent 60%), radial-gradient(ellipse at bottom, rgba(34,211,238,0.20), transparent 55%), url(${galaxyBg.url})`,
+          backgroundSize: "cover, cover, cover",
+          backgroundPosition: "center",
+          backgroundColor: "#05010f",
         }}
       >
         <div
