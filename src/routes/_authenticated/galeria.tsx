@@ -16,7 +16,7 @@ import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserP
 import { STLPreviewModal } from "@/components/STLPreviewModal";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
-import { DestinationBadge } from "@/components/DestinationBadge";
+
 
 export const Route = createFileRoute("/_authenticated/galeria")({ component: Galeria });
 
