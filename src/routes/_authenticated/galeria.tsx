@@ -223,24 +223,36 @@ function Galeria() {
                   </div>
                 </div>
 
-                {visas.length > 0 && (
-                  <div className="mt-3 rounded-xl border border-accent/20 bg-black/30 p-2">
-                    <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-mono mb-1.5 px-1">
-                      Selos · {visas.length} destino{visas.length > 1 ? "s" : ""}
+                {visas.length > 0 && (() => {
+                  const counts = visas.reduce(
+                    (acc, v) => {
+                      const t = (v.tier ?? "bronze") as "bronze" | "silver" | "gold";
+                      acc[t] = (acc[t] ?? 0) + 1;
+                      return acc;
+                    },
+                    { gold: 0, silver: 0, bronze: 0 } as Record<"gold" | "silver" | "bronze", number>,
+                  );
+                  const tierMeta = [
+                    { key: "gold" as const, label: "Ouro", cls: "from-amber-300 to-yellow-600 text-black" },
+                    { key: "silver" as const, label: "Prata", cls: "from-slate-200 to-slate-400 text-black" },
+                    { key: "bronze" as const, label: "Bronze", cls: "from-orange-400 to-amber-700 text-black" },
+                  ];
+                  return (
+                    <div className="mt-3 rounded-xl border border-accent/20 bg-black/30 p-2">
+                      <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-mono mb-1.5 px-1">
+                        Selos · {visas.length} destino{visas.length > 1 ? "s" : ""}
+                      </div>
+                      <div className="flex gap-1.5 justify-center">
+                        {tierMeta.map((t) => (
+                          <div key={t.key} className={`flex-1 rounded-lg bg-gradient-to-b ${t.cls} px-2 py-1.5 text-center font-mono`}>
+                            <div className="text-[9px] uppercase tracking-widest opacity-80">{t.label}</div>
+                            <div className="text-base font-bold leading-none">{counts[t.key]}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 justify-center">
-                      {visas.map((v) => (
-                        <DestinationBadge
-                          key={v.id}
-                          destinationId={v.destination_id}
-                          destinationName={v.destination_name}
-                          tier={(v.tier ?? "bronze") as "bronze" | "silver" | "gold"}
-                          size={44}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {fatal && (
                   <button
