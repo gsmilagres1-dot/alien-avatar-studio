@@ -56,14 +56,14 @@ function Landing() {
   const stats = useUpgradeStats();
   return (
     <main className="relative z-10 min-h-screen overflow-hidden">
-      {/* ===== COCKPIT VIEWPORT (arched window) ===== */}
+      {/* ===== COCKPIT VIEWPORT (arched window) — larger, no hero text ===== */}
       <section className="relative">
-        <div className="relative aspect-[16/10] w-full">
+        <div className="relative aspect-[4/3] w-full">
           <img
             src={cockpitView}
             alt="Vista do cockpit da nave alien"
             width={1536}
-            height={896}
+            height={1152}
             className="absolute inset-0 w-full h-full object-cover"
           />
           {/* HUD overlay top */}
@@ -74,18 +74,7 @@ function Landing() {
             <LanguageSwitcher />
           </div>
 
-          {/* Center hero text — projected on viewport */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pointer-events-none">
-            <h1 className="font-display text-4xl sm:text-6xl font-bold leading-none drop-shadow-[0_2px_18px_rgba(0,0,0,0.9)]">
-              <span className="text-gradient-alien">Vire um</span>{" "}
-              <span className="text-gradient-neon">alien</span>
-            </h1>
-            <p className="mt-2 text-[11px] sm:text-sm text-white/90 max-w-xs drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-              Selfie → passaporte → nave → 45 destinos. 100% grátis.
-            </p>
-          </div>
-
-          {/* Side readouts on viewport frame */}
+          {/* Side readouts on viewport frame — upgrade gauges */}
           <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 w-[88px]">
             <Readout icon={Gauge} label="Velocidade" value={stats.speedC} color="#22d3ee" />
             <Readout icon={Zap}   label="Reator"    value={stats.reactor}    color="#34d399" />
