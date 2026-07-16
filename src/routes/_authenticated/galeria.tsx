@@ -12,8 +12,10 @@ import {
   FREE_IDENTITIES_LIMIT,
 } from "@/lib/identity-pack.functions";
 import { useWallet } from "@/hooks/useWallet";
-import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus, ImageIcon, Box } from "lucide-react";
+import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus, ImageIcon, Box, Gauge, Shield, Radar, Zap, Package } from "lucide-react";
 import { STLPreviewModal } from "@/components/STLPreviewModal";
+import { useUpgradeStats } from "@/hooks/useUpgradeStats";
+import { UPGRADES, MAX_UPGRADE_LEVEL, type UpgradeKey } from "@/lib/upgrades";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
 
@@ -32,6 +34,8 @@ function Galeria() {
   const [rescuingId, setRescuingId] = useState<string | null>(null);
   const [buyingPack, setBuyingPack] = useState(false);
   const [stlPreview, setStlPreview] = useState<{ url: string; name: string } | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const upgradeStats = useUpgradeStats();
 
   const { data, isLoading } = useQuery({ queryKey: ["identities-with-journeys"], queryFn: () => list() });
 
@@ -187,8 +191,109 @@ function Galeria() {
         </section>
       )}
 
+      {!isLoading && identityCount > 0 && (
+        <section className="mb-6">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h2 className="font-display text-sm text-accent uppercase tracking-widest">Selecionar piloto</h2>
+            <span className="font-mono text-[10px] text-muted-foreground">{identityCount} avatar{identityCount > 1 ? "es" : ""}</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+            <button
+              type="button"
+              onClick={() => setSelectedId(null)}
+              className={`shrink-0 snap-start rounded-2xl px-3 py-2 text-[11px] font-mono transition ${
+                selectedId === null ? "bg-accent text-accent-foreground shadow-neon" : "glass text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Todos
+            </button>
+            {data?.items.map(({ identity: i }) => {
+              const active = selectedId === i.id;
+              return (
+                <button
+                  key={i.id}
+                  type="button"
+                  onClick={() => setSelectedId(i.id)}
+                  title={i.alien_name}
+                  className={`shrink-0 snap-start relative rounded-2xl p-1 transition ${
+                    active ? "ring-2 ring-accent shadow-neon" : "opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  <img src={i.avatar_url} alt={i.alien_name} className="w-14 h-14 rounded-xl object-cover object-[center_25%]" />
+                  <span className="block text-[9px] font-mono text-center mt-1 max-w-[64px] truncate">{i.alien_name}</span>
+                </button>
+              );
+            })}
+          </div>
+          {selectedId && (() => {
+            const sel = data?.items.find((x) => x.identity.id === selectedId);
+            if (!sel) return null;
+            const iconMap: Record<UpgradeKey, typeof Gauge> = {
+              speed: Gauge, shield: Shield, radar: Radar, energy: Zap, cargo: Package,
+            };
+            return (
+              <div className="glass rounded-2xl p-4 mt-3 border border-accent/30">
+                <div className="flex items-start gap-3">
+                  <img src={sel.identity.avatar_url} alt={sel.identity.alien_name} className="w-20 h-20 rounded-xl object-cover object-[center_25%]" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-display text-lg text-gradient-neon truncate">{sel.identity.alien_name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{sel.identity.species}</div>
+                    <div className="font-mono text-[10px] text-accent">{sel.identity.id_number}</div>
+                  </div>
+                  {sel.identity.ship_image_url && (
+                    <img src={sel.identity.ship_image_url} alt="Nave" className="w-16 h-16 rounded-lg object-cover border border-accent/40" />
+                  )}
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="glass rounded-lg p-2 text-center">
+                    <div className="text-[9px] uppercase font-mono text-muted-foreground">Velocidade</div>
+                    <div className="text-sm font-bold text-cyan-300">{upgradeStats.speedC}</div>
+                  </div>
+                  <div className="glass rounded-lg p-2 text-center">
+                    <div className="text-[9px] uppercase font-mono text-muted-foreground">Reator</div>
+                    <div className="text-sm font-bold text-emerald-300">{upgradeStats.reactor}</div>
+                  </div>
+                  <div className="glass rounded-lg p-2 text-center">
+                    <div className="text-[9px] uppercase font-mono text-muted-foreground">Escudo</div>
+                    <div className="text-sm font-bold text-fuchsia-300">{upgradeStats.shields}</div>
+                  </div>
+                  <div className="glass rounded-lg p-2 text-center">
+                    <div className="text-[9px] uppercase font-mono text-muted-foreground">Radar</div>
+                    <div className="text-sm font-bold text-amber-300">{upgradeStats.radar}</div>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono mb-1.5 flex items-center justify-between">
+                    <span>Upgrades da nave</span>
+                    <Link to="/upgrades" className="text-accent hover:underline normal-case tracking-normal">Evoluir →</Link>
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {UPGRADES.map((u) => {
+                      const Icon = iconMap[u.key];
+                      const lvl = upgradeStats.levels[u.key] ?? 0;
+                      return (
+                        <div key={u.key} className="glass rounded-lg p-1.5 text-center" title={`${u.label} · ${u.desc}`}>
+                          <Icon className="w-3.5 h-3.5 mx-auto text-accent" />
+                          <div className="text-[9px] font-mono mt-0.5 truncate">{u.label}</div>
+                          <div className="text-[10px] font-bold">{lvl}/{MAX_UPGRADE_LEVEL}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[9px] text-muted-foreground mt-1.5 leading-relaxed">
+                    A nave e seus upgrades são compartilhados entre seus pilotos — evoluções valem para toda a frota.
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+        </section>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data?.items.map(({ identity: i, journey, visas }) => {
+        {data?.items.filter(({ identity: i }) => !selectedId || i.id === selectedId).map(({ identity: i, journey, visas }) => {
           const fatal = journey?.final_destination_kind === "fatal";
           const active = journey?.status === "active";
           return (
