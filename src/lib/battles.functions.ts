@@ -196,7 +196,7 @@ export const submitBattleScore = createServerFn({ method: "POST" })
     );
 
     const { error } = await supabaseAdmin.rpc("submit_battle_score", {
-      _battle_id: data.battleId, _score: score,
+      _battle_id: data.battleId, _score: score, _caller_id: userId,
     });
     if (error) throw new Error(error.message);
 
