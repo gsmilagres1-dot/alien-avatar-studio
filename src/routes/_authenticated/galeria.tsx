@@ -12,8 +12,10 @@ import {
   FREE_IDENTITIES_LIMIT,
 } from "@/lib/identity-pack.functions";
 import { useWallet } from "@/hooks/useWallet";
-import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus, ImageIcon, Box } from "lucide-react";
+import { Loader2, Trash2, Plus, Rocket, Skull, Sparkles, MapPin, LifeBuoy, UserPlus, ImageIcon, Box, Gauge, Shield, Radar, Zap, Package } from "lucide-react";
 import { STLPreviewModal } from "@/components/STLPreviewModal";
+import { useUpgradeStats } from "@/hooks/useUpgradeStats";
+import { UPGRADES, MAX_UPGRADE_LEVEL, type UpgradeKey } from "@/lib/upgrades";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
 
