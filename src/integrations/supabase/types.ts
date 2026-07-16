@@ -982,10 +982,12 @@ export type Database = {
         Args: { _accept: boolean; _request_id: string }
         Returns: undefined
       }
-      submit_battle_score: {
-        Args: { _battle_id: string; _score: number }
-        Returns: undefined
-      }
+      submit_battle_score:
+        | { Args: { _battle_id: string; _score: number }; Returns: undefined }
+        | {
+            Args: { _battle_id: string; _caller_id?: string; _score: number }
+            Returns: undefined
+          }
       subscribers_count: { Args: never; Returns: number }
     }
     Enums: {
