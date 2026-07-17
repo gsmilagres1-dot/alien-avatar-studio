@@ -1,57 +1,51 @@
-## Escopo (sem alterar fluxo existente)
+# Plano — Melhorias visuais + GAME HUB "A&A Across Ages"
 
-Só adiciono/ajusto o necessário. Nenhuma tela nova entra no fluxo principal sem você pedir.
+## 1. Botões da home (`src/routes/index.tsx`)
 
-### 1. Quiz atual (galáxia dos 45 destinos)
-- Reduzir de 15 → **9 perguntas distintas** por destino (sorteadas do banco existente).
-- Adicionar seletor de **dificuldade (Fácil / Médio / Difícil)** antes de iniciar cada viagem.
-- **Sempre mostrar resposta certa e errada** imediatamente após clicar (já implementado na última rodada — vou confirmar que está funcionando de verdade antes de continuar).
-- Botão SOS continua funcionando durante o quiz.
+- **"Criar Molde 3D"** ganha cor dourada (gradiente `#e6c067 → #c9a84c → #8b6a1f`) com borda/sombra dourada, ícone `Box` dourado, mantendo o mesmo tamanho lado a lado com "Criar identidade".
+- **Reorganizar os 6 botões de ação (Equipe, Fichas, Mapa, Batalha, Upgrades, Galeria) em favo de hexágono 3×3**, com o **botão central sendo o GAME HUB "A&A · Across Ages"** (novo, destacado com gradiente neon + selo "NOVO"). O botão leva para a nova rota `/gamehub`.
 
-### 2. Prêmio surpresa dos 45 destinos
-- Criar novo prêmio "Super Telescópio Atômico Jimmy Wath" (usar imagem estilo James Webb, padrão dos outros prêmios).
-- **Oculto** na galeria — aparece como "?" / surpresa até desbloqueio.
-- Desbloqueado ao completar os 45 destinos (ouro/prata/bronze da imagem 1 é referência visual dos selos existentes — não muda selos atuais).
+  Layout aproximado (cada célula é um "hex" com `clip-path: polygon` hexagonal, mantendo grid responsivo em mobile):
 
-### 3. Novo módulo: Quiz de Objetos Espaciais (NÃO entra no fluxo dos 45 destinos)
-- Nova seção separada, acessível por um card na home (sem mexer em navegação existente).
-- **70 itens** no mapa:
-  - **30 objetos tecnológicos**: naves, foguetes, satélites, sondas, rovers reais (Voyager, Hubble, JWST, ISS, Perseverance, Curiosity, Apollo 11, SpaceX Dragon, Parker Solar Probe, New Horizons, Cassini, Juno, etc.)
-  - **40 corpos celestes**: estrelas, asteroides, cometas, meteoros (Halley, Bennu, Ceres, Vesta, Sirius, Betelgeuse, Proxima Centauri, Leonidas, etc.)
-- Cada item tem quiz próprio: **15 perguntas no banco, 9 sorteadas por partida**, 3 níveis de dificuldade, mínimo 70% acerto, 3 chances ou SOS. Mesmo formato do quiz atual.
-- Mapa ilustrado com imagens pertinentes (mescla estilo das imagens 2 e 3 anexas — visual escuro/emblemático).
+  ```text
+  [Equipe]   [Fichas]   [Mapa]
+  [Batalha]  [A&A HUB]  [Galeria]
+             [Upgrades]
+  ```
 
-### 4. Referência das imagens anexas
-- Imagem 1 (brasões ouro/prata/bronze): estilo visual dos selos já existentes — não altero.
-- Imagens 2 e 3: paleta/estilo para o novo mapa de objetos espaciais.
+  Em telas estreitas, cai para grid 2 colunas mas o botão A&A HUB permanece em destaque (largura dupla).
 
-## Ordem de execução (para não gastar créditos à toa)
+## 2. Galeria — contadores de selos com emblemas (`src/routes/_authenticated/galeria.tsx`)
 
-Vou fazer em **fases separadas**, confirmando cada uma antes de seguir:
+Nos totais **Bronze / Prata / Ouro**, renderizar o **`DestinationBadge` real** (imagens `badge-bronze.png`, `badge-silver.png`, `badge-gold.png`) em tamanho ~48px, com o número sobreposto no canto inferior direito num chip. Substitui os círculos coloridos genéricos atuais.
 
-**Fase A** (agora): 
-1. Confirmar que resposta certa/errada aparece no quiz atual (verificar código real, não confiar em edições anteriores).
-2. Reduzir quiz atual para 9 perguntas.
-3. Adicionar seletor de dificuldade antes da viagem.
+## 3. Nova rota `/gamehub` — A&A Across Ages (`src/routes/_authenticated/gamehub.tsx`)
 
-**Fase B** (só após você aprovar A):
-4. Criar imagem do telescópio Jimmy Wath.
-5. Adicionar prêmio surpresa oculto dos 45 destinos.
+Aba exclusiva do mini-jogo. Estrutura da tela:
 
-**Fase C** (só após você aprovar B):
-6. Banco de dados dos 70 objetos + 15 perguntas cada (é bastante conteúdo — vou gerar em blocos).
-7. Mapa novo com imagens.
-8. Fluxo do quiz reutilizando componentes existentes.
+- Cabeçalho: título "A&A · ACROSS AGES", HUD do piloto ativo (nave selecionada da galeria, escudos, reator).
+- **Seletor de nave**: usa avatares/identidades criados pelo usuário (via `pilots.functions`); usuário escolhe qual nave pilotar.
+- **Mapa de mineração** (canvas HTML 2D com fundo galáctico):
+  - Nós flutuantes de 4 tipos: **Asteroide ☄️**, **Meteoro 🌠**, **Planeta 🪐**, **Constelação ✨**.
+  - Nave do jogador se move com toque/arrastar (mobile-first) ou setas (desktop).
+  - Ao colidir com um nó → mini-ação "minerar" (barra de progresso 1-2s) → recompensa em **fichas** (via `wallet.functions.addFichas`) e material acumulado local.
+  - Nós reaparecem em posições aleatórias após minerados.
+- **Painel de recursos minerados** (contadores por tipo, sessão).
+- Botões: "Nova rodada", "Voltar ao painel".
 
-## Detalhes técnicos
+Sem backend novo: reusa `wallet.functions.ts` para creditar fichas ganhas (cap de X fichas por sessão para evitar farm). Estado do jogo é local (`useState`).
 
-- Perguntas dos novos objetos: geradas por seed determinístico + curadoria manual em blocos de 10 itens.
-- Mapa novo: rota nova `/mapa-espacial`, isolada — não toca em `/galaxia` nem `/galeria`.
-- Dificuldade: filtro por campo `level` já existente em `intergalactic.ts`.
-- Prêmio Jimmy Wath: entry novo em `prizes` com flag `hidden: true` até condição de desbloqueio.
+## 4. Navegação (`src/routes/_authenticated.tsx`)
 
-## Aviso honesto
+Adicionar link "A&A" (ícone `Gamepad2`) na barra superior, ao lado de "Pilotos".
 
-Fase C é grande (70 itens × 15 perguntas = 1050 perguntas + arte do mapa). Se quiser reduzir escopo aí (ex: começar com 20 itens), me diz antes que eu executo — evita gastar crédito à toa.
+## Arquivos
 
-Confirma se posso começar pela **Fase A**?
+- editar `src/routes/index.tsx` — botão dourado 3D + hexágono com HUB central
+- editar `src/routes/_authenticated/galeria.tsx` — contadores com emblemas reais
+- editar `src/routes/_authenticated.tsx` — link nav A&A
+- criar `src/routes/_authenticated/gamehub.tsx` — tela do jogo
+- criar `src/components/MiningGameCanvas.tsx` — canvas do mini-jogo
+- criar `src/lib/mining-game.ts` — tipos, spawn de nós, recompensas
+
+Confirmar para eu implementar?
