@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/gamehub")({
 function GameHub() {
   const listFn = useServerFn(listMyIdentities);
   const { data, isLoading } = useQuery({ queryKey: ["my-identities"], queryFn: () => listFn() });
-  const identities = useMemo(() => data?.items ?? [], [data]);
+  const identities = useMemo(() => data?.identities ?? [], [data]);
   const [pilotId, setPilotId] = useState<string | null>(null);
   const pilot = identities.find((i) => i.id === pilotId) ?? identities[0] ?? null;
   const stats = useUpgradeStats();
