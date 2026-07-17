@@ -17,6 +17,7 @@ import { Route as AuthenticatedUpgradesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPilotosRouteImport } from './routes/_authenticated/pilotos'
 import { Route as AuthenticatedMapaRouteImport } from './routes/_authenticated/mapa'
 import { Route as AuthenticatedLojaRouteImport } from './routes/_authenticated/loja'
+import { Route as AuthenticatedGamehubRouteImport } from './routes/_authenticated/gamehub'
 import { Route as AuthenticatedGaleriaRouteImport } from './routes/_authenticated/galeria'
 import { Route as AuthenticatedGalaxiaRouteImport } from './routes/_authenticated/galaxia'
 import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
@@ -64,6 +65,11 @@ const AuthenticatedMapaRoute = AuthenticatedMapaRouteImport.update({
 const AuthenticatedLojaRoute = AuthenticatedLojaRouteImport.update({
   id: '/loja',
   path: '/loja',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedGamehubRoute = AuthenticatedGamehubRouteImport.update({
+  id: '/gamehub',
+  path: '/gamehub',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedGaleriaRoute = AuthenticatedGaleriaRouteImport.update({
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/equipes': typeof AuthenticatedEquipesRouteWithChildren
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
+  '/gamehub': typeof AuthenticatedGamehubRoute
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/pilotos': typeof AuthenticatedPilotosRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/equipes': typeof AuthenticatedEquipesRouteWithChildren
   '/galaxia': typeof AuthenticatedGalaxiaRoute
   '/galeria': typeof AuthenticatedGaleriaRoute
+  '/gamehub': typeof AuthenticatedGamehubRoute
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/pilotos': typeof AuthenticatedPilotosRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/_authenticated/equipes': typeof AuthenticatedEquipesRouteWithChildren
   '/_authenticated/galaxia': typeof AuthenticatedGalaxiaRoute
   '/_authenticated/galeria': typeof AuthenticatedGaleriaRoute
+  '/_authenticated/gamehub': typeof AuthenticatedGamehubRoute
   '/_authenticated/loja': typeof AuthenticatedLojaRoute
   '/_authenticated/mapa': typeof AuthenticatedMapaRoute
   '/_authenticated/pilotos': typeof AuthenticatedPilotosRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/equipes'
     | '/galaxia'
     | '/galeria'
+    | '/gamehub'
     | '/loja'
     | '/mapa'
     | '/pilotos'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/equipes'
     | '/galaxia'
     | '/galeria'
+    | '/gamehub'
     | '/loja'
     | '/mapa'
     | '/pilotos'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/_authenticated/equipes'
     | '/_authenticated/galaxia'
     | '/_authenticated/galeria'
+    | '/_authenticated/gamehub'
     | '/_authenticated/loja'
     | '/_authenticated/mapa'
     | '/_authenticated/pilotos'
@@ -293,6 +305,13 @@ declare module '@tanstack/react-router' {
       path: '/loja'
       fullPath: '/loja'
       preLoaderRoute: typeof AuthenticatedLojaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/gamehub': {
+      id: '/_authenticated/gamehub'
+      path: '/gamehub'
+      fullPath: '/gamehub'
+      preLoaderRoute: typeof AuthenticatedGamehubRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/galeria': {
@@ -391,6 +410,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRouteWithChildren
   AuthenticatedGalaxiaRoute: typeof AuthenticatedGalaxiaRoute
   AuthenticatedGaleriaRoute: typeof AuthenticatedGaleriaRoute
+  AuthenticatedGamehubRoute: typeof AuthenticatedGamehubRoute
   AuthenticatedLojaRoute: typeof AuthenticatedLojaRoute
   AuthenticatedMapaRoute: typeof AuthenticatedMapaRoute
   AuthenticatedPilotosRoute: typeof AuthenticatedPilotosRoute
@@ -403,6 +423,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedEquipesRoute: AuthenticatedEquipesRouteWithChildren,
   AuthenticatedGalaxiaRoute: AuthenticatedGalaxiaRoute,
   AuthenticatedGaleriaRoute: AuthenticatedGaleriaRoute,
+  AuthenticatedGamehubRoute: AuthenticatedGamehubRoute,
   AuthenticatedLojaRoute: AuthenticatedLojaRoute,
   AuthenticatedMapaRoute: AuthenticatedMapaRoute,
   AuthenticatedPilotosRoute: AuthenticatedPilotosRoute,
@@ -423,13 +444,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

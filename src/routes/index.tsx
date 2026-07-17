@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Camera, Rocket, Sparkles, Stamp, MapPin, Cpu, Radar, Satellite, Users, Coins, Map, Gauge, Zap, Shield, Signal, Swords, Wrench, Box } from "lucide-react";
+import { Camera, Rocket, Sparkles, Stamp, MapPin, Cpu, Radar, Satellite, Users, Coins, Map, Gauge, Zap, Shield, Signal, Swords, Wrench, Box, Gamepad2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useUpgradeStats } from "@/hooks/useUpgradeStats";
 import cockpitView from "@/assets/cockpit-view.jpg";
@@ -104,7 +104,7 @@ function Landing() {
           </div>
         </div>
 
-        {/* Primary CTA bar — 20% smaller */}
+        {/* Primary CTA bar — Criar identidade + botão dourado "Criar Molde 3D" */}
         <div className="rounded-2xl p-[2px] bg-gradient-to-r from-amber-300 via-orange-400 to-yellow-500 shadow-[0_4px_20px_rgba(251,146,60,0.4)] mb-2.5">
           <div className="rounded-2xl bg-black/85 backdrop-blur p-2 flex gap-1.5">
             <Link
@@ -116,11 +116,17 @@ function Landing() {
             </Link>
             <Link
               to="/galeria"
-              className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl glass text-[10px]"
-              title="Baixar molde 3D dos avatares para Bambu, Flashforge, Creality"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl font-display font-bold text-[11px] transition hover:scale-[1.02]"
+              style={{
+                background: "linear-gradient(135deg, #fff3c2 0%, #e6c067 40%, #c9a84c 70%, #8b6a1f 100%)",
+                color: "#2a1a04",
+                boxShadow: "0 0 12px rgba(230,192,103,0.55), inset 0 1px 0 rgba(255,255,255,0.5)",
+                border: "1px solid rgba(255,220,140,0.6)",
+              }}
+              title="Criar molde 3D dos avatares para Bambu Studio, FlashPrint (Flashforge) e Creality Print"
             >
               <Box className="w-3 h-3" />
-              Molde 3D
+              Criar Molde 3D
             </Link>
           </div>
         </div>
@@ -172,40 +178,82 @@ function Landing() {
           <span className="w-1 h-1 rounded-full bg-white/30" />
         </div>
 
-        {/* 6 hub buttons — 20% smaller */}
+        {/* Hexágono de hubs · 3×3 com A&A Across Ages no centro */}
         <div className="grid grid-cols-3 gap-1.5">
-          {[
-            { to: "/equipes",  icon: Users,  label: "Equipe",   sub: "Intergaláctica", metal: "gold"   as const, hint: "TEAM-Σ" },
-            { to: "/loja",     icon: Coins,  label: "Fichas",   sub: "Loja · S.O.S.",  metal: "gold"   as const, hint: "FIC-€"  },
-            { to: "/mapa",     icon: Map,    label: "Mapa",     sub: "45 destinos",    metal: "plasma" as const, hint: "MAP-∞"  },
-            { to: "/batalha",  icon: Swords, label: "Batalha",  sub: "9 perguntas",    metal: "copper" as const, hint: "BTL-X"  },
-            { to: "/upgrades", icon: Wrench, label: "Upgrades", sub: "Evoluir nave",   metal: "silver" as const, hint: "UPG-7"  },
-            { to: "/galeria",  icon: Rocket, label: "Galeria",  sub: "Suas identid.",  metal: "plasma" as const, hint: "GAL-9"  },
-          ].map((h) => {
-            const m = METAL[h.metal];
-            return (
-              <Link
-                key={h.to}
-                to={h.to}
-                className={`relative rounded-xl p-[2px] bg-gradient-to-br ${m.ring} shadow-[0_4px_14px_rgba(0,0,0,0.6)] active:scale-[0.97] hover:scale-[1.02] transition`}
-              >
-                <div className="rounded-xl bg-gradient-to-b from-black/90 via-black/75 to-black/90 p-1.5 h-full flex flex-col items-center text-center">
-                  <span className="text-[6px] font-mono text-white/40 tracking-widest self-end">{h.hint}</span>
-                  <div className={`relative w-7 h-7 rounded-full p-[2px] bg-gradient-to-br ${m.ring} mb-0.5`}>
-                    <div className="w-full h-full rounded-full bg-black/85 flex items-center justify-center">
-                      <h.icon className={`w-3 h-3 ${m.accent}`} />
+          {(() => {
+            const HEX_CLIP = "polygon(25% 5%, 75% 5%, 98% 50%, 75% 95%, 25% 95%, 2% 50%)";
+            const outer: Array<{ to: string; icon: typeof Users; label: string; sub: string; metal: keyof typeof METAL; hint: string; slot: number }> = [
+              { to: "/equipes",  icon: Users,  label: "Equipe",   sub: "Intergaláctica", metal: "gold",   hint: "TEAM-Σ", slot: 1 },
+              { to: "/loja",     icon: Coins,  label: "Fichas",   sub: "Loja · S.O.S.",  metal: "gold",   hint: "FIC-€",  slot: 2 },
+              { to: "/mapa",     icon: Map,    label: "Mapa",     sub: "45 destinos",    metal: "plasma", hint: "MAP-∞",  slot: 3 },
+              { to: "/batalha",  icon: Swords, label: "Batalha",  sub: "9 perguntas",    metal: "copper", hint: "BTL-X",  slot: 4 },
+              { to: "/galeria",  icon: Rocket, label: "Galeria",  sub: "Suas identid.",  metal: "plasma", hint: "GAL-9",  slot: 6 },
+              { to: "/upgrades", icon: Wrench, label: "Upgrades", sub: "Evoluir nave",   metal: "silver", hint: "UPG-7",  slot: 8 },
+            ];
+            const cells: React.ReactNode[] = [];
+            for (let i = 1; i <= 9; i++) {
+              if (i === 5) {
+                cells.push(
+                  <Link
+                    key="hub"
+                    to="/gamehub"
+                    className="relative active:scale-[0.97] hover:scale-[1.03] transition"
+                    style={{ gridColumn: 2, gridRow: 2 }}
+                  >
+                    <div
+                      className="rounded-xl p-[2.5px]"
+                      style={{
+                        background: "conic-gradient(from 0deg, #22d3ee, #a855f7, #f0abfc, #22d3ee)",
+                        clipPath: HEX_CLIP,
+                        boxShadow: "0 0 18px rgba(168,85,247,0.55)",
+                      }}
+                    >
+                      <div
+                        className="bg-black/90 p-1.5 h-full flex flex-col items-center justify-center text-center"
+                        style={{ clipPath: HEX_CLIP }}
+                      >
+                        <span className="absolute top-0.5 right-1 text-[6px] font-mono font-bold text-fuchsia-300 bg-black/70 px-1 rounded-sm tracking-widest">NOVO</span>
+                        <Gamepad2 className="w-4 h-4 text-fuchsia-300 mb-0.5" />
+                        <div className="font-display text-[9px] leading-none text-gradient-neon">A&amp;A HUB</div>
+                        <div className="text-[7px] font-mono text-cyan-200/80 leading-tight">Across Ages</div>
+                      </div>
                     </div>
-                    <span
-                      className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse"
-                      style={{ backgroundColor: m.glow, boxShadow: `0 0 6px ${m.glow}` }}
-                    />
+                  </Link>,
+                );
+                continue;
+              }
+              const h = outer.find((o) => o.slot === i);
+              if (!h) { cells.push(<div key={`e${i}`} />); continue; }
+              const m = METAL[h.metal];
+              cells.push(
+                <Link
+                  key={h.to}
+                  to={h.to}
+                  className={`relative p-[2px] bg-gradient-to-br ${m.ring} shadow-[0_4px_14px_rgba(0,0,0,0.6)] active:scale-[0.97] hover:scale-[1.03] transition`}
+                  style={{ clipPath: HEX_CLIP }}
+                >
+                  <div
+                    className="bg-gradient-to-b from-black/90 via-black/75 to-black/90 p-1.5 h-full flex flex-col items-center text-center"
+                    style={{ clipPath: HEX_CLIP }}
+                  >
+                    <span className="text-[6px] font-mono text-white/40 tracking-widest self-end">{h.hint}</span>
+                    <div className={`relative w-7 h-7 rounded-full p-[2px] bg-gradient-to-br ${m.ring} mb-0.5`}>
+                      <div className="w-full h-full rounded-full bg-black/85 flex items-center justify-center">
+                        <h.icon className={`w-3 h-3 ${m.accent}`} />
+                      </div>
+                      <span
+                        className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full animate-pulse"
+                        style={{ backgroundColor: m.glow, boxShadow: `0 0 6px ${m.glow}` }}
+                      />
+                    </div>
+                    <div className="font-display text-[10px] text-foreground leading-tight">{h.label}</div>
+                    <div className="text-[7px] text-white/55 leading-tight">{h.sub}</div>
                   </div>
-                  <div className="font-display text-[10px] text-foreground leading-tight">{h.label}</div>
-                  <div className="text-[7px] text-white/55 leading-tight">{h.sub}</div>
-                </div>
-              </Link>
-            );
-          })}
+                </Link>,
+              );
+            }
+            return cells;
+          })()}
         </div>
 
 
