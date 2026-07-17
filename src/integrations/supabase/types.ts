@@ -888,7 +888,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
+      } mining_state: {
+  Row: {
+    crashed_count: number
+    created_at: string
+    landed_count: number
+    level: number
+    updated_at: string
+    user_id: string
+  }
+  Insert: {
+    crashed_count?: number
+    created_at?: string
+    landed_count?: number
+    level?: number
+    updated_at?: string
+    user_id: string
+  }
+  Update: {
+    crashed_count?: number
+    created_at?: string
+    landed_count?: number
+    level?: number
+    updated_at?: string
+    user_id?: string
+  }
+  Relationships: []
+}
+mining_progress: {
+  Row: {
+    created_at: string
+    id: string
+    material_key: string
+    total_collected: number
+    updated_at: string
+    user_id: string
+  }
+  Insert: {
+    created_at?: string
+    id?: string
+    material_key: string
+    total_collected?: number
+    updated_at?: string
+    user_id: string
+  }
+  Update: {
+    created_at?: string
+    id?: string
+    material_key?: string
+    total_collected?: number
+    updated_at?: string
+    user_id?: string
+  }
+  Relationships: []
+  }
     }
     Views: {
       public_subscribers: {
