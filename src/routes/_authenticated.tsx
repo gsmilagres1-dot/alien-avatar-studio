@@ -51,6 +51,9 @@ function AuthLayout() {
             <Link to="/galaxia" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
               <Globe2 className="w-3.5 h-3.5" /> <span>Viagem</span>
             </Link>
+            <Link to="/across-age" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
+  <Gamepad2 className="w-3.5 h-3.5" /> <span>Across Age</span>
+</Link>
             <Link to="/galeria" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
               <Images className="w-3.5 h-3.5" /> <span>Galeria</span>
             </Link>
