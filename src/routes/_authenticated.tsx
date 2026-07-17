@@ -52,16 +52,13 @@ function AuthLayout() {
               <Globe2 className="w-3.5 h-3.5" /> <span>Viagem</span>
             </Link>
             <Link to="/across-age" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
-  <Gamepad2 className="w-3.5 h-3.5" /> <span>Across Age</span>
-</Link>
+              <Gamepad2 className="w-3.5 h-3.5" /> <span>Across Age</span>
+            </Link>
             <Link to="/galeria" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
               <Images className="w-3.5 h-3.5" /> <span>Galeria</span>
             </Link>
             <Link to="/pilotos" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1">
               <Users className="w-3.5 h-3.5" /> <span>Pilotos</span>
-            </Link>
-            <Link to="/gamehub" className="px-2 py-1.5 rounded-full hover:bg-accent/10 inline-flex items-center gap-1 text-fuchsia-300" title="A&A Across Ages · Game Hub">
-              <Gamepad2 className="w-3.5 h-3.5" /> <span>A&amp;A</span>
             </Link>
             <LanguageSwitcher compact />
           </div>
