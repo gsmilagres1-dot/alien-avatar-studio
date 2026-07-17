@@ -196,7 +196,7 @@ function Landing() {
                 cells.push(
                   <Link
                     key="hub"
-                    to="/gamehub"
+                    to="/across-age"
                     className="relative active:scale-[0.97] hover:scale-[1.03] transition"
                     style={{ gridColumn: 2, gridRow: 2 }}
                   >
