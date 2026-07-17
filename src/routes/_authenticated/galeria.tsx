@@ -18,6 +18,9 @@ import { useUpgradeStats } from "@/hooks/useUpgradeStats";
 import { UPGRADES, MAX_UPGRADE_LEVEL, type UpgradeKey } from "@/lib/upgrades";
 import { toast } from "sonner";
 import { ShareProfileImage } from "@/components/ShareProfileImage";
+import badgeGold from "@/assets/badge-gold.png";
+import badgeSilver from "@/assets/badge-silver.png";
+import badgeBronze from "@/assets/badge-bronze.png";
 
 
 export const Route = createFileRoute("/_authenticated/galeria")({ component: Galeria });
