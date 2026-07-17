@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
-import { Sparkles, Rocket, Images, Globe2, Home, Share2, Users } from "lucide-react";
+import { Sparkles, Rocket, Images, Globe2, Home, Share2, Users, Gamepad2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { toast } from "sonner";
 
