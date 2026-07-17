@@ -338,20 +338,25 @@ function Galeria() {
                     { gold: 0, silver: 0, bronze: 0 } as Record<"gold" | "silver" | "bronze", number>,
                   );
                   const tierMeta = [
-                    { key: "gold" as const, label: "Ouro", cls: "from-amber-300 to-yellow-600 text-black" },
-                    { key: "silver" as const, label: "Prata", cls: "from-slate-200 to-slate-400 text-black" },
-                    { key: "bronze" as const, label: "Bronze", cls: "from-orange-400 to-amber-700 text-black" },
+                    { key: "gold" as const,   label: "Ouro",   img: badgeGold,   text: "text-amber-300" },
+                    { key: "silver" as const, label: "Prata",  img: badgeSilver, text: "text-slate-200" },
+                    { key: "bronze" as const, label: "Bronze", img: badgeBronze, text: "text-orange-300" },
                   ];
                   return (
                     <div className="mt-3 rounded-xl border border-accent/20 bg-black/30 p-2">
                       <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-mono mb-1.5 px-1">
                         Selos · {visas.length} destino{visas.length > 1 ? "s" : ""}
                       </div>
-                      <div className="flex gap-1.5 justify-center">
+                      <div className="grid grid-cols-3 gap-1.5">
                         {tierMeta.map((t) => (
-                          <div key={t.key} className={`flex-1 rounded-lg bg-gradient-to-b ${t.cls} px-2 py-1.5 text-center font-mono`}>
-                            <div className="text-[9px] uppercase tracking-widest opacity-80">{t.label}</div>
-                            <div className="text-base font-bold leading-none">{counts[t.key]}</div>
+                          <div key={t.key} className="relative flex flex-col items-center bg-black/40 rounded-lg px-1 py-1.5">
+                            <div className="relative">
+                              <img src={t.img} alt={`Selo ${t.label}`} className="w-11 h-11 object-contain drop-shadow-[0_0_6px_rgba(0,0,0,0.6)]" />
+                              <span className="absolute -bottom-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-black/85 border border-accent/40 flex items-center justify-center text-[10px] font-bold font-mono text-accent">
+                                {counts[t.key]}
+                              </span>
+                            </div>
+                            <span className={`mt-1 text-[8px] font-mono uppercase tracking-widest ${t.text}`}>{t.label}</span>
                           </div>
                         ))}
                       </div>
