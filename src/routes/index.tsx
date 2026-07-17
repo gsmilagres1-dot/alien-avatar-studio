@@ -104,7 +104,7 @@ function Landing() {
           </div>
         </div>
 
-        {/* Primary CTA bar — 20% smaller */}
+        {/* Primary CTA bar — Criar identidade + botão dourado "Criar Molde 3D" */}
         <div className="rounded-2xl p-[2px] bg-gradient-to-r from-amber-300 via-orange-400 to-yellow-500 shadow-[0_4px_20px_rgba(251,146,60,0.4)] mb-2.5">
           <div className="rounded-2xl bg-black/85 backdrop-blur p-2 flex gap-1.5">
             <Link
@@ -116,11 +116,17 @@ function Landing() {
             </Link>
             <Link
               to="/galeria"
-              className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl glass text-[10px]"
-              title="Baixar molde 3D dos avatares para Bambu, Flashforge, Creality"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl font-display font-bold text-[11px] transition hover:scale-[1.02]"
+              style={{
+                background: "linear-gradient(135deg, #fff3c2 0%, #e6c067 40%, #c9a84c 70%, #8b6a1f 100%)",
+                color: "#2a1a04",
+                boxShadow: "0 0 12px rgba(230,192,103,0.55), inset 0 1px 0 rgba(255,255,255,0.5)",
+                border: "1px solid rgba(255,220,140,0.6)",
+              }}
+              title="Criar molde 3D dos avatares para Bambu Studio, FlashPrint (Flashforge) e Creality Print"
             >
               <Box className="w-3 h-3" />
-              Molde 3D
+              Criar Molde 3D
             </Link>
           </div>
         </div>
