@@ -58,14 +58,15 @@ function Landing() {
     <main className="relative z-10 min-h-screen overflow-hidden">
       {/* ===== COCKPIT VIEWPORT (arched window) — larger, no hero text ===== */}
       <section className="relative">
-        <div className="relative aspect-[4/3] w-full">
+        <div className="relative aspect-[16/11] w-full bg-black">
           <img
             src={cockpitView}
             alt="Vista do cockpit da nave alien"
             width={1536}
             height={1152}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain"
           />
+
           {/* HUD overlay top */}
           <div className="absolute top-0 inset-x-0 flex items-center justify-between px-3 py-2 bg-gradient-to-b from-black/70 to-transparent">
             <div className="flex items-center gap-1.5 text-[9px] font-mono tracking-widest uppercase text-cyan-300">
