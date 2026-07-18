@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Lock, Coins, Check } from "lucide-react";
+import { Lock, Coins, Check, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { SHIPS, RACES } from "@/lib/alien";
-import { getHangarState, setHangarSelection, purchaseSkin, type ShipModel, type RaceSkin } from "@/lib/mining.functions";
+import {
+  getHangarState, setHangarSelection, purchaseSkin, purchaseShip,
+  EXTRA_SHIPS, type ShipModel, type RaceSkin,
+} from "@/lib/mining.functions";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
@@ -27,6 +30,23 @@ const SHIP_IMAGES: Record<ShipModel, string> = {
   offroad: shipOffroad,
   corrida: shipCorrida,
   teleportadora: shipTeleportadora,
+};
+
+// TODO: trocar por imagens reais (geradas pela IA do app ou licenciadas)
+// assim que estiverem prontas — por enquanto usa as 4 naves existentes
+// como placeholder visual pras 11 naves extras do hangar.
+const EXTRA_SHIP_IMAGES: Record<string, string> = {
+  aerodeslizador: shipEsportiva,
+  "vtol-classica": shipOffroad,
+  quadricoptero: shipCorrida,
+  furtiva: shipTeleportadora,
+  "bronze-jato": shipEsportiva,
+  "asa-negra": shipOffroad,
+  "limusine-voadora": shipCorrida,
+  "biplano-retro": shipTeleportadora,
+  "prancha-prata": shipEsportiva,
+  hexacoptero: shipOffroad,
+  "concept-vermelho": shipCorrida,
 };
 
 const SKIN_IMAGES: Record<RaceSkin, string> = {
@@ -60,12 +80,14 @@ export function HangarSelect({
   const getHangar = useServerFn(getHangarState);
   const saveSelection = useServerFn(setHangarSelection);
   const buySkin = useServerFn(purchaseSkin);
+  const buyShip = useServerFn(purchaseShip);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({ queryKey: ["hangar-state"], queryFn: () => getHangar() });
-  const [ship, setShip] = useState<ShipModel | null>(null);
+  const [ship, setShip] = useState<string | null>(null);
   const [skin, setSkin] = useState<RaceSkin | null | undefined>(undefined); // undefined = ainda não escolheu nada (usa próprio avatar)
   const [busySkin, setBusySkin] = useState<RaceSkin | null>(null);
+  const [busyShip, setBusyShip] = useState<string | null>(null);
 
   if (isLoading || !data) {
     return <div className="text-center text-sm text-muted-foreground py-10">Carregando hangar...</div>;
@@ -74,6 +96,26 @@ export function HangarSelect({
   const selectedShip = ship ?? data.selectedShip;
   const selectedSkin = skin === undefined ? data.selectedSkin : skin;
   const unlockedSet = new Set(data.unlockedSkins);
+  const unlockedShipSet = new Set(data.unlockedExtraShips);
+
+  async function handleBuyShip(id: string) {
+    setBusyShip(id);
+    try {
+      const result = await buyShip({ data: { ship: id } });
+      if (result.alreadyOwned) {
+        toast.info("Você já tem essa nave.");
+      } else {
+        toast.success(`Nave desbloqueada! Saldo: ${result.balance} 🪙`);
+      }
+      qc.invalidateQueries({ queryKey: ["hangar-state"] });
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+      setShip(id);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não deu pra comprar essa nave.");
+    } finally {
+      setBusyShip(null);
+    }
+  }
 
   async function handleBuy(s: RaceSkin) {
     setBusySkin(s);
@@ -100,7 +142,8 @@ export function HangarSelect({
     } catch (e) {
       console.error(e);
     }
-    const shipImageUrl = selectedShip ? SHIP_IMAGES[selectedShip] : ownShipUrl;
+    const shipImageUrl =
+      (SHIP_IMAGES as Record<string, string>)[selectedShip] ?? EXTRA_SHIP_IMAGES[selectedShip] ?? ownShipUrl;
     const pilotAvatarUrl = selectedSkin ? SKIN_IMAGES[selectedSkin] : ownAvatarUrl;
     onStart(shipImageUrl, pilotAvatarUrl);
   }
@@ -120,7 +163,16 @@ export function HangarSelect({
               selectedShip === s.id ? "border-accent shadow-neon" : "border-border"
             }`}
           >
-            <img src={SHIP_IMAGES[s.id]} alt={s.name} className="w-full aspect-square object-cover" />
+            <img
+              src={SHIP_IMAGES[s.id]}
+              alt={s.name}
+              className="w-full aspect-square object-cover"
+              style={{
+                transform: "scale(1.08)",
+                WebkitMaskImage: "radial-gradient(ellipse 78% 78% at 50% 46%, black 62%, transparent 92%)",
+                maskImage: "radial-gradient(ellipse 78% 78% at 50% 46%, black 62%, transparent 92%)",
+              }}
+            />
             <div className="p-1.5 bg-black/40">
               <div className="text-[11px] font-display flex items-center gap-1">
                 {s.name} {selectedShip === s.id && <Check className="w-3 h-3 text-accent" />}
@@ -129,6 +181,58 @@ export function HangarSelect({
             </div>
           </button>
         ))}
+      </div>
+
+      <h3 className="font-display text-sm mb-2 text-accent">
+        Naves extras <span className="text-[10px] text-muted-foreground">— 4 grátis, as demais por 800 🪙 cada</span>
+      </h3>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+        {EXTRA_SHIPS.map((s) => {
+          const unlocked = unlockedShipSet.has(s.id);
+          return (
+            <div key={s.id} className="flex flex-col gap-1">
+              <button
+                onClick={() => (unlocked ? setShip(s.id) : handleBuyShip(s.id))}
+                disabled={busyShip === s.id}
+                className={`relative rounded-xl overflow-hidden border-2 text-left transition ${
+                  selectedShip === s.id ? "border-accent shadow-neon" : "border-border"
+                }`}
+              >
+                <img
+                  src={EXTRA_SHIP_IMAGES[s.id]}
+                  alt={s.name}
+                  className={`w-full aspect-square object-cover ${unlocked ? "" : "opacity-35 grayscale"}`}
+                  style={{
+                    transform: "scale(1.08)",
+                    WebkitMaskImage: "radial-gradient(ellipse 78% 78% at 50% 46%, black 62%, transparent 92%)",
+                    maskImage: "radial-gradient(ellipse 78% 78% at 50% 46%, black 62%, transparent 92%)",
+                  }}
+                />
+                {!unlocked && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/30">
+                    <Lock className="w-4 h-4 text-white" />
+                    <span className="text-[9px] flex items-center gap-0.5 text-amber-200 bg-black/60 px-1.5 rounded-full">
+                      <Coins className="w-2.5 h-2.5" /> {s.price}
+                    </span>
+                  </div>
+                )}
+                <div className="p-1.5 bg-black/40">
+                  <div className="text-[11px] font-display flex items-center gap-1">
+                    {s.name} {selectedShip === s.id && <Check className="w-3 h-3 text-accent" />}
+                  </div>
+                </div>
+              </button>
+              {unlocked && (
+                <button
+                  onClick={() => toast.info("Mudar de cor precisa gerar uma imagem nova pela IA — em breve.")}
+                  className="flex items-center justify-center gap-1 text-[9px] text-muted-foreground border border-border rounded-full py-1"
+                >
+                  <Palette className="w-2.5 h-2.5" /> Mudar cor (IA)
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <h3 className="font-display text-sm mb-2 text-accent">
@@ -186,4 +290,4 @@ export function HangarSelect({
       </button>
     </div>
   );
-}
+                              }
