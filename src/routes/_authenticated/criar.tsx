@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Camera, Loader2, Sparkles, Wand2, Calendar as CalendarIcon, Check, RotateCcw, Rocket, Box, ImageIcon } from "lucide-react";
 import { STLPreviewModal } from "@/components/STLPreviewModal";
 import techScanBtn from "@/assets/tech-scan-btn.png";
-import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity } from "@/lib/alien";
+import { RACES, SHIPS, generateAlienIdentity, raceFromBirthdate, type Gender, type AlienIdentity, type ShipId } from "@/lib/alien";
 import { AlienCard } from "@/components/AlienCard";
 import { ShareButtons } from "@/components/ShareButtons";
 import { createAvatarDraft, getActivePayment, saveIdentity, generateShipImage, restartIdentityFlow } from "@/lib/identities.functions";
