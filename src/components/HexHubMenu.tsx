@@ -93,44 +93,45 @@ function ContentLayer({ item, pos }: { item: Item; pos: { left: string; top: str
   return (
     <span
       className="absolute flex flex-col items-center text-center pointer-events-none"
-      style={{ left: pos.left, top: pos.top, transform: "translate(-50%, -50%)", width: "13cqw" }}
+      style={{ left: pos.left, top: pos.top, transform: "translate(-50%, -50%)", width: "18cqw" }}
     >
       <span
         className="absolute font-mono text-white/40 tracking-widest whitespace-nowrap"
-        style={{ top: "-2cqw", fontSize: "0.85cqw" }}
+        style={{ top: "-3.2cqw", fontSize: "1.4cqw" }}
       >
         {item.hint}
       </span>
       {/* MESMO círculo do ícone do original: anel + fundo preto + pulso */}
       <span
         className={`relative rounded-full bg-gradient-to-br ${item.ring}`}
-        style={{ width: "4cqw", height: "4cqw", padding: "0.32cqw", marginBottom: "0.2cqw" }}
+        style={{ width: "6.5cqw", height: "6.5cqw", padding: "0.5cqw", marginBottom: "0.4cqw" }}
       >
         <span className="w-full h-full rounded-full bg-black/85 flex items-center justify-center">
-          <Icon style={{ width: "1.8cqw", height: "1.8cqw" }} className={item.accent} />
+          <Icon style={{ width: "3cqw", height: "3cqw" }} className={item.accent} />
         </span>
         <span
           className="absolute rounded-full animate-pulse"
           style={{
-            top: "-0.12cqw",
-            right: "-0.12cqw",
-            width: "0.9cqw",
-            height: "0.9cqw",
+            top: "-0.2cqw",
+            right: "-0.2cqw",
+            width: "1.4cqw",
+            height: "1.4cqw",
             backgroundColor: item.glow,
-            boxShadow: `0 0 0.9cqw ${item.glow}`,
+            boxShadow: `0 0 1.4cqw ${item.glow}`,
           }}
         />
       </span>
       <span
         className="font-display text-foreground leading-tight whitespace-nowrap"
-        style={{ fontSize: "1.3cqw" }}
+        style={{ fontSize: "2.2cqw" }}
       >
         {item.label}
       </span>
-      <span className="text-white/55 leading-tight whitespace-nowrap" style={{ fontSize: "0.9cqw" }}>
+      <span className="text-white/55 leading-tight whitespace-nowrap" style={{ fontSize: "1.5cqw" }}>
         {item.sub}
       </span>
     </span>
+
   );
 }
 
