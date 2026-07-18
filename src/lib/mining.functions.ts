@@ -12,6 +12,25 @@ const FICHAS_LEVEL_BONUS = 10;
 export const SHIP_MODELS = ["esportiva", "offroad", "corrida", "teleportadora"] as const;
 export type ShipModel = (typeof SHIP_MODELS)[number];
 
+// Naves extras só do hangar de mineração (não afetam a identidade/nave
+// "oficial" do jogador, que continua sendo as 4 de cima). As 4 primeiras
+// são grátis; as 7 seguintes custam fichas até serem compradas.
+export const EXTRA_SHIPS = [
+  { id: "aerodeslizador", name: "Aerodeslizador", price: 0 },
+  { id: "vtol-classica", name: "VTOL Clássica", price: 0 },
+  { id: "quadricoptero", name: "Quadricóptero", price: 0 },
+  { id: "furtiva", name: "Furtiva", price: 0 },
+  { id: "bronze-jato", name: "Jato Bronze", price: 800 },
+  { id: "asa-negra", name: "Asa Negra", price: 800 },
+  { id: "limusine-voadora", name: "Limusine Voadora", price: 800 },
+  { id: "biplano-retro", name: "Biplano Retrô", price: 800 },
+  { id: "prancha-prata", name: "Prancha Prateada", price: 800 },
+  { id: "hexacoptero", name: "Hexacóptero", price: 800 },
+  { id: "concept-vermelho", name: "Concept Vermelho", price: 800 },
+] as const;
+export type ExtraShipId = (typeof EXTRA_SHIPS)[number]["id"];
+const ALL_SHIP_KEYS = [...SHIP_MODELS, ...EXTRA_SHIPS.map((s) => s.id)] as unknown as [string, ...string[]];
+
 // Mesmas 12 raças de FALLBACK_RACE_IMAGES em identities.server.ts.
 export const RACE_SKINS = [
   "starseed", "nordico", "grey", "reptiliano", "draconiano", "insectoide",
@@ -131,12 +150,15 @@ export const getHangarState = createServerFn({ method: "GET" })
     );
     const freeUnlocked = RACE_SKINS.slice(0, freeUnlockedCount);
     const purchased = (progress.purchased_skins as string[] | null) ?? [];
+    const purchasedShips = (progress.purchased_ships as string[] | null) ?? [];
 
     return {
       shipModels: SHIP_MODELS,
+      extraShips: EXTRA_SHIPS,
+      unlockedExtraShips: EXTRA_SHIPS.filter((s) => s.price === 0 || purchasedShips.includes(s.id)).map((s) => s.id),
       raceSkins: RACE_SKINS,
       unlockedSkins: Array.from(new Set([...freeUnlocked, ...purchased])) as RaceSkin[],
-      selectedShip: (progress.selected_ship as ShipModel) ?? "esportiva",
+      selectedShip: (progress.selected_ship as string) ?? "esportiva",
       selectedSkin: (progress.selected_skin as RaceSkin | null) ?? null,
       landed: progress.landed as number,
       skinPrice: SKIN_PRICE,
@@ -145,7 +167,7 @@ export const getHangarState = createServerFn({ method: "GET" })
   });
 
 const selectionInput = z.object({
-  selectedShip: z.enum(SHIP_MODELS),
+  selectedShip: z.enum(ALL_SHIP_KEYS),
   selectedSkin: z.enum(RACE_SKINS).nullable(),
 });
 
@@ -155,10 +177,17 @@ export const setHangarSelection = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await ensureProgress(supabaseAdmin, userId);
+    const progress = await ensureProgress(supabaseAdmin, userId);
+
+    const extraShip = EXTRA_SHIPS.find((s) => s.id === data.selectedShip);
+    if (extraShip && extraShip.price > 0) {
+      const purchasedShips = (progress.purchased_ships as string[] | null) ?? [];
+      if (!purchasedShips.includes(data.selectedShip)) {
+        throw new Error("Essa nave ainda não foi desbloqueada");
+      }
+    }
 
     if (data.selectedSkin) {
-      const progress = await ensureProgress(supabaseAdmin, userId);
       const freeUnlockedCount = Math.min(
         RACE_SKINS.length,
         Math.floor((progress.landed as number) / UNLOCK_EVERY_N_COLLECTS) + 1
@@ -176,6 +205,38 @@ export const setHangarSelection = createServerFn({ method: "POST" })
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+const purchaseShipInput = z.object({
+  ship: z.enum(EXTRA_SHIPS.map((s) => s.id) as unknown as [string, ...string[]]),
+});
+
+export const purchaseShip = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => purchaseShipInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const progress = await ensureProgress(supabaseAdmin, userId);
+    const purchasedShips = (progress.purchased_ships as string[] | null) ?? [];
+    if (purchasedShips.includes(data.ship)) return { ok: true, alreadyOwned: true, balance: null as number | null };
+
+    const shipDef = EXTRA_SHIPS.find((s) => s.id === data.ship)!;
+    const { data: balance, error: fichasErr } = await supabaseAdmin.rpc("adjust_fichas", {
+      _user_id: userId,
+      _delta: -shipDef.price,
+      _reason: "compra_nave_extra",
+      _meta: { ship: data.ship },
+    });
+    if (fichasErr) throw new Error(fichasErr.message);
+
+    const { error } = await supabaseAdmin
+      .from("mining_progress")
+      .update({ purchased_ships: [...purchasedShips, data.ship] })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+
+    return { ok: true, alreadyOwned: false, balance: balance as number };
   });
 
 const purchaseInput = z.object({ skin: z.enum(RACE_SKINS) });
@@ -206,3 +267,4 @@ export const purchaseSkin = createServerFn({ method: "POST" })
 
     return { ok: true, alreadyOwned: false, balance: balance as number };
   });
+    
