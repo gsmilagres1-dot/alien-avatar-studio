@@ -73,7 +73,7 @@ function Galaxia() {
   const [quizLoading, setQuizLoading] = useState(false);
   const [lastResult, setLastResult] = useState<{ passed: boolean; score: number; attemptsLeft: number; fatal: { name: string; transport: string } | null; tier: "bronze" | "silver" | "gold" | null; fichasEarned?: number } | null>(null);
   const [review, setReview] = useState<number[] | null>(null);
-  const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
+  const [shipCategory, setShipCategory] = useState<ShipId>("esportiva");
   const [shipLoading, setShipLoading] = useState(false);
   const [journeyStep, setJourneyStep] = useState<"passport" | "destination" | "ship">("passport");
 
