@@ -23,6 +23,7 @@ import { Route as AuthenticatedGalaxiaRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
 import { Route as AuthenticatedCriarRouteImport } from './routes/_authenticated/criar'
 import { Route as AuthenticatedBatalhaRouteImport } from './routes/_authenticated/batalha'
+import { Route as AuthenticatedAcrossAgeRouteImport } from './routes/_authenticated/across-age'
 import { Route as AuthenticatedEquipesDestinosRouteImport } from './routes/_authenticated/equipes.destinos'
 import { Route as AuthenticatedBatalhaIdRouteImport } from './routes/_authenticated/batalha.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -97,6 +98,11 @@ const AuthenticatedBatalhaRoute = AuthenticatedBatalhaRouteImport.update({
   path: '/batalha',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAcrossAgeRoute = AuthenticatedAcrossAgeRouteImport.update({
+  id: '/across-age',
+  path: '/across-age',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedEquipesDestinosRoute =
   AuthenticatedEquipesDestinosRouteImport.update({
     id: '/destinos',
@@ -124,6 +130,7 @@ const AuthenticatedEquipesConviteTokenRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/across-age': typeof AuthenticatedAcrossAgeRoute
   '/batalha': typeof AuthenticatedBatalhaRouteWithChildren
   '/criar': typeof AuthenticatedCriarRoute
   '/equipes': typeof AuthenticatedEquipesRouteWithChildren
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/across-age': typeof AuthenticatedAcrossAgeRoute
   '/batalha': typeof AuthenticatedBatalhaRouteWithChildren
   '/criar': typeof AuthenticatedCriarRoute
   '/equipes': typeof AuthenticatedEquipesRouteWithChildren
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/across-age': typeof AuthenticatedAcrossAgeRoute
   '/_authenticated/batalha': typeof AuthenticatedBatalhaRouteWithChildren
   '/_authenticated/criar': typeof AuthenticatedCriarRoute
   '/_authenticated/equipes': typeof AuthenticatedEquipesRouteWithChildren
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/across-age'
     | '/batalha'
     | '/criar'
     | '/equipes'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/across-age'
     | '/batalha'
     | '/criar'
     | '/equipes'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/across-age'
     | '/_authenticated/batalha'
     | '/_authenticated/criar'
     | '/_authenticated/equipes'
@@ -349,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBatalhaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/across-age': {
+      id: '/_authenticated/across-age'
+      path: '/across-age'
+      fullPath: '/across-age'
+      preLoaderRoute: typeof AuthenticatedAcrossAgeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/equipes/destinos': {
       id: '/_authenticated/equipes/destinos'
       path: '/destinos'
@@ -405,6 +424,7 @@ const AuthenticatedEquipesRouteWithChildren =
   AuthenticatedEquipesRoute._addFileChildren(AuthenticatedEquipesRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAcrossAgeRoute: typeof AuthenticatedAcrossAgeRoute
   AuthenticatedBatalhaRoute: typeof AuthenticatedBatalhaRouteWithChildren
   AuthenticatedCriarRoute: typeof AuthenticatedCriarRoute
   AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRouteWithChildren
@@ -418,6 +438,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAcrossAgeRoute: AuthenticatedAcrossAgeRoute,
   AuthenticatedBatalhaRoute: AuthenticatedBatalhaRouteWithChildren,
   AuthenticatedCriarRoute: AuthenticatedCriarRoute,
   AuthenticatedEquipesRoute: AuthenticatedEquipesRouteWithChildren,
