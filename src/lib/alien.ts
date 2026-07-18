@@ -134,6 +134,7 @@ export const SHIPS = [
   { id: "esportiva" as const, name: "Esportiva", desc: "Aerodinâmica, veloz, casco prateado", palette: "neon cyan, chrome silver, indigo glow" },
   { id: "offroad" as const,  name: "Off-road",  desc: "Pernas mecânicas, blindagem para luas hostis", palette: "rust orange, gunmetal, amber lights" },
   { id: "corrida" as const,  name: "Corrida",   desc: "Pod racer com motores de plasma", palette: "magenta, hot pink, plasma white" },
+  { id: "teleportadora" as const, name: "Teleportadora", desc: "Cabine telefônica retrofuturista com anéis de teletransporte", palette: "electric blue, magenta arcs, deep space red" },
 ] as const;
 
 export type ShipId = (typeof SHIPS)[number]["id"];
@@ -270,7 +271,7 @@ export function buildAvatarPrompt(opts: {
   return `Cinematic reimagining of the uploaded human photo as a ${race.name} (${race.species}) alien from ${race.origin}. ${visual}. ${genderHint}. ${variantTwist}. CRITICAL: preserve the ENTIRE composition of the source selfie exactly as framed — same crop, same pose, same camera angle. Keep ALL visible elements intact and morph them into the alien aesthetic: hair, hairstyle and hair color, shoulders, chest, torso, abdomen and any visible body parts, plus every accessory and clothing item present in the photo (earrings, necklaces, glasses, caps, hats, shirts, jackets, jewelry, makeup, tattoos). Do NOT crop, do NOT zoom in on the face, do NOT remove or replace accessories or clothing — only transform the human skin, eyes and facial features into this alien race while keeping identity recognizable. Realistic photographic quality, cinematic movie-poster lighting, cosmic nebula background with purple and neon green stardust. No text, no watermark.`;
 }
 
-export function buildShipPrompt(category: "esportiva" | "offroad" | "corrida", planet: string) {
+export function buildShipPrompt(category: ShipId, planet: string) {
   const ship = SHIPS.find((s) => s.id === category)!;
   return `Cinematic alien ${ship.name} spacecraft from ${planet}, ${ship.desc}, ${ship.palette}. Inspired by classic sci-fi vehicles (Star Wars pod racers, Mass Effect Normandy, Halo Banshee, Star Trek shuttles, Tron light cycles). Hovering, side three-quarter view, dramatic cinematic lighting, cosmic nebula background, ultra detailed, no text, no watermark.`;
-}
+    }
