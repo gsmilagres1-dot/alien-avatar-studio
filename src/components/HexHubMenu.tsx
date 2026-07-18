@@ -20,7 +20,7 @@ import { Users, Coins, Map, Rocket, Wrench, Swords, Gamepad2 } from "lucide-reac
 
 type Item = {
   to: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   label: string;
   sub: string;
   hint: string;

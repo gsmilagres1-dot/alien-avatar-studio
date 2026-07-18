@@ -311,25 +311,46 @@ export type Database = {
       }
       mining_progress: {
         Row: {
+          collected: number
+          crashed: number
           created_at: string
           id: string
-          material_key: string
+          landed: number
+          level: number
+          material_key: string | null
+          purchased_skins: string[]
+          selected_ship: string
+          selected_skin: string | null
           total_collected: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          collected?: number
+          crashed?: number
           created_at?: string
           id?: string
-          material_key: string
+          landed?: number
+          level?: number
+          material_key?: string | null
+          purchased_skins?: string[]
+          selected_ship?: string
+          selected_skin?: string | null
           total_collected?: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          collected?: number
+          crashed?: number
           created_at?: string
           id?: string
-          material_key?: string
+          landed?: number
+          level?: number
+          material_key?: string | null
+          purchased_skins?: string[]
+          selected_ship?: string
+          selected_skin?: string | null
           total_collected?: number
           updated_at?: string
           user_id?: string
