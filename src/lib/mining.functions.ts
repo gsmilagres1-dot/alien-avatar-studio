@@ -1,11 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { TEAM_DESTINATIONS } from "@/lib/team-destinations";
 
 export type MaterialKey = "ouro" | "monumento" | "niquel" | "ferramenta" | "cadmio" | "alien";
 
 const FICHAS_PER_COLLECT = 1;
-const FICHAS_LEVEL_BONUS = 10;
+
+// Ordem da rota de fases — sistema solar primeiro (por `level` 1-5 já
+// existente em cada destino de intergalactic.ts), depois as 30 galáxias/
+// nebulosas/exoplanetas/aglomerados/quasares de team-destinations.ts,
+// também ordenados por dificuldade.
+const SOLAR_ROUTE = [
+  "marte", "mercurio", "lua", "venus", "jupiter", "plutao",
+  "saturno", "urano", "netuno", "europa",
+  "kepler", "alpha_a", "proxima", "sol", "betelgeuse",
+] as const;
+const GALAXY_ROUTE = [...TEAM_DESTINATIONS].sort((a, b) => a.level - b.level).map((d) => d.id);
+
+export const ROUTE_ORDER = [...SOLAR_ROUTE, ...GALAXY_ROUTE] as unknown as [string, ...string[]];
+export type RouteDestinationId = string;
 
 // Mesmas 4 naves de src/lib/alien.ts (SHIPS) — repetido aqui como
 // literal porque server functions validam com Zod, não com o tipo TS.
@@ -40,6 +54,7 @@ export type RaceSkin = (typeof RACE_SKINS)[number];
 
 const SKIN_PRICE = 40;
 const UNLOCK_EVERY_N_COLLECTS = 5;
+const PHASE_CLEAR_BONUS = 50;
 
 async function ensureProgress(supabaseAdmin: any, userId: string) {
   const { data } = await supabaseAdmin
@@ -85,56 +100,29 @@ export const submitMiningResult = createServerFn({ method: "POST" })
     const progress = await ensureProgress(supabaseAdmin, userId);
 
     if (!data.success) {
-      const { data: updated, error } = await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from("mining_progress")
         .update({ crashed: progress.crashed + 1 })
-        .eq("user_id", userId)
-        .select("*")
-        .single();
+        .eq("user_id", userId);
       if (error) throw new Error(error.message);
-      return {
-        level: updated.level as number,
-        collected: updated.collected as number,
-        fichasEarned: 0,
-        leveledUp: false,
-        balance: null as number | null,
-      };
+      return { fichasEarned: 0, balance: null as number | null };
     }
 
-    let level = progress.level as number;
-    let collected = (progress.collected as number) + 1;
-    let leveledUp = false;
-    let fichasEarned = FICHAS_PER_COLLECT;
-    if (collected >= 10 && level < 10) {
-      level += 1;
-      collected = 0;
-      leveledUp = true;
-      fichasEarned += FICHAS_LEVEL_BONUS;
-    }
-
-    const { data: updated, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from("mining_progress")
-      .update({ level, collected, landed: progress.landed + 1 })
-      .eq("user_id", userId)
-      .select("*")
-      .single();
+      .update({ landed: progress.landed + 1 })
+      .eq("user_id", userId);
     if (error) throw new Error(error.message);
 
     const { data: balance, error: fichasErr } = await supabaseAdmin.rpc("adjust_fichas", {
       _user_id: userId,
-      _delta: fichasEarned,
-      _reason: leveledUp ? "mineracao_nivel" : "mineracao_coleta",
-      _meta: { materialKey: data.materialKey, level: updated.level },
+      _delta: FICHAS_PER_COLLECT,
+      _reason: "mineracao_coleta",
+      _meta: { materialKey: data.materialKey },
     });
     if (fichasErr) throw new Error(fichasErr.message);
 
-    return {
-      level: updated.level as number,
-      collected: updated.collected as number,
-      fichasEarned,
-      leveledUp,
-      balance: balance as number,
-    };
+    return { fichasEarned: FICHAS_PER_COLLECT, balance: balance as number };
   });
 
 export const getHangarState = createServerFn({ method: "GET" })
@@ -267,4 +255,57 @@ export const purchaseSkin = createServerFn({ method: "POST" })
 
     return { ok: true, alreadyOwned: false, balance: balance as number };
   });
-    
+
+export const getRouteState = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const progress = await ensureProgress(supabaseAdmin, userId);
+    const cleared = (progress.cleared_destinations as string[] | null) ?? [];
+
+    // Libera o primeiro destino sempre, e cada um seguinte só depois
+    // que o anterior na sequência foi completado (leva inteira + base).
+    const unlocked: string[] = [];
+    for (const id of ROUTE_ORDER) {
+      unlocked.push(id);
+      if (!cleared.includes(id)) break;
+    }
+
+    return {
+      routeOrder: ROUTE_ORDER,
+      clearedDestinations: cleared,
+      unlockedDestinations: unlocked,
+    };
+  });
+
+const clearDestInput = z.object({
+  destinationId: z.enum(ROUTE_ORDER),
+});
+
+export const clearDestinationWave = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => clearDestInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const progress = await ensureProgress(supabaseAdmin, userId);
+    const cleared = (progress.cleared_destinations as string[] | null) ?? [];
+    if (cleared.includes(data.destinationId)) return { ok: true, alreadyCleared: true, balance: null as number | null };
+
+    const { error } = await supabaseAdmin
+      .from("mining_progress")
+      .update({ cleared_destinations: [...cleared, data.destinationId] })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+
+    const { data: balance, error: fichasErr } = await supabaseAdmin.rpc("adjust_fichas", {
+      _user_id: userId,
+      _delta: PHASE_CLEAR_BONUS,
+      _reason: "mineracao_fase_completa",
+      _meta: { destinationId: data.destinationId },
+    });
+    if (fichasErr) throw new Error(fichasErr.message);
+
+    return { ok: true, alreadyCleared: false, balance: balance as number };
+  });
