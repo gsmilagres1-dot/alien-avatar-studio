@@ -481,7 +481,7 @@ function FinalView(props: {
   avatarUrl: string;
   shipImageUrl: string | null;
   shipCategory: shipCategory: ShipId;
-  setShipCategory: (c: "esportiva" | "offroad" | "corrida") => void;
+  setShipCategory: setShipCategory: (c: ShipId) => void;
   shipLoading: boolean;
   onGenShip: () => void;
   onNew: () => void;
