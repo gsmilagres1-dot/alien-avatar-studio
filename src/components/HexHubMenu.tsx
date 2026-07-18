@@ -38,6 +38,19 @@ const METAL = {
   plasma: { ring: "from-[#c9f0ff] via-[#7a4dd0] to-[#1a0a3a]", accent: "text-cyan-200", glow: "#7a4dd0" },
 };
 
+// Aumenta os gomos para alinhar com a largura dos botões de cima
+// e dar mais respiro para os textos não ficarem sobre os traços.
+const SCALE = 1.1275;
+
+const scalePct = (n: number) => 50 + (n - 50) * SCALE;
+const fmtPct = (n: number) => `${n.toFixed(2)}%`;
+
+const scaleClipPath = (polygon: string) =>
+  polygon.replace(
+    /(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%/g,
+    (_, x, y) => `${fmtPct(scalePct(Number(x)))} ${fmtPct(scalePct(Number(y)))}`
+  );
+
 const OUTER: Item[] = [
   { to: "/equipes", icon: Users, label: "Equipe", sub: "Intergaláctica", hint: "TEAM-Σ", metal: "gold", ...METAL.gold },
   { to: "/loja", icon: Coins, label: "Fichas", sub: "Loja · S.O.S.", hint: "FIC-€", metal: "gold", ...METAL.gold },
@@ -68,14 +81,16 @@ const TRAP_CLICK_CLIPS = [
   "polygon(6.37% 28.11%, 49.28% 7.27%, 49.28% 31.59%, 31.40% 40.27%)",
 ];
 
-// posição do conteúdo, mais afastada das bordas (não passa mais por cima da linha)
+const TRAP_CLICK_CLIPS_SCALED = TRAP_CLICK_CLIPS.map(scaleClipPath);
+
+// posição do conteúdo, escalado junto com os gomos para manter o alinhamento visual
 const CONTENT_POS = [
-  { left: "66.54%", top: "25.90%" },
-  { left: "83.08%", top: "50.00%" },
-  { left: "66.54%", top: "74.10%" },
-  { left: "33.46%", top: "74.10%" },
-  { left: "16.92%", top: "50.00%" },
-  { left: "33.46%", top: "25.90%" },
+  { left: fmtPct(scalePct(66.54)), top: fmtPct(scalePct(25.90)) },
+  { left: fmtPct(scalePct(83.08)), top: fmtPct(scalePct(50.00)) },
+  { left: fmtPct(scalePct(66.54)), top: fmtPct(scalePct(74.10)) },
+  { left: fmtPct(scalePct(33.46)), top: fmtPct(scalePct(74.10)) },
+  { left: fmtPct(scalePct(16.92)), top: fmtPct(scalePct(50.00)) },
+  { left: fmtPct(scalePct(33.46)), top: fmtPct(scalePct(25.90)) },
 ];
 
 // cor "média" de cada METAL, usada só no contorno SVG (stroke uniforme em qualquer ângulo)
@@ -131,8 +146,6 @@ function ContentLayer({ item, pos }: { item: Item; pos: { left: string; top: str
         {item.sub}
       </span>
     </span>
-
-
   );
 }
 
@@ -146,7 +159,11 @@ export function HexHubMenu() {
 
       {/* Camada 1: os 6 trapézios (peças independentes, com folga entre elas,
           cantos arredondados de verdade via path, contorno uniforme via SVG stroke) */}
-      <svg viewBox="0 0 592.1 472.8" className="absolute inset-0 w-full h-full pointer-events-none">
+      <svg
+        viewBox="0 0 592.1 472.8"
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ overflow: "visible", transform: `scale(${SCALE})`, transformOrigin: "center" }}
+      >
         <defs>
           {(Object.keys(GRADIENT_STOPS) as Item["metal"][]).map((m) => (
             <linearGradient key={m} id={`grad-${m}`} x1="0" y1="0" x2="1" y2="1">
@@ -186,12 +203,23 @@ export function HexHubMenu() {
           key={`${item.to}-l`}
           to={item.to}
           className="absolute inset-0 active:opacity-70"
-          style={{ clipPath: TRAP_CLICK_CLIPS[i] }}
+          style={{ clipPath: TRAP_CLICK_CLIPS_SCALED[i] }}
         />
       ))}
 
       {/* Hexágono central — MESMA técnica: forma clipada separada do texto (sem clip-path) */}
-      <div className="absolute" style={{ left: "32.29%", top: "33.08%", width: "35.42%", height: "33.84%" }}>
+      <div
+        className="absolute"
+        style={{
+          left: "32.29%",
+          top: "33.08%",
+          width: "35.42%",
+          height: "33.84%",
+          transform: `scale(${SCALE})`,
+          transformOrigin: "center",
+          overflow: "visible",
+        }}
+      >
         {/* Camada 1: forma (clipada) */}
         <div
           className="absolute inset-0 overflow-hidden"
