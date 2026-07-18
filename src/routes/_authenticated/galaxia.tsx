@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { listMyIdentities, generateShipImage } from "@/lib/identities.functions";
 import { getJourneyState, startQuiz, submitQuiz, claimVisa } from "@/lib/intergalactic.functions";
 import { DESTINATIONS, ALL_DESTINATIONS, getAnyDestination, MAX_QUIZ_ATTEMPTS, KIND_LABEL, TELEPORTER_THRESHOLD, TELESCOPE_JIMMY_WATH_THRESHOLD, WORMHOLE_SURPRISE_THRESHOLD, type Destination } from "@/lib/intergalactic";
-import { SHIPS } from "@/lib/alien";
+import { SHIPS, type ShipId } from "@/lib/alien";
 import { DestinationBadge } from "@/components/DestinationBadge";
 import { TeleporterPrize } from "@/components/TeleporterPrize";
 import { WormholePrize } from "@/components/WormholePrize";
