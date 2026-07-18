@@ -41,7 +41,7 @@ function Criar() {
   const [selectedDraft, setSelectedDraft] = useState<string | null>(null);
   const [genLoading, setGenLoading] = useState(false);
   const [savedIdentity, setSavedIdentity] = useState<AlienIdentity & { avatarUrl: string; id: string; shipImageUrl: string | null } | null>(null);
-  const [shipCategory, setShipCategory] = useState<"esportiva" | "offroad" | "corrida">("esportiva");
+  const [shipCategory, setShipCategory] = useState<ShipId>("esportiva")
   const [shipLoading, setShipLoading] = useState(false);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
