@@ -1,13 +1,19 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { listMyIdentities } from "@/lib/identities.functions";
-import { getMiningState, submitMiningResult, type MaterialKey } from "@/lib/mining.functions";
+import { getMiningState, submitMiningResult, clearDestinationWave, type MaterialKey } from "@/lib/mining.functions";
+import { getDestination } from "@/lib/intergalactic";
+import { getBankForDestination } from "@/lib/intergalactic-questions";
+import { getTeamDestination } from "@/lib/team-destinations";
+import { listMyUpgrades } from "@/lib/upgrades.functions";
+import { SOSButton } from "@/components/SOSButton";
 import { HangarSelect } from "@/components/HangarSelect";
 import { TeleporterLoadingIntro } from "@/components/TeleporterLoadingIntro";
+import { getBiomeTheme } from "@/lib/space-biomes";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
@@ -21,15 +27,18 @@ const SHIP_PREVIEWS: Record<string, string> = {
 export const Route = createFileRoute("/_authenticated/across-age")({
   validateSearch: (s: Record<string, unknown>) => ({
     identityId: typeof s.identityId === "string" ? s.identityId : undefined,
+    destinationId: typeof s.destinationId === "string" ? s.destinationId : undefined,
   }),
   component: AcrossAge,
 });
 
 function AcrossAge() {
-  const { identityId } = Route.useSearch();
+  const { identityId, destinationId } = Route.useSearch();
   const listIdentities = useServerFn(listMyIdentities);
   const getMining = useServerFn(getMiningState);
   const submitResult = useServerFn(submitMiningResult);
+  const getUpgrades = useServerFn(listMyUpgrades);
+  const clearWave = useServerFn(clearDestinationWave);
   const qc = useQueryClient();
   const [showIntro, setShowIntro] = useState(true);
   const [loadout, setLoadout] = useState<{ shipImageUrl: string; pilotAvatarUrl: string | null } | null>(null);
@@ -42,6 +51,14 @@ function AcrossAge() {
     queryKey: ["mining-state"],
     queryFn: () => getMining(),
   });
+  const { data: upgradesData } = useQuery({
+    queryKey: ["upgrades"],
+    queryFn: () => getUpgrades(),
+  });
+  const upgradeLevels: Record<string, number> = {};
+  (upgradesData?.upgrades ?? []).forEach((u: { upgrade_key: string; level: number }) => {
+    upgradeLevels[u.upgrade_key] = u.level;
+  });
 
   const identities = identitiesData?.identities ?? [];
   const pilot = identities.find((i) => i.id === identityId) ?? identities[0];
@@ -50,15 +67,9 @@ function AcrossAge() {
     async (materialKey: MaterialKey, success: boolean) => {
       try {
         const result = await submitResult({ data: { materialKey, success } });
-        qc.invalidateQueries({ queryKey: ["mining-state"] });
         if (success) {
           qc.invalidateQueries({ queryKey: ["wallet"] });
-          qc.invalidateQueries({ queryKey: ["hangar-state"] });
-          if (result.leveledUp) {
-            toast.success(`Nível ${result.level}! +${result.fichasEarned} 🪙 (saldo: ${result.balance})`);
-          } else {
-            toast.success(`Material coletado! +${result.fichasEarned} 🪙`);
-          }
+          toast.success(`Material coletado! +${result.fichasEarned} 🪙`);
         }
       } catch (e) {
         console.error(e);
@@ -67,6 +78,20 @@ function AcrossAge() {
     },
     [submitResult, qc]
   );
+
+  const handleWaveCleared = useCallback(async () => {
+    if (!destinationId) return;
+    try {
+      const result = await clearWave({ data: { destinationId } });
+      if (!result.alreadyCleared) {
+        qc.invalidateQueries({ queryKey: ["route-state"] });
+        qc.invalidateQueries({ queryKey: ["wallet"] });
+        toast.success(`Fase completa! +50 🪙 de bônus (saldo: ${result.balance}). Próximo destino liberado 🚀`);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [clearWave, destinationId, qc]);
 
   if (showIntro) {
     return <TeleporterLoadingIntro onComplete={() => setShowIntro(false)} />;
@@ -108,14 +133,31 @@ function AcrossAge() {
 
   return (
     <GameCanvas
-      key={pilot.id}
+      key={`${pilot.id}-${destinationId ?? "default"}`}
       pilotAvatarUrl={loadout.pilotAvatarUrl}
       shipImageUrl={loadout.shipImageUrl}
       pilotName={pilot.alien_name ?? "Piloto"}
-      startLevel={miningData?.level ?? 1}
+      startLevel={destinationId ? (getDestination(destinationId)?.level ?? 1) : (miningData?.level ?? 1)}
+      destinationId={destinationId ?? null}
+      destinationFact={destinationId ? pickDestinationFact(destinationId) : null}
+      upgradeLevels={upgradeLevels}
       onResult={handleResult}
+      onWaveCleared={handleWaveCleared}
     />
   );
+}
+
+function pickDestinationFact(destinationId: string): string | null {
+  const teamDest = getTeamDestination(destinationId);
+  if (teamDest) {
+    const facts = [teamDest.highlight, teamDest.trivia, `descoberta: ${teamDest.discovered}`, `distância: ${teamDest.distance}`];
+    return facts[Math.floor(Math.random() * facts.length)];
+  }
+  const bank = getBankForDestination(destinationId);
+  if (bank.length === 0) return null;
+  const pick = bank[Math.floor(Math.random() * bank.length)];
+  const answerText = pick.choices[pick.answer];
+  return `${pick.q} ${answerText}.`;
 }
 
 // =========================================================
@@ -237,12 +279,25 @@ type GameCanvasProps = {
   shipImageUrl: string;
   pilotName: string;
   startLevel: number;
+  destinationId?: string | null;
+  destinationFact?: string | null;
+  upgradeLevels?: Record<string, number>;
   onResult: (materialKey: MaterialKey, success: boolean) => void;
+  onWaveCleared?: () => void;
 };
 
-function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onResult }: GameCanvasProps) {
+function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, destinationId, destinationFact, upgradeLevels, onResult, onWaveCleared }: GameCanvasProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rescueRef = useRef<(() => void) | undefined>(undefined);
+  const navigate = useNavigate();
+  const theme = getBiomeTheme(destinationId);
+  const ups = upgradeLevels ?? {};
+  const upPropulsor = ups["propulsor"] ?? 0;
+  const upTanque = ups["tanque"] ?? 0;
+  const upOxigenio = ups["oxigenio"] ?? 0;
+  const upCarga = ups["carga-mineracao"] ?? 0;
+  const toolUpgradeKey: Record<"rede" | "ima" | "sucao", string> = { rede: "gancho", ima: "ima", sucao: "sucao" };
 
   useEffect(() => {
     const root = rootRef.current;
@@ -265,17 +320,34 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
       else { shipDrawH = SHIP_TARGET_SIZE; shipDrawW = SHIP_TARGET_SIZE * ar; }
     };
 
+    let bgImgReady = false;
+    const bgImg = new Image();
+    if (theme.bgImageUrl) {
+      bgImg.onload = () => { bgImgReady = true; };
+      bgImg.src = theme.bgImageUrl;
+    }
+
     const FICHAS_PER_COLLECT = 1;
+    const decorPoints: { x: number; y: number; emoji: string; size: number }[] = [];
+    const MAX_FUEL = 100 + upTanque * 20;
+    const MAX_O2 = 60 + upOxigenio * 15;
+    const BASE_CARGO_CAP = 4 + upCarga * 2;
+    function cargoCap() { return Math.round(BASE_CARGO_CAP * (1 + state.cargoBonusPct / 100)); }
+    const O2_DRAIN_RATE = 1; // por segundo, sempre correndo (independente de acelerar)
 
     const state = {
-      level: Math.min(10, Math.max(1, startLevel)),
+      level: Math.min(5, Math.max(1, startLevel)),
       collected: 0,
       landed: 0,
       crashed: 0,
-      fuel: 100,
+      fuel: MAX_FUEL,
+      o2: MAX_O2,
       fichas: 0,
-      engaged: false,
       flashT: 0,
+      cargoBonusPct: 0,
+      phaseFichas: 0,
+      phaseStartMs: 0,
+      phaseDone: false,
     };
 
     const el = <T extends HTMLElement = HTMLElement>(sel: string) => root!.querySelector<T>(sel)!;
@@ -283,7 +355,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
     type Node = { x: number; y: number; material: typeof MATERIALS[number]; collected: boolean };
     type Debris = { x: number; y: number; vx: number; vy: number; r: number; kind: typeof DEBRIS_KINDS[number]; rot: number; spin: number };
 
-    let ship = { x: 0, y: 0, vx: 0, vy: 0, angle: 90 };
+    let ship = { x: 0, y: 0, vx: 0, vy: 0, facing: 1 };
     let WORLD_W = 1800, WORLD_H = 900;
     let camX = 0, camY = 0;
     let base = { x: 100, y: 450 };
@@ -293,16 +365,13 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
     let running = false;
     let rafId = 0;
     const keys = { left: false, right: false, thrust: false };
-    let engagedNodeIndex = -1;
-    let nodeCooldownIndex = -1;
-    let activeNode: Node | null = null;
-    let fuelBurnRate = 0, thrustPower = 0, rotationRate = 0, damping = 0.992;
+    let nearbyNodeIndex = -1;
+    let fuelBurnRate = 0, thrustPower = 0, damping = 0.992;
 
     function difficultyParams(level: number) {
       return {
-        fuelBurnRate: 5 + level * 0.6,
-        thrustPower: 150,
-        rotationRate: 130,
+        fuelBurnRate: (5 + level * 0.6) * (theme.danger ? 1.4 : 1),
+        thrustPower: 150 * (1 + upPropulsor * 0.15),
         damping: 0.992,
         nodeCount: 5 + level,
         debrisCount: 3 + Math.floor(level * 0.9),
@@ -323,20 +392,25 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
 
     function updateHud() {
       el("#fichas-badge").textContent = `🪙 ${state.fichas}`;
-      el<HTMLDivElement>("#fuel-fill").style.width = Math.max(0, state.fuel) + "%";
+      el<HTMLDivElement>("#fuel-fill").style.width = Math.max(0, (state.fuel / MAX_FUEL) * 100) + "%";
+      el<HTMLDivElement>("#o2-fill").style.width = Math.max(0, (state.o2 / MAX_O2) * 100) + "%";
       const total = nodes.length || 1;
       const done = nodes.filter((n) => n.collected).length;
-      el("#cargo-count").textContent = `📦 ${done}/${total}`;
-      el("#level-badge").textContent = `NÍVEL ${state.level}/10`;
+      el("#cargo-count").textContent = `📦 ${done}/${total} · 🎒 ${state.collected}/${cargoCap()}`;
+      el("#level-badge").textContent = `NÍVEL ${state.level}/5`;
     }
 
     function resetWave() {
       const p = difficultyParams(state.level);
-      fuelBurnRate = p.fuelBurnRate; thrustPower = p.thrustPower; rotationRate = p.rotationRate; damping = p.damping;
+      fuelBurnRate = p.fuelBurnRate; thrustPower = p.thrustPower; damping = p.damping;
       WORLD_W = p.worldW; WORLD_H = p.worldH;
       base = { x: 110, y: WORLD_H / 2 };
-      ship = { x: base.x + 70, y: base.y, vx: 0, vy: 0, angle: 90 };
-      state.fuel = 100;
+      ship = { x: base.x, y: base.y - 6, vx: 0, vy: 0, facing: 1 };
+      state.fuel = MAX_FUEL;
+      state.o2 = MAX_O2;
+      state.phaseFichas = 0;
+      state.phaseStartMs = performance.now();
+      state.phaseDone = false;
       nodes = Array.from({ length: p.nodeCount }, () => ({
         x: 260 + Math.random() * (WORLD_W - 360),
         y: 60 + Math.random() * (WORLD_H - 120),
@@ -353,7 +427,17 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
           spin: (Math.random() - 0.5) * (kind === "ovni" ? 0.6 : 1.6),
         };
       });
-      engagedNodeIndex = -1; nodeCooldownIndex = -1; activeNode = null;
+      nearbyNodeIndex = -1;
+      decorPoints.length = 0;
+      const decorCount = 4 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < decorCount; i++) {
+        decorPoints.push({
+          x: 100 + Math.random() * (WORLD_W - 200),
+          y: 40 + Math.random() * (WORLD_H - 80),
+          emoji: theme.decor[Math.floor(Math.random() * theme.decor.length)],
+          size: 22 + Math.random() * 14,
+        });
+      }
       makeStars();
       camX = Math.max(0, Math.min(WORLD_W - W, ship.x - W / 2));
       camY = Math.max(0, Math.min(WORLD_H - H, ship.y - H / 2));
@@ -393,49 +477,89 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
       c.restore();
     }
 
-    function drawShip(c: CanvasRenderingContext2D, thrusting: boolean) {
-      const rad = (ship.angle * Math.PI) / 180;
+    function drawShip(c: CanvasRenderingContext2D, thrustingUp: boolean, thrustingSide: boolean) {
       for (let i = 0; i < state.collected; i++) {
         const back = 30 + i * 15;
-        const tx = ship.x - Math.sin(rad) * back, ty = ship.y + Math.cos(rad) * back;
+        const tx = ship.x - ship.facing * back, ty = ship.y;
         c.font = "13px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
         c.fillText("📦", tx, ty);
       }
       c.save();
       c.translate(ship.x, ship.y);
-      c.rotate(rad);
+      c.scale(ship.facing, 1);
       if (shipImgReady) {
         c.drawImage(shipImg, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
       } else {
-        c.fillStyle = thrusting ? "#ff9d3d" : "#3ddbc9";
-        c.beginPath(); c.moveTo(0, -14); c.lineTo(10, 12); c.lineTo(0, 7); c.lineTo(-10, 12); c.closePath(); c.fill();
+        c.fillStyle = thrustingUp || thrustingSide ? "#ff9d3d" : "#3ddbc9";
+        c.beginPath(); c.moveTo(14, 0); c.lineTo(-10, -9); c.lineTo(-6, 0); c.lineTo(-10, 9); c.closePath(); c.fill();
       }
-      if (thrusting) {
-        const flameY = shipImgReady ? shipDrawH / 2 - 3 : 10;
+      if (thrustingSide) {
+        const flameX = shipImgReady ? -shipDrawW / 2 + 3 : -8;
         c.fillStyle = "#ffd27a";
-        c.beginPath(); c.moveTo(-4, flameY); c.lineTo(0, flameY + 12 + Math.random() * 8); c.lineTo(4, flameY); c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(flameX, -4); c.lineTo(flameX - 12 - Math.random() * 8, 0); c.lineTo(flameX, 4); c.closePath(); c.fill();
       }
       c.restore();
+      if (thrustingUp) {
+        const flameY = shipImgReady ? shipDrawH / 2 - 3 : 9;
+        c.fillStyle = "#ffd27a";
+        c.beginPath(); c.moveTo(ship.x - 4, ship.y + flameY); c.lineTo(ship.x, ship.y + flameY + 12 + Math.random() * 8); c.lineTo(ship.x + 4, ship.y + flameY); c.closePath(); c.fill();
+      }
     }
 
     function draw() {
-      ctx.fillStyle = "#050714"; ctx.fillRect(0, 0, W, H);
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, theme.skyTop);
+      bgGrad.addColorStop(1, theme.skyBottom);
+      ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
       ctx.save();
       ctx.translate(-camX, -camY);
-      ctx.fillStyle = "#eef0ff";
+
+      if (bgImgReady) {
+        ctx.globalAlpha = 0.8;
+        ctx.drawImage(bgImg, 0, 0, WORLD_W, WORLD_H);
+        ctx.globalAlpha = 1;
+        // véu escuro pra manter nós/detritos/HUD legíveis por cima da foto
+        ctx.fillStyle = "rgba(5,7,20,0.28)";
+        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+      }
+
+      ctx.fillStyle = theme.starColor;
       stars.forEach((s) => {
         s.tw += 0.02;
         ctx.globalAlpha = 0.4 + Math.sin(s.tw) * 0.4;
         ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
       });
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = "rgba(61,219,201,0.15)"; ctx.lineWidth = 4;
+      ctx.strokeStyle = theme.horizonGlow; ctx.lineWidth = 4;
       ctx.strokeRect(2, 2, WORLD_W - 4, WORLD_H - 4);
+
+      // silhueta de horizonte decorativa (estilo HCR2), fixa perto do fundo do mundo
+      ctx.fillStyle = theme.horizonColor;
+      ctx.beginPath();
+      const ridgeY = WORLD_H - 26;
+      ctx.moveTo(0, WORLD_H);
+      ctx.lineTo(0, ridgeY);
+      for (let x = 0; x <= WORLD_W; x += 60) {
+        const bump = Math.sin(x * 0.01 + 1.3) * 14 + Math.sin(x * 0.037) * 6;
+        ctx.lineTo(x, ridgeY + bump);
+      }
+      ctx.lineTo(WORLD_W, WORLD_H);
+      ctx.closePath(); ctx.fill();
+
+      // objetos cômicos decorativos (não interagem, só dão graça ao cenário)
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      decorPoints.forEach((d) => {
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.font = `${d.size}px sans-serif`;
+        ctx.fillText(d.emoji, d.x, d.y);
+        ctx.restore();
+      });
 
       drawBase(ctx, base);
       nodes.forEach((n) => { if (!n.collected) drawNode(ctx, n); });
       debris.forEach((d) => drawDebrisPiece(ctx, d));
-      drawShip(ctx, keys.thrust && state.fuel > 0);
+      drawShip(ctx, keys.thrust && state.fuel > 0, (keys.left || keys.right) && state.fuel > 0);
       ctx.restore();
 
       if (state.flashT > 0) {
@@ -449,21 +573,30 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
       if (!running) return;
       const dt = Math.min((t - lastT) / 1000, 0.05) || 0.016;
       lastT = t;
-      if (!state.engaged) update(dt);
+      update(dt);
       draw();
       if (running) rafId = requestAnimationFrame(loop);
     }
 
     function update(dt: number) {
       if (state.flashT > 0) state.flashT -= dt;
-      if (keys.left) ship.angle -= rotationRate * dt;
-      if (keys.right) ship.angle += rotationRate * dt;
-      if (keys.thrust && state.fuel > 0) {
-        const rad = (ship.angle * Math.PI) / 180;
-        ship.vx += Math.sin(rad) * thrustPower * dt;
-        ship.vy -= Math.cos(rad) * thrustPower * dt;
-        state.fuel -= fuelBurnRate * dt;
+      state.o2 = Math.max(0, state.o2 - O2_DRAIN_RATE * dt);
+      let burningFuel = false;
+      if (keys.left && state.fuel > 0) {
+        ship.vx -= thrustPower * dt;
+        ship.facing = -1;
+        burningFuel = true;
       }
+      if (keys.right && state.fuel > 0) {
+        ship.vx += thrustPower * dt;
+        ship.facing = 1;
+        burningFuel = true;
+      }
+      if (keys.thrust && state.fuel > 0) {
+        ship.vy -= thrustPower * dt;
+        burningFuel = true;
+      }
+      if (burningFuel) state.fuel = Math.max(0, state.fuel - fuelBurnRate * dt);
       ship.vx *= damping; ship.vy *= damping;
       ship.x += ship.vx * dt; ship.y += ship.vy * dt;
       const margin = shipImgReady ? Math.max(shipDrawW, shipDrawH) / 2 + 4 : 18;
@@ -487,34 +620,42 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
         }
       }
 
-      if (engagedNodeIndex === -1) {
+      nearbyNodeIndex = -1;
+      if (state.collected < cargoCap()) {
         for (let i = 0; i < nodes.length; i++) {
           const n = nodes[i];
-          if (n.collected || i === nodeCooldownIndex) continue;
-          if (Math.hypot(ship.x - n.x, ship.y - n.y) < 34) { openCollectOverlay(i); break; }
+          if (n.collected) continue;
+          const toolEase = ups[toolUpgradeKey[n.material.tool]] ?? 0;
+          const pickupRadius = 40 + toolEase * 8;
+          if (Math.hypot(ship.x - n.x, ship.y - n.y) < pickupRadius) { nearbyNodeIndex = i; break; }
         }
       }
-      if (nodeCooldownIndex !== -1) {
-        const n = nodes[nodeCooldownIndex];
-        if (n && Math.hypot(ship.x - n.x, ship.y - n.y) > 50) nodeCooldownIndex = -1;
-      }
+      updateCollectButton();
 
       if (Math.hypot(ship.x - base.x, ship.y - base.y) < 46) {
-        if (state.fuel < 100) state.fuel = 100;
-        if (nodes.length > 0 && nodes.every((n) => n.collected)) advanceWave();
+        if (state.fuel < MAX_FUEL) state.fuel = MAX_FUEL;
+        if (state.o2 < MAX_O2) state.o2 = MAX_O2;
+        state.collected = 0;
+        if (!state.phaseDone && nodes.length > 0 && nodes.every((n) => n.collected)) completePhase();
       }
 
-      if (state.fuel <= 0) { stopLoop(); state.crashed++; loseGame(); return; }
+      if (state.fuel <= 0) { stopLoop(); state.crashed++; loseGame("fuel"); return; }
+      if (state.o2 <= 0) { stopLoop(); state.crashed++; loseGame("o2"); return; }
 
       camX = Math.max(0, Math.min(WORLD_W - W, ship.x - W / 2));
       camY = Math.max(0, Math.min(WORLD_H - H, ship.y - H / 2));
       updateHud();
     }
 
-    function advanceWave() {
-      state.level = Math.min(10, state.level + 1);
-      state.collected = 0;
-      resetWave();
+    function completePhase() {
+      state.phaseDone = true;
+      stopLoop();
+      const elapsedSec = Math.max(0, (performance.now() - state.phaseStartMs) / 1000);
+      const mm = Math.floor(elapsedSec / 60), ss = Math.floor(elapsedSec % 60);
+      el("#phase-time").textContent = `${mm}:${ss.toString().padStart(2, "0")}`;
+      el("#phase-fichas").textContent = `+${state.phaseFichas} 🪙`;
+      showOverlay("win-overlay");
+      onWaveCleared?.();
     }
 
     function startLoop() { running = true; lastT = performance.now(); rafId = requestAnimationFrame(loop); }
@@ -530,134 +671,69 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
     bindHold("#left-btn", "left"); bindHold("#right-btn", "right"); bindHold("#thrust-btn", "thrust");
 
     function showOverlay(id: string) {
-      ["start-overlay", "lose-overlay", "phase2"].forEach((o) => el(`#${o}`).classList.toggle("hidden", o !== id));
+      ["start-overlay", "lose-overlay", "win-overlay"].forEach((o) => el(`#${o}`).classList.toggle("hidden", o !== id));
     }
     function hideAllOverlays() {
-      ["start-overlay", "lose-overlay", "phase2"].forEach((o) => el(`#${o}`).classList.add("hidden"));
+      ["start-overlay", "lose-overlay", "win-overlay"].forEach((o) => el(`#${o}`).classList.add("hidden"));
     }
 
     function startRun() {
       hideAllOverlays(); resize(); resetWave(); startLoop();
     }
 
-    function loseGame() {
-      el("#funny-msg").textContent = FUNNY_LOSSES[Math.floor(Math.random() * FUNNY_LOSSES.length)];
+    function rescue() {
+      state.fuel = MAX_FUEL;
+      state.o2 = MAX_O2;
+      state.cargoBonusPct += 25;
+      ship.x = base.x; ship.y = base.y - 6; ship.vx = 0; ship.vy = 0;
+      hideAllOverlays();
+      startLoop();
+    }
+    rescueRef.current = rescue;
+
+    function loseGame(cause: "fuel" | "o2" = "fuel") {
+      el("#lose-title").textContent = cause === "o2" ? "SEM OXIGÊNIO" : "SEM COMBUSTÍVEL";
+      el("#funny-msg").textContent =
+        cause === "o2"
+          ? "O ar acabou antes de você voltar. Bom que era só um jogo."
+          : FUNNY_LOSSES[Math.floor(Math.random() * FUNNY_LOSSES.length)];
       el("#lose-level").textContent = String(state.level);
       el("#lose-collected").textContent = `${nodes.filter((n) => n.collected).length}/${nodes.length}`;
       showOverlay("lose-overlay");
     }
 
-    function openCollectOverlay(i: number) {
-      engagedNodeIndex = i;
-      state.engaged = true;
-      const node = nodes[i];
-      el("#target-icon").textContent = node.material.icon;
-      el("#target-name").textContent = node.material.name;
-      el("#target-state").textContent = node.material.state;
-      el("#target-desc").textContent = node.material.desc;
-      const pImg = el<HTMLImageElement>("#pilot-img");
-      if (pilotAvatarUrl) pImg.src = pilotAvatarUrl;
-
-      el("#tool-row").classList.remove("hidden");
-      el("#tool-prompt").classList.remove("hidden");
-      el("#aim-section").classList.add("hidden");
-      stopAim();
-
-      const row = el("#tool-row");
-      row.innerHTML = "";
-      TOOLS.forEach((tool) => {
-        const card = document.createElement("div");
-        card.className = "tool-card";
-        card.innerHTML = `<div class="tool-icon">${tool.icon}</div><div class="tool-name">${tool.name}</div><div class="tool-desc">${tool.desc}</div>`;
-        card.addEventListener("click", () => chooseTool(tool.id, node));
-        row.appendChild(card);
-      });
-      showOverlay("phase2");
-    }
-
-    function closeCollectOverlay() {
-      state.engaged = false;
-      hideAllOverlays();
-      lastT = performance.now();
-    }
-
-    function chooseTool(toolId: string, node: Node) {
-      if (toolId === node.material.tool) armTool(node);
-      else {
-        nodeCooldownIndex = engagedNodeIndex;
-        engagedNodeIndex = -1;
-        closeCollectOverlay();
-        onResult(node.material.id, false);
-      }
-    }
-
-    let aimRunning = false, aimRafId = 0, reachY = 0, reachDir = 1, aimSpeed = 0, zoneTop = 0, zoneHeight = 0;
-    const TRACK_HEIGHT = 150;
-    function armTool(node: Node) {
-      activeNode = node;
-      el("#tool-row").classList.add("hidden");
-      el("#tool-prompt").classList.add("hidden");
-      el("#aim-section").classList.remove("hidden");
-      const level = state.level;
-      const tool = node.material.tool;
-      const visual = TOOL_VISUAL[tool];
-
-      const scene = el<HTMLDivElement>("#collect-scene");
-      scene.className = `tool-${tool}`;
-      el<HTMLImageElement>("#collect-ship").src = shipImageUrl;
-      el("#collect-tool-icon").textContent = visual.icon;
-      el("#collect-target-mini").textContent = node.material.icon;
-      el("#collect-action-label").textContent = `${visual.verb} em direção a ${node.material.name}...`;
-      el<HTMLButtonElement>("#launch-btn").textContent = visual.label;
-
-      zoneHeight = Math.max(20, 60 - level * 4);
-      zoneTop = Math.random() * (TRACK_HEIGHT - zoneHeight);
-      aimSpeed = 90 + level * 12;
-      const zoneEl = el<HTMLDivElement>("#collect-zone");
-      zoneEl.style.top = zoneTop + "px"; zoneEl.style.height = zoneHeight + "px";
-      reachY = 0; reachDir = 1;
-      let lastTt = performance.now();
-      aimRunning = true;
-      function animate(t: number) {
-        if (!aimRunning) return;
-        const dt = Math.min((t - lastTt) / 1000, 0.05); lastTt = t;
-        reachY += aimSpeed * dt * reachDir;
-        if (reachY > TRACK_HEIGHT - 4) { reachY = TRACK_HEIGHT - 4; reachDir = -1; }
-        if (reachY < 0) { reachY = 0; reachDir = 1; }
-        const toolEl = el<HTMLDivElement>("#collect-tool-icon");
-        toolEl.style.top = reachY + "px";
-        el<HTMLDivElement>("#collect-line").style.height = reachY + "px";
-        aimRafId = requestAnimationFrame(animate);
-      }
-      aimRafId = requestAnimationFrame(animate);
-    }
-    function stopAim() { aimRunning = false; if (aimRafId) cancelAnimationFrame(aimRafId); }
-
-    el("#launch-btn").addEventListener("click", () => {
-      if (!aimRunning || !activeNode) return;
-      const hit = reachY + 2 >= zoneTop && reachY + 2 <= zoneTop + zoneHeight;
-      if (hit) {
-        stopAim();
-        activeNode.collected = true;
-        state.collected++; state.landed++; state.fichas += FICHAS_PER_COLLECT;
-        const node = activeNode; activeNode = null; engagedNodeIndex = -1;
-        closeCollectOverlay();
-        updateHud();
-        onResult(node.material.id, true);
+    function updateCollectButton() {
+      const btn = el<HTMLButtonElement>("#collect-btn");
+      if (nearbyNodeIndex !== -1) {
+        const node = nodes[nearbyNodeIndex];
+        btn.classList.remove("hidden");
+        btn.textContent = `🎯 COLETAR ${node.material.icon}`;
       } else {
-        const toolEl = el<HTMLDivElement>("#collect-tool-icon");
-        toolEl.style.filter = "drop-shadow(0 0 6px #ff5c5c)";
-        setTimeout(() => { toolEl.style.filter = ""; }, 180);
+        btn.classList.add("hidden");
       }
-    });
+    }
 
+    function collectNearbyNode() {
+      if (nearbyNodeIndex === -1) return;
+      const node = nodes[nearbyNodeIndex];
+      node.collected = true;
+      state.collected++; state.landed++; state.fichas += FICHAS_PER_COLLECT; state.phaseFichas += FICHAS_PER_COLLECT;
+      nearbyNodeIndex = -1;
+      updateCollectButton();
+      updateHud();
+      onResult(node.material.id, true);
+    }
+
+    el("#collect-btn").addEventListener("click", collectNearbyNode);
     el("#start-btn").addEventListener("click", startRun);
     el("#retry-btn").addEventListener("click", startRun);
+    el("#win-retry-btn").addEventListener("click", startRun);
 
     resize(); makeStars(); draw();
     window.addEventListener("resize", resize);
     return () => {
-      stopLoop(); stopAim();
+      stopLoop();
+      rescueRef.current = undefined;
       window.removeEventListener("resize", resize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -672,21 +748,30 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
             <div className="gauge-label">⛽ Combustível</div>
             <div className="gauge-track"><div id="fuel-fill" className="gauge-fill" style={{ width: "100%" }} /></div>
           </div>
+          <div className="gauge">
+            <div className="gauge-label">🫁 O2</div>
+            <div className="gauge-track"><div id="o2-fill" className="gauge-fill o2" style={{ width: "100%" }} /></div>
+          </div>
           <div id="cargo-count" className="pixel" style={{ fontSize: 10, color: "var(--teal)", alignSelf: "center", whiteSpace: "nowrap" }}>📦 0/0</div>
         </div>
         <div id="fichas-badge" className="pixel">🪙 0</div>
-        <div id="level-badge" className="pixel">NÍVEL {startLevel}/10</div>
+        <div id="level-badge" className="pixel">NÍVEL {startLevel}/5</div>
       </div>
 
       <div id="stage">
         <canvas ref={canvasRef} />
         <div id="pilot-badge"><img id="pilot-img" alt="Piloto" src={pilotAvatarUrl ?? undefined} /><span>{pilotName}</span></div>
+        <button id="collect-btn" className="btn collect-btn hidden">🎯 COLETAR</button>
         <div id="controls">
           <div className="side-pair">
             <div className="ctrl-btn pixel" id="left-btn">◀</div>
             <div className="ctrl-btn pixel" id="right-btn">▶</div>
           </div>
-          <div className="ctrl-btn pixel" id="thrust-btn">▲</div>
+          <div className="lever-btn" id="thrust-btn">
+            <div className="lever-track">
+              <div className="lever-handle">▲</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -694,42 +779,50 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, onRes
         <div className="title-big pixel">ACROSS<br />AGE</div>
         <img id="ship-briefing-img" src={shipImageUrl} alt="Sua nave" style={{ width: 260, borderRadius: 14, border: "2px solid var(--gold-dim)" }} />
         <div className="subtitle" style={{ marginTop: -6, opacity: 0.8 }}>Piloto: {pilotName}</div>
-        <div className="subtitle">
-          Voe pelo mapa, desvie dos detritos e chegue perto dos pontos brilhantes pra coletar.<br />
-          Escolha a ferramenta certa e ative no momento certo.<br />
-          Volte pra base pra reabastecer — quando coletar tudo, uma nova leva aparece.
+        <div className="subtitle" style={{ marginTop: -10, color: theme.glowColor }}>
+          Destino: {theme.label}{theme.danger ? " ☢️ (combustível some mais rápido aqui)" : ""}
         </div>
+        <div className="subtitle">
+          Voe pelo mapa, desvie dos detritos e chegue perto dos pontos brilhantes.<br />
+          Quando "🎯 COLETAR" aparecer, toca pra recolher o material.<br />
+          Colete tudo e volte à base no menor tempo possível — combustível e O2 são o limite.
+        </div>
+        {destinationFact && (
+          <div className="subtitle" style={{ color: theme.glowColor, opacity: 0.9, fontSize: 12 }}>
+            🛰️ Você sabia? {destinationFact}
+          </div>
+        )}
         <button className="btn" id="start-btn">▶ JOGAR</button>
       </div>
 
       <div id="lose-overlay" className="overlay hidden">
-        <div className="title-big pixel" style={{ fontSize: 16 }}>SEM COMBUSTÍVEL</div>
+        <div id="lose-title" className="title-big pixel" style={{ fontSize: 16 }}>SEM COMBUSTÍVEL</div>
         <div id="funny-msg" className="funny-msg" />
         <div className="stat-row"><span>Nível: <b id="lose-level">1</b></span><span>Coleta da leva: <b id="lose-collected">0/0</b></span></div>
         <button className="btn" id="retry-btn">↻ TENTAR NOVAMENTE</button>
+        <SOSButton
+          cost={25}
+          reason="sos_resgate_mineracao"
+          label="Resgate"
+          onSuccess={() => rescueRef.current?.()}
+        />
       </div>
 
-      <div id="phase2" className="overlay hidden">
-        <div className="title-big pixel" style={{ fontSize: 14 }}>PONTO DE COLETA!</div>
-        <div className="target-icon" id="target-icon">🥇</div>
-        <div id="target-name" className="pixel" style={{ fontSize: 12, color: "var(--gold)", marginTop: -8 }}>Ouro</div>
-        <div id="target-state" style={{ fontSize: 10, color: "var(--teal)", letterSpacing: ".5px", textTransform: "uppercase", marginTop: -10 }}>Sólido solto</div>
-        <div id="target-desc" className="subtitle" style={{ marginTop: -6 }}>—</div>
-        <div id="tool-prompt" className="subtitle" style={{ marginTop: -6, opacity: 0.8 }}>Qual ferramenta combina com esse tipo de garimpo?</div>
-        <div id="tool-row" />
-        <div id="aim-section" className="hidden">
-          <div id="collect-action-label" className="subtitle" style={{ margin: "2px 0 6px" }}>Lance no momento certo!</div>
-          <div id="collect-scene">
-            <img id="collect-ship" alt="Nave" />
-            <div id="collect-track">
-              <div id="collect-line" />
-              <div id="collect-zone" />
-              <div id="collect-tool-icon">🕸️</div>
-            </div>
-            <div id="collect-target-mini">🥇</div>
-          </div>
-          <button className="btn" id="launch-btn">🎯 ATIVAR</button>
+      <div id="win-overlay" className="overlay hidden">
+        <div className="title-big pixel" style={{ fontSize: 16, color: "var(--teal)" }}>FASE COMPLETA!</div>
+        <div className="stat-row">
+          <span>Tempo: <b id="phase-time">0:00</b></span>
+          <span>Ganho: <b id="phase-fichas">+0 🪙</b></span>
         </div>
+        <div className="subtitle">Quanto menos tempo, melhor — combustível e O2 são o limite.</div>
+        <button className="btn" id="win-retry-btn">↻ JOGAR DE NOVO</button>
+        <button
+          className="btn"
+          style={{ borderColor: "var(--teal)", color: "var(--teal)" }}
+          onClick={() => navigate({ to: "/rota" })}
+        >
+          🗺️ VOLTAR À ROTA
+        </button>
       </div>
     </div>
   );
@@ -747,14 +840,44 @@ const ACROSS_AGE_CSS = `
 .across-age-root .gauge-label{ font-size:10px; color:var(--ink-dim); margin-bottom:4px; text-transform:uppercase; }
 .across-age-root .gauge-track{ height:8px; border-radius:4px; background:#1c2050; overflow:hidden; border:1px solid #2b2f66; }
 .across-age-root .gauge-fill{ height:100%; border-radius:4px; transition:width .15s linear; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); }
+.across-age-root .gauge-fill.o2{ background:linear-gradient(90deg,#1c6f8f,#5ad2e6); }
 .across-age-root #level-badge{ font-size:10px; padding:6px 10px; border:1px solid var(--gold); border-radius:20px; color:var(--gold); white-space:nowrap; height:fit-content; }
 .across-age-root #fichas-badge{ font-size:10px; padding:6px 10px; border:1px solid var(--teal); border-radius:20px; color:var(--teal); white-space:nowrap; height:fit-content; }
 .across-age-root #stage{ position:relative; height:calc(100% - 46px); overflow:hidden; }
 .across-age-root canvas{ position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
 .across-age-root #controls{ position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; align-items:flex-end; padding:18px; z-index:6; pointer-events:none; }
-.across-age-root .ctrl-btn{ pointer-events:auto; width:64px; height:64px; border-radius:50%; background:rgba(20,24,60,.85); border:2px solid var(--gold-dim); color:var(--gold); font-size:22px; display:flex; align-items:center; justify-content:center; }
-.across-age-root .ctrl-btn:active{ background:rgba(232,179,74,.25); border-color:var(--gold); }
-.across-age-root #thrust-btn{ width:78px; height:78px; font-size:26px; }
+.across-age-root .collect-btn{ position:absolute; left:50%; bottom:112px; transform:translateX(-50%); z-index:7; padding:10px 18px; font-size:12px; animation:collectPulse 1s ease-in-out infinite; }
+@keyframes collectPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(232,179,74,.55); } 50%{ box-shadow:0 0 0 14px rgba(232,179,74,0); } }
+.across-age-root .ctrl-btn{
+  pointer-events:auto; width:64px; height:64px; border-radius:50%;
+  background:linear-gradient(150deg,#eef1f4 0%,#c3c9d1 35%,#8b929c 70%,#6b7280 100%);
+  border:2px solid #5a6068; color:#2a2f38; font-size:22px; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 0 #4a4f58, inset 0 1px 3px rgba(255,255,255,.7), inset 0 -3px 4px rgba(0,0,0,.15);
+  text-shadow:0 1px 0 rgba(255,255,255,.5);
+}
+.across-age-root .ctrl-btn:active{
+  background:linear-gradient(150deg,#c3c9d1,#8b929c);
+  box-shadow:0 1px 0 #4a4f58, inset 0 2px 4px rgba(0,0,0,.25);
+  transform:translateY(2px);
+}
+.across-age-root .lever-btn{
+  pointer-events:auto; width:60px; height:104px; border-radius:14px;
+  background:linear-gradient(150deg,#dfe3e7,#9aa1ab);
+  border:2px solid #5a6068; box-shadow:0 4px 0 #4a4f58, inset 0 1px 3px rgba(255,255,255,.6);
+  display:flex; align-items:flex-end; justify-content:center; padding-bottom:8px;
+}
+.across-age-root .lever-track{
+  position:relative; width:10px; height:82px; margin:0 auto; border-radius:6px;
+  background:linear-gradient(180deg,#3a3f47,#1c2026); box-shadow:inset 0 2px 4px rgba(0,0,0,.6);
+}
+.across-age-root .lever-handle{
+  position:absolute; left:50%; bottom:0; width:36px; height:26px; border-radius:8px;
+  transform:translate(-50%,0); transition:bottom .12s ease;
+  background:linear-gradient(150deg,#f2f4f6,#a8afb8); border:2px solid #5a6068;
+  display:flex; align-items:center; justify-content:center; font-size:13px; color:#2a2f38;
+  box-shadow:0 2px 0 #4a4f58, inset 0 1px 2px rgba(255,255,255,.7);
+}
+.across-age-root .lever-btn:active .lever-handle{ bottom:52px; }
 .across-age-root .side-pair{ display:flex; gap:12px; }
 .across-age-root .overlay{ position:absolute; inset:0; z-index:20; background:rgba(5,7,20,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px; gap:14px; overflow:auto; }
 .across-age-root .title-big{ font-size:22px; color:var(--gold); line-height:1.6; }
