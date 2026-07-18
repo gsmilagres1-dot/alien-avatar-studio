@@ -309,6 +309,60 @@ export type Database = {
           },
         ]
       }
+      mining_progress: {
+        Row: {
+          created_at: string
+          id: string
+          material_key: string
+          total_collected: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          material_key: string
+          total_collected?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          material_key?: string
+          total_collected?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mining_state: {
+        Row: {
+          crashed_count: number
+          created_at: string
+          landed_count: number
+          level: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          crashed_count?: number
+          created_at?: string
+          landed_count?: number
+          level?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          crashed_count?: number
+          created_at?: string
+          landed_count?: number
+          level?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       nave_upgrades: {
         Row: {
           created_at: string
@@ -888,60 +942,7 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      } mining_state: {
-  Row: {
-    crashed_count: number
-    created_at: string
-    landed_count: number
-    level: number
-    updated_at: string
-    user_id: string
-  }
-  Insert: {
-    crashed_count?: number
-    created_at?: string
-    landed_count?: number
-    level?: number
-    updated_at?: string
-    user_id: string
-  }
-  Update: {
-    crashed_count?: number
-    created_at?: string
-    landed_count?: number
-    level?: number
-    updated_at?: string
-    user_id?: string
-  }
-  Relationships: []
-}
-mining_progress: {
-  Row: {
-    created_at: string
-    id: string
-    material_key: string
-    total_collected: number
-    updated_at: string
-    user_id: string
-  }
-  Insert: {
-    created_at?: string
-    id?: string
-    material_key: string
-    total_collected?: number
-    updated_at?: string
-    user_id: string
-  }
-  Update: {
-    created_at?: string
-    id?: string
-    material_key?: string
-    total_collected?: number
-    updated_at?: string
-    user_id?: string
-  }
-  Relationships: []
-  }
+      }
     }
     Views: {
       public_subscribers: {
@@ -1041,6 +1042,10 @@ mining_progress: {
             Args: { _battle_id: string; _caller_id?: string; _score: number }
             Returns: undefined
           }
+      submit_mining_result: {
+        Args: { _caller_id: string; _material_key: string; _success: boolean }
+        Returns: Json
+      }
       subscribers_count: { Args: never; Returns: number }
     }
     Enums: {
