@@ -19,11 +19,13 @@ import { WalletBadge } from "@/components/WalletBadge";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
+import shipTeleportadora from "@/assets/teleporter-prize.jpg";
 
-const SHIP_PREVIEWS: Record<"esportiva" | "offroad" | "corrida", string> = {
+const SHIP_PREVIEWS: Record<"esportiva" | "offroad" | "corrida" | "teleportadora", string> = {
   esportiva: shipEsportiva,
   offroad: shipOffroad,
   corrida: shipCorrida,
+  teleportadora: shipTeleportadora,
 };
 
 export const Route = createFileRoute("/_authenticated/galaxia")({
