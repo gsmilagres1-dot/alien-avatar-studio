@@ -149,7 +149,7 @@ export const saveIdentity = createServerFn({ method: "POST" })
 
 const shipInput = z.object({
   identityId: z.string().uuid(),
-  category: z.enum(["esportiva", "offroad", "corrida"]),
+category: z.enum(["esportiva", "offroad", "corrida", "teleportadora"]),
 });
 
 export const generateShipImage = createServerFn({ method: "POST" })
