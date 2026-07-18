@@ -480,8 +480,8 @@ function FinalView(props: {
   identityId: string;
   avatarUrl: string;
   shipImageUrl: string | null;
-  shipCategory: shipCategory: ShipId;
-  setShipCategory: setShipCategory: (c: ShipId) => void;
+  shipCategory: ShipId;
+setShipCategory: (c: ShipId) => void;
   shipLoading: boolean;
   onGenShip: () => void;
   onNew: () => void;
