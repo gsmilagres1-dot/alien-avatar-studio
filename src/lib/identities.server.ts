@@ -1,10 +1,11 @@
 import { Buffer } from "buffer";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { buildAvatarPrompt, buildShipPrompt, getRace } from "@/lib/alien";
+import { buildAvatarPrompt, buildShipPrompt, getRace, type ShipId } from "@/lib/alien";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
+import shipTeleportadora from "@/assets/teleporter-prize.jpg";
 import raceStarseed from "@/assets/race-starseed.jpg";
 import raceNordico from "@/assets/race-nordico.jpg";
 import raceGrey from "@/assets/race-grey.jpg";
@@ -24,7 +25,8 @@ export const FALLBACK_SHIP_IMAGES = {
   esportiva: shipEsportiva,
   offroad: shipOffroad,
   corrida: shipCorrida,
-} satisfies Record<"esportiva" | "offroad" | "corrida", string>;
+  teleportadora: shipTeleportadora,
+} satisfies Record<ShipId, string>;
 
 export const FALLBACK_RACE_IMAGES: Record<string, string> = {
   starseed: raceStarseed,
@@ -161,6 +163,6 @@ export function buildAvatarPromptForRace(planetId: string, gender: "male" | "fem
   return buildAvatarPrompt({ race: getRace(planetId), gender, variant });
 }
 
-export function buildShipPromptForRace(category: "esportiva" | "offroad" | "corrida", planetId: string) {
+export function buildShipPromptForRace(category: ShipId, planetId: string) {
   return buildShipPrompt(category, getRace(planetId).origin);
-}
+                                    }
