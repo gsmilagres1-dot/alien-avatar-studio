@@ -66,6 +66,20 @@ export const SHIP_STATS: Record<string, ShipStats> = {
   "navigator": { category: "grande", fuelMult: 0.70, o2Mult: 0.80, cargoMult: 1.60, speedMult: 0.75, blurb: "Estação-nave, carga máxima" },
   "hover-coupe-rz": { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.88, speedMult: 1.18, blurb: "Coupé ágil" },
   "lander-rz9": { category: "leve", fuelMult: 1.08, o2Mult: 1.05, cargoMult: 0.90, speedMult: 1.15, blurb: "Rápida, carga moderada" },
+
+  // ---- leva nova: 12 naves ----
+  "cruzer-noturno": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.18, blurb: "Ágil, visual furtivo" },
+  "cruzador-aurun": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Cruzador robusto e equilibrado" },
+  "aranha-lander": { category: "grande", fuelMult: 0.75, o2Mult: 0.85, cargoMult: 1.45, speedMult: 0.80, blurb: "Mecânica pesada, carga alta" },
+  "galactic-diamond": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.20, blurb: "Angular e rápida" },
+  "modal-multidimensional": { category: "medio", fuelMult: 0.98, o2Mult: 1.00, cargoMult: 1.10, speedMult: 1.00, blurb: "Tecnologia densa, carga extra" },
+  "super-duty-vanguard": { category: "grande", fuelMult: 0.72, o2Mult: 0.82, cargoMult: 1.55, speedMult: 0.78, blurb: "Nave de guerra, carga máxima" },
+  "speed-bee-predator": { category: "medio", fuelMult: 0.95, o2Mult: 0.98, cargoMult: 1.05, speedMult: 1.10, blurb: "Ágil e agressiva" },
+  "cruzer-dourado": { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.85, speedMult: 1.15, blurb: "Clássica, elegante" },
+  "lander-expedicao": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.92, blurb: "Robusta pra terrenos difíceis" },
+  "speed-bee-rubi": { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.88, speedMult: 1.16, blurb: "Ágil, carga moderada" },
+  "cruzer-aereo": { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.80, speedMult: 1.12, blurb: "Leve, feita pra voar" },
+  "bolha-lander": { category: "micro", fuelMult: 1.35, o2Mult: 1.25, cargoMult: 0.55, speedMult: 1.30, blurb: "Compacta, autonomia enorme" },
 };
 
 export function getShipStats(shipId: string | null | undefined): ShipStats {
