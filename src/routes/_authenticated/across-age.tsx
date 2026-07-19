@@ -334,6 +334,8 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
     const BASE_CARGO_CAP = 4 + upCarga * 2;
     function cargoCap() { return Math.round(BASE_CARGO_CAP * (1 + state.cargoBonusPct / 100)); }
     const O2_DRAIN_RATE = 1; // por segundo, sempre correndo (independente de acelerar)
+    const GRAVITY = 70; // puxa a nave pra baixo o tempo todo — sem isso ela sobe e fica presa no teto
+    const MAX_SPEED = 260; // trava a velocidade máxima pra alavanca não "disparar" e nunca frear
 
     const state = {
       level: Math.min(5, Math.max(1, startLevel)),
@@ -582,6 +584,10 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       if (state.flashT > 0) state.flashT -= dt;
       state.o2 = Math.max(0, state.o2 - O2_DRAIN_RATE * dt);
       let burningFuel = false;
+
+      // gravidade constante — sem ela, a nave que sobe nunca mais desce sozinha
+      ship.vy += GRAVITY * dt;
+
       if (keys.left && state.fuel > 0) {
         ship.vx -= thrustPower * dt;
         ship.facing = -1;
@@ -593,15 +599,29 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
         burningFuel = true;
       }
       if (keys.thrust && state.fuel > 0) {
-        ship.vy -= thrustPower * dt;
+        ship.vy -= (thrustPower + GRAVITY * 1.6) * dt;
         burningFuel = true;
       }
       if (burningFuel) state.fuel = Math.max(0, state.fuel - fuelBurnRate * dt);
+
       ship.vx *= damping; ship.vy *= damping;
+
+      // trava a velocidade máxima — impede a alavanca de "disparar" e nunca mais frear
+      const speed = Math.hypot(ship.vx, ship.vy);
+      if (speed > MAX_SPEED) {
+        const s = MAX_SPEED / speed;
+        ship.vx *= s; ship.vy *= s;
+      }
+
       ship.x += ship.vx * dt; ship.y += ship.vy * dt;
       const margin = shipImgReady ? Math.max(shipDrawW, shipDrawH) / 2 + 4 : 18;
-      ship.x = Math.max(margin, Math.min(WORLD_W - margin, ship.x));
-      ship.y = Math.max(margin, Math.min(WORLD_H - margin, ship.y));
+      const clampedX = Math.max(margin, Math.min(WORLD_W - margin, ship.x));
+      const clampedY = Math.max(margin, Math.min(WORLD_H - margin, ship.y));
+      // zera a velocidade no eixo que bateu na borda — sem isso a nave fica
+      // "empurrando" a parede/teto e não responde direito aos comandos
+      if (clampedX !== ship.x) ship.vx = 0;
+      if (clampedY !== ship.y) ship.vy = 0;
+      ship.x = clampedX; ship.y = clampedY;
 
       debris.forEach((d) => {
         d.x += d.vx * dt; d.y += d.vy * dt; d.rot += d.spin * dt;
@@ -667,6 +687,11 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       const off = (e: Event) => { e.preventDefault(); keys[key] = false; };
       btn.addEventListener("touchstart", on); btn.addEventListener("touchend", off); btn.addEventListener("touchcancel", off);
       btn.addEventListener("mousedown", on); btn.addEventListener("mouseup", off); btn.addEventListener("mouseleave", off);
+      // salva-guarda extra: se o dedo escorregar pra fora do botão e soltar em
+      // qualquer lugar da tela, desliga o comando mesmo assim — evita ficar
+      // "acelerando pra sempre" quando o gesto sai da área do botão
+      window.addEventListener("pointerup", off);
+      window.addEventListener("blur", off);
     }
     bindHold("#left-btn", "left"); bindHold("#right-btn", "right"); bindHold("#thrust-btn", "thrust");
 
