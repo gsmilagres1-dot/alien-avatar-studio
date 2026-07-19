@@ -28,7 +28,9 @@ export type ShipModel = (typeof SHIP_MODELS)[number];
 
 // Naves extras só do hangar de mineração (não afetam a identidade/nave
 // "oficial" do jogador, que continua sendo as 4 de cima). As 4 primeiras
-// são grátis; as 7 seguintes custam fichas até serem compradas.
+// são grátis; o resto custa fichas até ser comprado. Preço varia pela
+// categoria da nave (ver src/lib/ship-stats.ts): naves "micro"/leves são
+// mais baratas, "grande" (carregam mais material) são mais caras.
 export const EXTRA_SHIPS = [
   { id: "aerodeslizador", name: "Aerodeslizador", price: 0 },
   { id: "vtol-classica", name: "VTOL Clássica", price: 0 },
@@ -41,6 +43,23 @@ export const EXTRA_SHIPS = [
   { id: "prancha-prata", name: "Prancha Prateada", price: 800 },
   { id: "hexacoptero", name: "Hexacóptero", price: 800 },
   { id: "concept-vermelho", name: "Concept Vermelho", price: 800 },
+
+  // ---- leva de 15 naves novas (recortadas no contorno) ----
+  { id: "delorean-classic", name: "Delorean Classic", price: 800 },
+  { id: "cadillactic-zx", name: "El Cadillactic ZX", price: 850 },
+  { id: "nano-mold", name: "Nano Mold", price: 600 },
+  { id: "modulo-c23", name: "Módulo Intergaláctico C-23", price: 1000 },
+  { id: "navigator-original", name: "Navigator Original", price: 1400 },
+  { id: "shadow-slim-2", name: "Shadow Slim", price: 800 },
+  { id: "love-flyer", name: "Love Flyer", price: 1000 },
+  { id: "supersonic-force1", name: "Super-Sonic Force 1", price: 1050 },
+  { id: "easy-rider-bus", name: "Easy Rider Bus", price: 1500 },
+  { id: "unilander-77", name: "Uni-Lander 77", price: 650 },
+  { id: "unilander", name: "Uni-Lander", price: 850 },
+  { id: "egg-lander-1001", name: "Egg Lander 1001", price: 600 },
+  { id: "navigator", name: "Navigator", price: 1600 },
+  { id: "hover-coupe-rz", name: "Hover Coupe RZ", price: 800 },
+  { id: "lander-rz9", name: "Lander RZ-9", price: 850 },
 ] as const;
 export type ExtraShipId = (typeof EXTRA_SHIPS)[number]["id"];
 const ALL_SHIP_KEYS = [...SHIP_MODELS, ...EXTRA_SHIPS.map((s) => s.id)] as unknown as [string, ...string[]];
