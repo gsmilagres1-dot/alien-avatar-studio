@@ -342,15 +342,13 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
     // base +60% em relação ao valor antigo (era 100), depois ajustada pelo
     // multiplicador da nave escolhida (naves pequenas/ágeis rendem mais
     // autonomia; naves grandes rendem mais carga e menos autonomia)
-    const BASE_MAX_FUEL = Math.round((160 + upTanque * 20) * shipStats.fuelMult);
-    const BASE_MAX_O2 = Math.round((60 + upOxigenio * 15) * shipStats.o2Mult);
+    const BASE_MAX_FUEL = Math.round((240 + upTanque * 25) * shipStats.fuelMult); // subiu bem mais — antes não dava tempo de coletar e voltar
+    const BASE_MAX_O2 = Math.round((100 + upOxigenio * 18) * shipStats.o2Mult);
     function maxFuel() { return Math.round(BASE_MAX_FUEL * (1 + state.fuelBonusPct / 100)); }
     function maxO2() { return Math.round(BASE_MAX_O2 * (1 + state.o2BonusPct / 100)); }
     const BASE_CARGO_CAP = (4 + upCarga * 2) * shipStats.cargoMult;
     function cargoCap() { return Math.round(BASE_CARGO_CAP * (1 + state.cargoBonusPct / 100)); }
     const O2_DRAIN_RATE = 1; // por segundo, sempre correndo (independente de acelerar)
-    const GRAVITY = 70; // puxa a nave pra baixo o tempo todo — sem isso ela sobe e fica presa no teto
-    const MAX_SPEED = 260; // trava a velocidade máxima pra alavanca não "disparar" e nunca frear
 
     const state = {
       level: Math.min(5, Math.max(1, startLevel)),
@@ -389,11 +387,11 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
 
     function difficultyParams(level: number) {
       return {
-        fuelBurnRate: (5 + level * 0.6) * (theme.danger ? 1.4 : 1),
+        fuelBurnRate: (4 + level * 0.5) * (theme.danger ? 1.4 : 1),
         thrustPower: 150 * (1 + upPropulsor * 0.15) * shipStats.speedMult,
         damping: 0.992,
         nodeCount: 5 + level,
-        nodeSpeed: 12 + level * 2.5, // materiais de coleta agora se movem — exige manobra pra alcançar
+        nodeSpeed: 8 + level * 1.8, // materiais de coleta se movem, mas mais devagar — dá pra alcançar com folga
         debrisCount: 3 + Math.floor(level * 0.9),
         debrisSpeed: 26 + level * 9,
         worldW: 1700 + level * 130,
@@ -609,13 +607,10 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       state.o2 = Math.max(0, state.o2 - O2_DRAIN_RATE * dt);
       let fuelUsedRate = 0; // acumula quanto gastar nesse frame (soma dos comandos ativos)
 
-      // gravidade constante — sem ela, a nave que sobe nunca mais desce sozinha
-      ship.vy += GRAVITY * dt;
-
       if (keys.left && state.fuel > 0) {
         ship.vx -= thrustPower * dt;
         ship.facing = -1;
-        fuelUsedRate += fuelBurnRate * 0.30; // manobra lateral gasta bem menos — só gira/desloca, não briga com a gravidade
+        fuelUsedRate += fuelBurnRate * 0.30; // manobra lateral gasta bem menos que subir
       }
       if (keys.right && state.fuel > 0) {
         ship.vx += thrustPower * dt;
@@ -623,50 +618,32 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
         fuelUsedRate += fuelBurnRate * 0.30;
       }
       if (keys.thrust && state.fuel > 0) {
-        ship.vy -= (thrustPower + GRAVITY * 1.6) * dt;
-        fuelUsedRate += fuelBurnRate; // subir custa o valor cheio — precisa vencer a gravidade
+        ship.vy -= thrustPower * dt;
+        fuelUsedRate += fuelBurnRate;
       }
       if (fuelUsedRate > 0) state.fuel = Math.max(0, state.fuel - fuelUsedRate * dt);
 
       ship.vx *= damping; ship.vy *= damping;
-
-      // trava a velocidade máxima — impede a alavanca de "disparar" e nunca mais frear
-      const speed = Math.hypot(ship.vx, ship.vy);
-      if (speed > MAX_SPEED) {
-        const s = MAX_SPEED / speed;
-        ship.vx *= s; ship.vy *= s;
-      }
-
       ship.x += ship.vx * dt; ship.y += ship.vy * dt;
 
-      // inclinação visual — a nave banka nas curvas e levanta o nariz ao subir.
-      // No espaço não tem resistência: se ela já está em movimento por inércia
-      // (embalo de uma aceleração anterior) e você aciona ◀ ou ▶, ela gira de
-      // verdade (mortal) — não precisa estar segurando a alavanca no momento.
-      // Solta e o giro desacelera suave até voltar a plainar.
+      // giro por inércia — se a nave já está em movimento (embalo de uma
+      // aceleração) e você segura ◀ ou ▶, ela gira de verdade, cada vez mais
+      // rápido quanto mais tempo segurar (até um teto). Solta e o giro
+      // desacelera suave até ela voltar a ficar reta.
       const speedNow = Math.hypot(ship.vx, ship.vy);
-      const MIN_SPIN_SPEED = 35; // precisa ter embalo (inércia) — parado, virar não gira
+      const MIN_SPIN_SPEED = 35; // precisa ter embalo — parada, virar não gira
       const spinning = (keys.left || keys.right) && speedNow > MIN_SPIN_SPEED && state.fuel > 0;
       if (spinning) {
         const spinDir = keys.left ? -1 : 1;
-        const SPIN_ACCEL = 9; // rad/s² — quanto tempo segura, mais rápido gira
-        const MAX_SPIN = 7; // rad/s — velocidade máxima do giro
+        const SPIN_ACCEL = 9; // rad/s² — quanto mais segura, mais rápido gira
+        const MAX_SPIN = 7; // rad/s — teto de velocidade do giro
         ship.angularVel += spinDir * SPIN_ACCEL * dt;
         ship.angularVel = Math.max(-MAX_SPIN, Math.min(MAX_SPIN, ship.angularVel));
-        ship.angle += ship.angularVel * dt;
       } else {
-        // sem girar: desacelera o giro e volta suave pro ângulo de inclinação normal
-        ship.angularVel *= Math.max(0, 1 - dt * 4);
-        if (Math.abs(ship.angularVel) < 0.02) {
-          ship.angularVel = 0;
-          const bankTarget = Math.max(-0.45, Math.min(0.45, (-ship.vx / MAX_SPEED) * 0.55));
-          const pitchTarget = Math.max(-0.25, Math.min(0.25, (-ship.vy / MAX_SPEED) * 0.35));
-          const angleTarget = (bankTarget + pitchTarget) * ship.facing;
-          ship.angle += (angleTarget - ship.angle) * Math.min(1, dt * 6);
-        } else {
-          ship.angle += ship.angularVel * dt;
-        }
+        ship.angularVel *= Math.max(0, 1 - dt * 4); // desacelera suave quando solta
+        if (Math.abs(ship.angularVel) < 0.02) ship.angularVel = 0;
       }
+      ship.angle += ship.angularVel * dt;
 
       const margin = shipImgReady ? Math.max(shipDrawW, shipDrawH) / 2 + 4 : 18;
       const clampedX = Math.max(margin, Math.min(WORLD_W - margin, ship.x));
