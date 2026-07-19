@@ -47,6 +47,21 @@ const EXTRA_SHIP_IMAGES: Record<string, string> = {
   "prancha-prata": shipEsportiva,
   hexacoptero: shipOffroad,
   "concept-vermelho": shipCorrida,
+  "delorean-classic": shipTeleportadora,
+  "cadillactic-zx": shipEsportiva,
+  "nano-mold": shipOffroad,
+  "modulo-c23": shipCorrida,
+  "navigator-original": shipTeleportadora,
+  "shadow-slim-2": shipEsportiva,
+  "love-flyer": shipOffroad,
+  "supersonic-force1": shipCorrida,
+  "easy-rider-bus": shipTeleportadora,
+  "unilander-77": shipEsportiva,
+  unilander: shipOffroad,
+  "egg-lander-1001": shipCorrida,
+  navigator: shipTeleportadora,
+  "hover-coupe-rz": shipEsportiva,
+  "lander-rz9": shipOffroad,
 };
 
 const SKIN_IMAGES: Record<RaceSkin, string> = {
@@ -75,7 +90,7 @@ export function HangarSelect({
 }: {
   ownAvatarUrl: string | null;
   ownShipUrl: string;
-  onStart: (shipImageUrl: string, pilotAvatarUrl: string | null) => void;
+  onStart: (shipImageUrl: string, pilotAvatarUrl: string | null, shipKey: string) => void;
 }) {
   const getHangar = useServerFn(getHangarState);
   const saveSelection = useServerFn(setHangarSelection);
@@ -145,7 +160,7 @@ export function HangarSelect({
     const shipImageUrl =
       (SHIP_IMAGES as Record<string, string>)[selectedShip] ?? EXTRA_SHIP_IMAGES[selectedShip] ?? ownShipUrl;
     const pilotAvatarUrl = selectedSkin ? SKIN_IMAGES[selectedSkin] : ownAvatarUrl;
-    onStart(shipImageUrl, pilotAvatarUrl);
+    onStart(shipImageUrl, pilotAvatarUrl, selectedShip);
   }
 
   return (
