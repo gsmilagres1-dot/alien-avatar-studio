@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthenticatedUpgradesRouteImport } from './routes/_authenticated/upgrades'
+import { Route as AuthenticatedRotaRouteImport } from './routes/_authenticated/rota'
 import { Route as AuthenticatedPilotosRouteImport } from './routes/_authenticated/pilotos'
 import { Route as AuthenticatedMapaRouteImport } from './routes/_authenticated/mapa'
 import { Route as AuthenticatedLojaRouteImport } from './routes/_authenticated/loja'
@@ -51,6 +52,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
 const AuthenticatedUpgradesRoute = AuthenticatedUpgradesRouteImport.update({
   id: '/upgrades',
   path: '/upgrades',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedRotaRoute = AuthenticatedRotaRouteImport.update({
+  id: '/rota',
+  path: '/rota',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedPilotosRoute = AuthenticatedPilotosRouteImport.update({
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/pilotos': typeof AuthenticatedPilotosRoute
+  '/rota': typeof AuthenticatedRotaRoute
   '/upgrades': typeof AuthenticatedUpgradesRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/batalha/$id': typeof AuthenticatedBatalhaIdRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/loja': typeof AuthenticatedLojaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/pilotos': typeof AuthenticatedPilotosRoute
+  '/rota': typeof AuthenticatedRotaRoute
   '/upgrades': typeof AuthenticatedUpgradesRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/batalha/$id': typeof AuthenticatedBatalhaIdRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/_authenticated/loja': typeof AuthenticatedLojaRoute
   '/_authenticated/mapa': typeof AuthenticatedMapaRoute
   '/_authenticated/pilotos': typeof AuthenticatedPilotosRoute
+  '/_authenticated/rota': typeof AuthenticatedRotaRoute
   '/_authenticated/upgrades': typeof AuthenticatedUpgradesRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/batalha/$id': typeof AuthenticatedBatalhaIdRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/loja'
     | '/mapa'
     | '/pilotos'
+    | '/rota'
     | '/upgrades'
     | '/checkout/return'
     | '/batalha/$id'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/loja'
     | '/mapa'
     | '/pilotos'
+    | '/rota'
     | '/upgrades'
     | '/checkout/return'
     | '/batalha/$id'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/_authenticated/loja'
     | '/_authenticated/mapa'
     | '/_authenticated/pilotos'
+    | '/_authenticated/rota'
     | '/_authenticated/upgrades'
     | '/checkout/return'
     | '/_authenticated/batalha/$id'
@@ -296,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/upgrades'
       fullPath: '/upgrades'
       preLoaderRoute: typeof AuthenticatedUpgradesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rota': {
+      id: '/_authenticated/rota'
+      path: '/rota'
+      fullPath: '/rota'
+      preLoaderRoute: typeof AuthenticatedRotaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/pilotos': {
@@ -434,6 +453,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedLojaRoute: typeof AuthenticatedLojaRoute
   AuthenticatedMapaRoute: typeof AuthenticatedMapaRoute
   AuthenticatedPilotosRoute: typeof AuthenticatedPilotosRoute
+  AuthenticatedRotaRoute: typeof AuthenticatedRotaRoute
   AuthenticatedUpgradesRoute: typeof AuthenticatedUpgradesRoute
 }
 
@@ -448,6 +468,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLojaRoute: AuthenticatedLojaRoute,
   AuthenticatedMapaRoute: AuthenticatedMapaRoute,
   AuthenticatedPilotosRoute: AuthenticatedPilotosRoute,
+  AuthenticatedRotaRoute: AuthenticatedRotaRoute,
   AuthenticatedUpgradesRoute: AuthenticatedUpgradesRoute,
 }
 
