@@ -24,6 +24,22 @@ import raceSiriano from "@/assets/race-siriano.jpg";
 import racePleiadiano from "@/assets/race-pleiadiano.jpg";
 import raceLyriano from "@/assets/race-lyriano.jpg";
 import raceKashyapa from "@/assets/race-kashyapa.jpg";
+import { getShipStats } from "@/lib/ship-stats";
+import shipDeloreanClassic from "@/assets/ship-extra-delorean-classic.png";
+import shipCadillacticZx from "@/assets/ship-extra-cadillactic-zx.png";
+import shipNanoMold from "@/assets/ship-extra-nano-mold.png";
+import shipModuloC23 from "@/assets/ship-extra-modulo-c23.png";
+import shipNavigatorOriginal from "@/assets/ship-extra-navigator-original.png";
+import shipShadowSlim2 from "@/assets/ship-extra-shadow-slim-2.png";
+import shipLoveFlyer from "@/assets/ship-extra-love-flyer.png";
+import shipSupersonicForce1 from "@/assets/ship-extra-supersonic-force1.png";
+import shipEasyRiderBus from "@/assets/ship-extra-easy-rider-bus.jpg";
+import shipUnilander77 from "@/assets/ship-extra-unilander-77.jpg";
+import shipUnilander from "@/assets/ship-extra-unilander.jpg";
+import shipEggLander1001 from "@/assets/ship-extra-egg-lander-1001.png";
+import shipNavigator from "@/assets/ship-extra-navigator.jpg";
+import shipHoverCoupeRz from "@/assets/ship-extra-hover-coupe-rz.png";
+import shipLanderRz9 from "@/assets/ship-extra-lander-rz9.png";
 
 const SHIP_IMAGES: Record<ShipModel, string> = {
   esportiva: shipEsportiva,
@@ -32,9 +48,9 @@ const SHIP_IMAGES: Record<ShipModel, string> = {
   teleportadora: shipTeleportadora,
 };
 
-// TODO: trocar por imagens reais (geradas pela IA do app ou licenciadas)
-// assim que estiverem prontas — por enquanto usa as 4 naves existentes
-// como placeholder visual pras 11 naves extras do hangar.
+// As 11 primeiras naves extras ainda usam as 4 imagens base como
+// placeholder (pendente de imagem própria gerada/licenciada). As 15
+// mais novas abaixo já têm imagem real, recortada no contorno.
 const EXTRA_SHIP_IMAGES: Record<string, string> = {
   aerodeslizador: shipEsportiva,
   "vtol-classica": shipOffroad,
@@ -47,21 +63,23 @@ const EXTRA_SHIP_IMAGES: Record<string, string> = {
   "prancha-prata": shipEsportiva,
   hexacoptero: shipOffroad,
   "concept-vermelho": shipCorrida,
-  "delorean-classic": shipTeleportadora,
-  "cadillactic-zx": shipEsportiva,
-  "nano-mold": shipOffroad,
-  "modulo-c23": shipCorrida,
-  "navigator-original": shipTeleportadora,
-  "shadow-slim-2": shipEsportiva,
-  "love-flyer": shipOffroad,
-  "supersonic-force1": shipCorrida,
-  "easy-rider-bus": shipTeleportadora,
-  "unilander-77": shipEsportiva,
-  unilander: shipOffroad,
-  "egg-lander-1001": shipCorrida,
-  navigator: shipTeleportadora,
-  "hover-coupe-rz": shipEsportiva,
-  "lander-rz9": shipOffroad,
+
+  // ---- leva de 15 naves novas — imagens reais, recortadas no contorno ----
+  "delorean-classic": shipDeloreanClassic,
+  "cadillactic-zx": shipCadillacticZx,
+  "nano-mold": shipNanoMold,
+  "modulo-c23": shipModuloC23,
+  "navigator-original": shipNavigatorOriginal,
+  "shadow-slim-2": shipShadowSlim2,
+  "love-flyer": shipLoveFlyer,
+  "supersonic-force1": shipSupersonicForce1,
+  "easy-rider-bus": shipEasyRiderBus,
+  "unilander-77": shipUnilander77,
+  "unilander": shipUnilander,
+  "egg-lander-1001": shipEggLander1001,
+  "navigator": shipNavigator,
+  "hover-coupe-rz": shipHoverCoupeRz,
+  "lander-rz9": shipLanderRz9,
 };
 
 const SKIN_IMAGES: Record<RaceSkin, string> = {
@@ -90,7 +108,7 @@ export function HangarSelect({
 }: {
   ownAvatarUrl: string | null;
   ownShipUrl: string;
-  onStart: (shipImageUrl: string, pilotAvatarUrl: string | null, shipKey: string) => void;
+  onStart: (shipImageUrl: string, pilotAvatarUrl: string | null, shipKey?: string | null) => void;
 }) {
   const getHangar = useServerFn(getHangarState);
   const saveSelection = useServerFn(setHangarSelection);
@@ -170,7 +188,9 @@ export function HangarSelect({
 
       <h3 className="font-display text-sm mb-2 text-accent">Nave</h3>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
-        {SHIPS.map((s) => (
+        {SHIPS.map((s) => {
+          const stats = getShipStats(s.id);
+          return (
           <button
             key={s.id}
             onClick={() => setShip(s.id)}
@@ -193,9 +213,11 @@ export function HangarSelect({
                 {s.name} {selectedShip === s.id && <Check className="w-3 h-3 text-accent" />}
               </div>
               <div className="text-[9px] text-muted-foreground leading-tight">{s.desc}</div>
+              <div className="text-[8px] text-teal-300/80 leading-tight mt-0.5">{stats.blurb}</div>
             </div>
           </button>
-        ))}
+          );
+        })}
       </div>
 
       <h3 className="font-display text-sm mb-2 text-accent">
@@ -204,6 +226,7 @@ export function HangarSelect({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
         {EXTRA_SHIPS.map((s) => {
           const unlocked = unlockedShipSet.has(s.id);
+          const stats = getShipStats(s.id);
           return (
             <div key={s.id} className="flex flex-col gap-1">
               <button
@@ -235,6 +258,7 @@ export function HangarSelect({
                   <div className="text-[11px] font-display flex items-center gap-1">
                     {s.name} {selectedShip === s.id && <Check className="w-3 h-3 text-accent" />}
                   </div>
+                  <div className="text-[8px] text-teal-300/80 leading-tight mt-0.5">{stats.blurb}</div>
                 </div>
               </button>
               {unlocked && (
@@ -305,4 +329,4 @@ export function HangarSelect({
       </button>
     </div>
   );
-                              }
+}
