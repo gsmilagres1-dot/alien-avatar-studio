@@ -14,6 +14,7 @@ import { SOSButton } from "@/components/SOSButton";
 import { HangarSelect } from "@/components/HangarSelect";
 import { TeleporterLoadingIntro } from "@/components/TeleporterLoadingIntro";
 import { getBiomeTheme } from "@/lib/space-biomes";
+import { getShipStats } from "@/lib/ship-stats";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
@@ -41,7 +42,7 @@ function AcrossAge() {
   const clearWave = useServerFn(clearDestinationWave);
   const qc = useQueryClient();
   const [showIntro, setShowIntro] = useState(true);
-  const [loadout, setLoadout] = useState<{ shipImageUrl: string; pilotAvatarUrl: string | null } | null>(null);
+  const [loadout, setLoadout] = useState<{ shipImageUrl: string; pilotAvatarUrl: string | null; shipKey: string | null } | null>(null);
 
   const { data: identitiesData, isLoading: loadingIdentities } = useQuery({
     queryKey: ["identities"],
@@ -69,7 +70,12 @@ function AcrossAge() {
         const result = await submitResult({ data: { materialKey, success } });
         if (success) {
           qc.invalidateQueries({ queryKey: ["wallet"] });
-          toast.success(`Material coletado! +${result.fichasEarned} 🪙`);
+          const mat = MATERIALS.find((m) => m.id === materialKey);
+          const toolName = mat ? TOOLS.find((t) => t.id === mat.tool)?.name : undefined;
+          const matLabel = mat ? `${mat.icon} ${mat.name}` : "Material";
+          toast.success(
+            `${matLabel} coletado com ${toolName ?? "ferramenta"}! +${result.fichasEarned} 🪙`
+          );
         }
       } catch (e) {
         console.error(e);
@@ -126,7 +132,7 @@ function AcrossAge() {
       <HangarSelect
         ownAvatarUrl={pilot.avatar_url}
         ownShipUrl={ownShipUrl}
-        onStart={(shipImageUrl, pilotAvatarUrl) => setLoadout({ shipImageUrl, pilotAvatarUrl })}
+        onStart={(shipImageUrl, pilotAvatarUrl, shipKey) => setLoadout({ shipImageUrl, pilotAvatarUrl, shipKey: shipKey ?? null })}
       />
     );
   }
@@ -136,6 +142,7 @@ function AcrossAge() {
       key={`${pilot.id}-${destinationId ?? "default"}`}
       pilotAvatarUrl={loadout.pilotAvatarUrl}
       shipImageUrl={loadout.shipImageUrl}
+      shipKey={loadout.shipKey}
       pilotName={pilot.alien_name ?? "Piloto"}
       startLevel={destinationId ? (getDestination(destinationId)?.level ?? 1) : (miningData?.level ?? 1)}
       destinationId={destinationId ?? null}
@@ -277,6 +284,7 @@ function drawDebrisPiece(
 type GameCanvasProps = {
   pilotAvatarUrl: string | null;
   shipImageUrl: string;
+  shipKey?: string | null;
   pilotName: string;
   startLevel: number;
   destinationId?: string | null;
@@ -286,12 +294,14 @@ type GameCanvasProps = {
   onWaveCleared?: () => void;
 };
 
-function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, destinationId, destinationFact, upgradeLevels, onResult, onWaveCleared }: GameCanvasProps) {
+function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLevel, destinationId, destinationFact, upgradeLevels, onResult, onWaveCleared }: GameCanvasProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rescueRef = useRef<(() => void) | undefined>(undefined);
   const navigate = useNavigate();
+  const [resourceInfo, setResourceInfo] = useState<"fuel" | "o2" | null>(null);
   const theme = getBiomeTheme(destinationId);
+  const shipStats = getShipStats(shipKey);
   const ups = upgradeLevels ?? {};
   const upPropulsor = ups["propulsor"] ?? 0;
   const upTanque = ups["tanque"] ?? 0;
@@ -329,9 +339,14 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
 
     const FICHAS_PER_COLLECT = 1;
     const decorPoints: { x: number; y: number; emoji: string; size: number }[] = [];
-    const MAX_FUEL = 100 + upTanque * 20;
-    const MAX_O2 = 60 + upOxigenio * 15;
-    const BASE_CARGO_CAP = 4 + upCarga * 2;
+    // base +60% em relação ao valor antigo (era 100), depois ajustada pelo
+    // multiplicador da nave escolhida (naves pequenas/ágeis rendem mais
+    // autonomia; naves grandes rendem mais carga e menos autonomia)
+    const BASE_MAX_FUEL = Math.round((160 + upTanque * 20) * shipStats.fuelMult);
+    const BASE_MAX_O2 = Math.round((60 + upOxigenio * 15) * shipStats.o2Mult);
+    function maxFuel() { return Math.round(BASE_MAX_FUEL * (1 + state.fuelBonusPct / 100)); }
+    function maxO2() { return Math.round(BASE_MAX_O2 * (1 + state.o2BonusPct / 100)); }
+    const BASE_CARGO_CAP = (4 + upCarga * 2) * shipStats.cargoMult;
     function cargoCap() { return Math.round(BASE_CARGO_CAP * (1 + state.cargoBonusPct / 100)); }
     const O2_DRAIN_RATE = 1; // por segundo, sempre correndo (independente de acelerar)
     const GRAVITY = 70; // puxa a nave pra baixo o tempo todo — sem isso ela sobe e fica presa no teto
@@ -342,11 +357,13 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       collected: 0,
       landed: 0,
       crashed: 0,
-      fuel: MAX_FUEL,
-      o2: MAX_O2,
+      fuel: BASE_MAX_FUEL,
+      o2: BASE_MAX_O2,
       fichas: 0,
       flashT: 0,
       cargoBonusPct: 0,
+      fuelBonusPct: 0,
+      o2BonusPct: 0,
       phaseFichas: 0,
       phaseStartMs: 0,
       phaseDone: false,
@@ -354,10 +371,10 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
 
     const el = <T extends HTMLElement = HTMLElement>(sel: string) => root!.querySelector<T>(sel)!;
 
-    type Node = { x: number; y: number; material: typeof MATERIALS[number]; collected: boolean };
+    type Node = { x: number; y: number; vx: number; vy: number; material: typeof MATERIALS[number]; collected: boolean };
     type Debris = { x: number; y: number; vx: number; vy: number; r: number; kind: typeof DEBRIS_KINDS[number]; rot: number; spin: number };
 
-    let ship = { x: 0, y: 0, vx: 0, vy: 0, facing: 1 };
+    let ship = { x: 0, y: 0, vx: 0, vy: 0, facing: 1, angle: 0, angularVel: 0 };
     let WORLD_W = 1800, WORLD_H = 900;
     let camX = 0, camY = 0;
     let base = { x: 100, y: 450 };
@@ -373,9 +390,10 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
     function difficultyParams(level: number) {
       return {
         fuelBurnRate: (5 + level * 0.6) * (theme.danger ? 1.4 : 1),
-        thrustPower: 150 * (1 + upPropulsor * 0.15),
+        thrustPower: 150 * (1 + upPropulsor * 0.15) * shipStats.speedMult,
         damping: 0.992,
         nodeCount: 5 + level,
+        nodeSpeed: 12 + level * 2.5, // materiais de coleta agora se movem — exige manobra pra alcançar
         debrisCount: 3 + Math.floor(level * 0.9),
         debrisSpeed: 26 + level * 9,
         worldW: 1700 + level * 130,
@@ -394,8 +412,8 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
 
     function updateHud() {
       el("#fichas-badge").textContent = `🪙 ${state.fichas}`;
-      el<HTMLDivElement>("#fuel-fill").style.width = Math.max(0, (state.fuel / MAX_FUEL) * 100) + "%";
-      el<HTMLDivElement>("#o2-fill").style.width = Math.max(0, (state.o2 / MAX_O2) * 100) + "%";
+      el<HTMLDivElement>("#fuel-fill").style.width = Math.max(0, (state.fuel / maxFuel()) * 100) + "%";
+      el<HTMLDivElement>("#o2-fill").style.width = Math.max(0, (state.o2 / maxO2()) * 100) + "%";
       const total = nodes.length || 1;
       const done = nodes.filter((n) => n.collected).length;
       el("#cargo-count").textContent = `📦 ${done}/${total} · 🎒 ${state.collected}/${cargoCap()}`;
@@ -407,18 +425,23 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       fuelBurnRate = p.fuelBurnRate; thrustPower = p.thrustPower; damping = p.damping;
       WORLD_W = p.worldW; WORLD_H = p.worldH;
       base = { x: 110, y: WORLD_H / 2 };
-      ship = { x: base.x, y: base.y - 6, vx: 0, vy: 0, facing: 1 };
-      state.fuel = MAX_FUEL;
-      state.o2 = MAX_O2;
+      ship = { x: base.x, y: base.y - 6, vx: 0, vy: 0, facing: 1, angle: 0, angularVel: 0 };
+      state.fuel = maxFuel();
+      state.o2 = maxO2();
       state.phaseFichas = 0;
       state.phaseStartMs = performance.now();
       state.phaseDone = false;
-      nodes = Array.from({ length: p.nodeCount }, () => ({
-        x: 260 + Math.random() * (WORLD_W - 360),
-        y: 60 + Math.random() * (WORLD_H - 120),
-        material: MATERIALS[Math.floor(Math.random() * MATERIALS.length)],
-        collected: false,
-      }));
+      nodes = Array.from({ length: p.nodeCount }, () => {
+        const a = Math.random() * Math.PI * 2;
+        return {
+          x: 260 + Math.random() * (WORLD_W - 360),
+          y: 60 + Math.random() * (WORLD_H - 120),
+          vx: Math.cos(a) * p.nodeSpeed,
+          vy: Math.sin(a) * p.nodeSpeed,
+          material: MATERIALS[Math.floor(Math.random() * MATERIALS.length)],
+          collected: false,
+        };
+      });
       debris = Array.from({ length: p.debrisCount }, () => {
         const a = Math.random() * Math.PI * 2;
         const kind = DEBRIS_KINDS[Math.floor(Math.random() * DEBRIS_KINDS.length)];
@@ -488,6 +511,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       }
       c.save();
       c.translate(ship.x, ship.y);
+      c.rotate(ship.angle);
       c.scale(ship.facing, 1);
       if (shipImgReady) {
         c.drawImage(shipImg, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
@@ -583,7 +607,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
     function update(dt: number) {
       if (state.flashT > 0) state.flashT -= dt;
       state.o2 = Math.max(0, state.o2 - O2_DRAIN_RATE * dt);
-      let burningFuel = false;
+      let fuelUsedRate = 0; // acumula quanto gastar nesse frame (soma dos comandos ativos)
 
       // gravidade constante — sem ela, a nave que sobe nunca mais desce sozinha
       ship.vy += GRAVITY * dt;
@@ -591,18 +615,18 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       if (keys.left && state.fuel > 0) {
         ship.vx -= thrustPower * dt;
         ship.facing = -1;
-        burningFuel = true;
+        fuelUsedRate += fuelBurnRate * 0.30; // manobra lateral gasta bem menos — só gira/desloca, não briga com a gravidade
       }
       if (keys.right && state.fuel > 0) {
         ship.vx += thrustPower * dt;
         ship.facing = 1;
-        burningFuel = true;
+        fuelUsedRate += fuelBurnRate * 0.30;
       }
       if (keys.thrust && state.fuel > 0) {
         ship.vy -= (thrustPower + GRAVITY * 1.6) * dt;
-        burningFuel = true;
+        fuelUsedRate += fuelBurnRate; // subir custa o valor cheio — precisa vencer a gravidade
       }
-      if (burningFuel) state.fuel = Math.max(0, state.fuel - fuelBurnRate * dt);
+      if (fuelUsedRate > 0) state.fuel = Math.max(0, state.fuel - fuelUsedRate * dt);
 
       ship.vx *= damping; ship.vy *= damping;
 
@@ -614,6 +638,36 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       }
 
       ship.x += ship.vx * dt; ship.y += ship.vy * dt;
+
+      // inclinação visual — a nave banka nas curvas e levanta o nariz ao subir.
+      // No espaço não tem resistência: se ela já está em movimento por inércia
+      // (embalo de uma aceleração anterior) e você aciona ◀ ou ▶, ela gira de
+      // verdade (mortal) — não precisa estar segurando a alavanca no momento.
+      // Solta e o giro desacelera suave até voltar a plainar.
+      const speedNow = Math.hypot(ship.vx, ship.vy);
+      const MIN_SPIN_SPEED = 35; // precisa ter embalo (inércia) — parado, virar não gira
+      const spinning = (keys.left || keys.right) && speedNow > MIN_SPIN_SPEED && state.fuel > 0;
+      if (spinning) {
+        const spinDir = keys.left ? -1 : 1;
+        const SPIN_ACCEL = 9; // rad/s² — quanto tempo segura, mais rápido gira
+        const MAX_SPIN = 7; // rad/s — velocidade máxima do giro
+        ship.angularVel += spinDir * SPIN_ACCEL * dt;
+        ship.angularVel = Math.max(-MAX_SPIN, Math.min(MAX_SPIN, ship.angularVel));
+        ship.angle += ship.angularVel * dt;
+      } else {
+        // sem girar: desacelera o giro e volta suave pro ângulo de inclinação normal
+        ship.angularVel *= Math.max(0, 1 - dt * 4);
+        if (Math.abs(ship.angularVel) < 0.02) {
+          ship.angularVel = 0;
+          const bankTarget = Math.max(-0.45, Math.min(0.45, (-ship.vx / MAX_SPEED) * 0.55));
+          const pitchTarget = Math.max(-0.25, Math.min(0.25, (-ship.vy / MAX_SPEED) * 0.35));
+          const angleTarget = (bankTarget + pitchTarget) * ship.facing;
+          ship.angle += (angleTarget - ship.angle) * Math.min(1, dt * 6);
+        } else {
+          ship.angle += ship.angularVel * dt;
+        }
+      }
+
       const margin = shipImgReady ? Math.max(shipDrawW, shipDrawH) / 2 + 4 : 18;
       const clampedX = Math.max(margin, Math.min(WORLD_W - margin, ship.x));
       const clampedY = Math.max(margin, Math.min(WORLD_H - margin, ship.y));
@@ -622,6 +676,13 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       if (clampedX !== ship.x) ship.vx = 0;
       if (clampedY !== ship.y) ship.vy = 0;
       ship.x = clampedX; ship.y = clampedY;
+
+      nodes.forEach((n) => {
+        if (n.collected) return;
+        n.x += n.vx * dt; n.y += n.vy * dt;
+        if (n.x < 40 || n.x > WORLD_W - 40) n.vx *= -1;
+        if (n.y < 40 || n.y > WORLD_H - 40) n.vy *= -1;
+      });
 
       debris.forEach((d) => {
         d.x += d.vx * dt; d.y += d.vy * dt; d.rot += d.spin * dt;
@@ -653,8 +714,8 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       updateCollectButton();
 
       if (Math.hypot(ship.x - base.x, ship.y - base.y) < 46) {
-        if (state.fuel < MAX_FUEL) state.fuel = MAX_FUEL;
-        if (state.o2 < MAX_O2) state.o2 = MAX_O2;
+        if (state.fuel < maxFuel()) state.fuel = maxFuel();
+        if (state.o2 < maxO2()) state.o2 = maxO2();
         state.collected = 0;
         if (!state.phaseDone && nodes.length > 0 && nodes.every((n) => n.collected)) completePhase();
       }
@@ -707,10 +768,12 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
     }
 
     function rescue() {
-      state.fuel = MAX_FUEL;
-      state.o2 = MAX_O2;
+      state.fuelBonusPct += 25;
+      state.o2BonusPct += 25;
       state.cargoBonusPct += 25;
-      ship.x = base.x; ship.y = base.y - 6; ship.vx = 0; ship.vy = 0;
+      state.fuel = maxFuel();
+      state.o2 = maxO2();
+      ship.x = base.x; ship.y = base.y - 6; ship.vx = 0; ship.vy = 0; ship.angle = 0; ship.angularVel = 0;
       hideAllOverlays();
       startLoop();
     }
@@ -770,11 +833,11 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
       <div id="hud">
         <div id="hud-normal">
           <div className="gauge">
-            <div className="gauge-label">⛽ Combustível</div>
+            <div className="gauge-label gauge-label-tap" onClick={() => setResourceInfo(resourceInfo === "fuel" ? null : "fuel")}>⛽ Combustível ℹ️</div>
             <div className="gauge-track"><div id="fuel-fill" className="gauge-fill" style={{ width: "100%" }} /></div>
           </div>
           <div className="gauge">
-            <div className="gauge-label">🫁 O2</div>
+            <div className="gauge-label gauge-label-tap" onClick={() => setResourceInfo(resourceInfo === "o2" ? null : "o2")}>🫁 O2 ℹ️</div>
             <div className="gauge-track"><div id="o2-fill" className="gauge-fill o2" style={{ width: "100%" }} /></div>
           </div>
           <div id="cargo-count" className="pixel" style={{ fontSize: 10, color: "var(--teal)", alignSelf: "center", whiteSpace: "nowrap" }}>📦 0/0</div>
@@ -782,6 +845,22 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
         <div id="fichas-badge" className="pixel">🪙 0</div>
         <div id="level-badge" className="pixel">NÍVEL {startLevel}/5</div>
       </div>
+
+      {resourceInfo && (
+        <div className="resource-info-popup" onClick={() => setResourceInfo(null)}>
+          <div className="resource-info-box" onClick={(e) => e.stopPropagation()}>
+            <div className="resource-info-title">
+              {resourceInfo === "fuel" ? "⛽ Combustível" : "🫁 O2"}
+            </div>
+            <div className="resource-info-text">
+              Acabando, volte pra base pra reabastecer de graça (se der tempo).
+              Sem tempo? Aciona o <b>SOS</b> (25 🪙) — dá <b>+25% extra</b> na hora,
+              e empilha a cada vez que usar de novo na mesma corrida.
+            </div>
+            <button className="resource-info-close" onClick={() => setResourceInfo(null)}>Entendi</button>
+          </div>
+        </div>
+      )}
 
       <div id="stage">
         <canvas ref={canvasRef} />
@@ -863,6 +942,13 @@ const ACROSS_AGE_CSS = `
 .across-age-root #hud-normal{ display:flex; gap:10px; flex:1; align-items:center; }
 .across-age-root .gauge{ flex:1; }
 .across-age-root .gauge-label{ font-size:10px; color:var(--ink-dim); margin-bottom:4px; text-transform:uppercase; }
+.across-age-root .gauge-label-tap{ cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
+.across-age-root .resource-info-popup{ position:absolute; inset:0; z-index:30; background:rgba(5,7,20,.55); display:flex; align-items:flex-start; justify-content:center; padding-top:60px; }
+.across-age-root .resource-info-box{ background:#12163a; border:2px solid var(--gold); border-radius:14px; padding:16px; max-width:300px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,.5); }
+.across-age-root .resource-info-title{ font-family:'Press Start 2P', monospace; font-size:12px; color:var(--gold); margin-bottom:8px; }
+.across-age-root .resource-info-text{ font-size:12px; color:var(--ink); line-height:1.6; margin-bottom:12px; }
+.across-age-root .resource-info-text b{ color:var(--teal); }
+.across-age-root .resource-info-close{ font-family:'Press Start 2P', monospace; font-size:10px; padding:8px 16px; border-radius:8px; border:2px solid var(--teal); background:transparent; color:var(--teal); cursor:pointer; }
 .across-age-root .gauge-track{ height:8px; border-radius:4px; background:#1c2050; overflow:hidden; border:1px solid #2b2f66; }
 .across-age-root .gauge-fill{ height:100%; border-radius:4px; transition:width .15s linear; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); }
 .across-age-root .gauge-fill.o2{ background:linear-gradient(90deg,#1c6f8f,#5ad2e6); }
