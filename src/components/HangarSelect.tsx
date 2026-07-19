@@ -145,7 +145,7 @@ export function HangarSelect({
     const shipImageUrl =
       (SHIP_IMAGES as Record<string, string>)[selectedShip] ?? EXTRA_SHIP_IMAGES[selectedShip] ?? ownShipUrl;
     const pilotAvatarUrl = selectedSkin ? SKIN_IMAGES[selectedSkin] : ownAvatarUrl;
-    onStart(shipImageUrl, pilotAvatarUrl);
+    onStart(shipImageUrl, pilotAvatarUrl, selectedShip);
   }
 
   return (
