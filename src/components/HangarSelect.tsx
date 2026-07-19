@@ -8,10 +8,10 @@ import {
   getHangarState, setHangarSelection, purchaseSkin, purchaseShip,
   EXTRA_SHIPS, type ShipModel, type RaceSkin,
 } from "@/lib/mining.functions";
-import shipEsportiva from "@/assets/ship-esportiva.jpg";
-import shipOffroad from "@/assets/ship-offroad.jpg";
-import shipCorrida from "@/assets/ship-corrida.jpg";
-import shipTeleportadora from "@/assets/teleporter-prize.jpg";
+import shipEsportiva from "@/assets/ship-esportiva.png";
+import shipOffroad from "@/assets/ship-offroad.png";
+import shipCorrida from "@/assets/ship-corrida.png";
+import shipTeleportadora from "@/assets/teleporter-prize.png";
 import raceStarseed from "@/assets/race-starseed.jpg";
 import raceNordico from "@/assets/race-nordico.jpg";
 import raceGrey from "@/assets/race-grey.jpg";
@@ -33,13 +33,27 @@ import shipNavigatorOriginal from "@/assets/ship-extra-navigator-original.png";
 import shipShadowSlim2 from "@/assets/ship-extra-shadow-slim-2.png";
 import shipLoveFlyer from "@/assets/ship-extra-love-flyer.png";
 import shipSupersonicForce1 from "@/assets/ship-extra-supersonic-force1.png";
-import shipEasyRiderBus from "@/assets/ship-extra-easy-rider-bus.jpg";
-import shipUnilander77 from "@/assets/ship-extra-unilander-77.jpg";
-import shipUnilander from "@/assets/ship-extra-unilander.jpg";
+import shipEasyRiderBus from "@/assets/ship-extra-easy-rider-bus.png";
+import shipUnilander77 from "@/assets/ship-extra-unilander-77.png";
+import shipUnilander from "@/assets/ship-extra-unilander.png";
 import shipEggLander1001 from "@/assets/ship-extra-egg-lander-1001.png";
-import shipNavigator from "@/assets/ship-extra-navigator.jpg";
+import shipNavigator from "@/assets/ship-extra-navigator.png";
 import shipHoverCoupeRz from "@/assets/ship-extra-hover-coupe-rz.png";
 import shipLanderRz9 from "@/assets/ship-extra-lander-rz9.png";
+
+// ---- leva nova: 12 naves, todas suas próprias imagens (fundo removido) ----
+import shipCruzerNoturno from "@/assets/ship-extra-cruzer-noturno.png";
+import shipCruzadorAurun from "@/assets/ship-extra-cruzador-aurun.png";
+import shipAranhaLander from "@/assets/ship-extra-aranha-lander.png";
+import shipGalacticDiamond from "@/assets/ship-extra-galactic-diamond.png";
+import shipModalMultidimensional from "@/assets/ship-extra-modal-multidimensional.png";
+import shipSuperDutyVanguard from "@/assets/ship-extra-super-duty-vanguard.png";
+import shipSpeedBeePredator from "@/assets/ship-extra-speed-bee-predator.png";
+import shipCruzerDourado from "@/assets/ship-extra-cruzer-dourado.png";
+import shipLanderExpedicao from "@/assets/ship-extra-lander-expedicao.png";
+import shipSpeedBeeRubi from "@/assets/ship-extra-speed-bee-rubi.png";
+import shipCruzerAereo from "@/assets/ship-extra-cruzer-aereo.png";
+import shipBolhaLander from "@/assets/ship-extra-bolha-lander.png";
 
 const SHIP_IMAGES: Record<ShipModel, string> = {
   esportiva: shipEsportiva,
@@ -80,6 +94,20 @@ const EXTRA_SHIP_IMAGES: Record<string, string> = {
   "navigator": shipNavigator,
   "hover-coupe-rz": shipHoverCoupeRz,
   "lander-rz9": shipLanderRz9,
+
+  // ---- leva nova: 12 naves ----
+  "cruzer-noturno": shipCruzerNoturno,
+  "cruzador-aurun": shipCruzadorAurun,
+  "aranha-lander": shipAranhaLander,
+  "galactic-diamond": shipGalacticDiamond,
+  "modal-multidimensional": shipModalMultidimensional,
+  "super-duty-vanguard": shipSuperDutyVanguard,
+  "speed-bee-predator": shipSpeedBeePredator,
+  "cruzer-dourado": shipCruzerDourado,
+  "lander-expedicao": shipLanderExpedicao,
+  "speed-bee-rubi": shipSpeedBeeRubi,
+  "cruzer-aereo": shipCruzerAereo,
+  "bolha-lander": shipBolhaLander,
 };
 
 const SKIN_IMAGES: Record<RaceSkin, string> = {
@@ -182,7 +210,21 @@ export function HangarSelect({
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div
+      className="max-w-2xl mx-auto px-4 py-6 relative"
+      style={{
+        backgroundImage:
+          "radial-gradient(ellipse at 20% 10%, rgba(61,219,201,0.10), transparent 55%), " +
+          "radial-gradient(ellipse at 85% 30%, rgba(232,179,74,0.08), transparent 50%), " +
+          "radial-gradient(1px 1px at 10% 20%, #fff 99%, transparent), " +
+          "radial-gradient(1px 1px at 80% 15%, #fff 99%, transparent), " +
+          "radial-gradient(1px 1px at 60% 60%, #cbd5e1 99%, transparent), " +
+          "radial-gradient(1.5px 1.5px at 30% 80%, #fff 99%, transparent), " +
+          "radial-gradient(1px 1px at 90% 75%, #fff 99%, transparent), " +
+          "linear-gradient(180deg, #05010f 0%, #0a0e27 100%)",
+        backgroundColor: "#05010f",
+      }}
+    >
       <h2 className="font-display text-2xl text-center mb-1">Estação Espacial</h2>
       <p className="text-center text-xs text-muted-foreground mb-6">Escolha a nave e o visual do piloto antes de partir</p>
 
