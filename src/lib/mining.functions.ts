@@ -60,6 +60,20 @@ export const EXTRA_SHIPS = [
   { id: "navigator", name: "Navigator", price: 1600 },
   { id: "hover-coupe-rz", name: "Hover Coupe RZ", price: 800 },
   { id: "lander-rz9", name: "Lander RZ-9", price: 850 },
+
+  // ---- leva nova: 12 naves ----
+  { id: "cruzer-noturno", name: "Cruzer Noturno", price: 850 },
+  { id: "cruzador-aurun", name: "Cruzador Aurun", price: 1050 },
+  { id: "aranha-lander", name: "Aranha Lander", price: 1500 },
+  { id: "galactic-diamond", name: "Galactic Diamond", price: 900 },
+  { id: "modal-multidimensional", name: "Modal Multidimensional", price: 1100 },
+  { id: "super-duty-vanguard", name: "Super Duty Vanguard", price: 1550 },
+  { id: "speed-bee-predator", name: "Speed Bee Predator", price: 1000 },
+  { id: "cruzer-dourado", name: "Cruzer Dourado", price: 850 },
+  { id: "lander-expedicao", name: "Lander Expedição", price: 900 },
+  { id: "speed-bee-rubi", name: "Speed Bee Rubi", price: 800 },
+  { id: "cruzer-aereo", name: "Cruzer Aéreo", price: 800 },
+  { id: "bolha-lander", name: "Bolha Lander", price: 650 },
 ] as const;
 export type ExtraShipId = (typeof EXTRA_SHIPS)[number]["id"];
 const ALL_SHIP_KEYS = [...SHIP_MODELS, ...EXTRA_SHIPS.map((s) => s.id)] as unknown as [string, ...string[]];
