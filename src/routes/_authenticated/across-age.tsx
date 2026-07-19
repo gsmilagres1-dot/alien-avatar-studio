@@ -500,7 +500,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       c.restore();
     }
 
-    function drawShip(c: CanvasRenderingContext2D, thrustingUp: boolean, thrustingSide: boolean) {
+    function drawShip(c: CanvasRenderingContext2D, thrustingUp: boolean) {
       for (let i = 0; i < state.collected; i++) {
         const back = 30 + i * 15;
         const tx = ship.x - ship.facing * back, ty = ship.y;
@@ -514,15 +514,12 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       if (shipImgReady) {
         c.drawImage(shipImg, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
       } else {
-        c.fillStyle = thrustingUp || thrustingSide ? "#ff9d3d" : "#3ddbc9";
+        c.fillStyle = thrustingUp ? "#ff9d3d" : "#3ddbc9";
         c.beginPath(); c.moveTo(14, 0); c.lineTo(-10, -9); c.lineTo(-6, 0); c.lineTo(-10, 9); c.closePath(); c.fill();
       }
-      if (thrustingSide) {
-        const flameX = shipImgReady ? -shipDrawW / 2 + 3 : -8;
-        c.fillStyle = "#ffd27a";
-        c.beginPath(); c.moveTo(flameX, -4); c.lineTo(flameX - 12 - Math.random() * 8, 0); c.lineTo(flameX, 4); c.closePath(); c.fill();
-      }
       c.restore();
+      // único propulsor: fica embaixo da nave, só acende com a alavanca (▲).
+      // ◀ e ▶ apenas direcionam pra que lado ela vai, sem chama própria.
       if (thrustingUp) {
         const flameY = shipImgReady ? shipDrawH / 2 - 3 : 9;
         c.fillStyle = "#ffd27a";
@@ -583,7 +580,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       drawBase(ctx, base);
       nodes.forEach((n) => { if (!n.collected) drawNode(ctx, n); });
       debris.forEach((d) => drawDebrisPiece(ctx, d));
-      drawShip(ctx, keys.thrust && state.fuel > 0, (keys.left || keys.right) && state.fuel > 0);
+      drawShip(ctx, keys.thrust && state.fuel > 0);
       ctx.restore();
 
       if (state.flashT > 0) {
@@ -911,7 +908,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
 
 const ACROSS_AGE_CSS = `
 .across-age-root{ --void:#0a0e27; --void-deep:#050714; --gold:#e8b34a; --gold-dim:#8a6a2a; --teal:#3ddbc9; --danger:#ff5c5c; --ink:#eef0ff; --ink-dim:#9aa0c8;
-  position:relative; width:100%; height:80vh; max-height:820px; margin:0 auto; border-radius:16px; overflow:hidden;
+  position:relative; width:100%; height:min(78vh, calc(100dvh - 130px)); max-height:760px; min-height:420px; margin:0 auto; border-radius:16px; overflow:hidden;
   background:radial-gradient(ellipse at 50% 20%, #14183c 0%, var(--void-deep) 70%); color:var(--ink); font-family:'Space Grotesk',sans-serif; }
 .across-age-root .pixel{ font-family:'Press Start 2P', monospace; }
 .across-age-root .hidden{ display:none !important; }
@@ -933,7 +930,7 @@ const ACROSS_AGE_CSS = `
 .across-age-root #fichas-badge{ font-size:10px; padding:6px 10px; border:1px solid var(--teal); border-radius:20px; color:var(--teal); white-space:nowrap; height:fit-content; }
 .across-age-root #stage{ position:relative; height:calc(100% - 46px); overflow:hidden; }
 .across-age-root canvas{ position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
-.across-age-root #controls{ position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; align-items:flex-end; padding:18px; z-index:6; pointer-events:none; }
+.across-age-root #controls{ position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; align-items:flex-end; padding:12px 18px calc(14px + env(safe-area-inset-bottom)) 18px; z-index:6; pointer-events:none; }
 .across-age-root .collect-btn{ position:absolute; left:50%; bottom:112px; transform:translateX(-50%); z-index:7; padding:10px 18px; font-size:12px; animation:collectPulse 1s ease-in-out infinite; }
 @keyframes collectPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(232,179,74,.55); } 50%{ box-shadow:0 0 0 14px rgba(232,179,74,0); } }
 .across-age-root .ctrl-btn{
