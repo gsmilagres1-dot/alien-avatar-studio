@@ -75,7 +75,7 @@ export function HangarSelect({
 }: {
   ownAvatarUrl: string | null;
   ownShipUrl: string;
-  onStart: (shipImageUrl: string, pilotAvatarUrl: string | null) => void;
+  onStart: (shipImageUrl: string, pilotAvatarUrl: string | null, shipKey: string) => void;
 }) {
   const getHangar = useServerFn(getHangarState);
   const saveSelection = useServerFn(setHangarSelection);
