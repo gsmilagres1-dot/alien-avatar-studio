@@ -78,6 +78,13 @@ export function Soundtrack() {
     };
   }, [started, muted]);
 
+  // Na tela do jogo (Across Age), os dois cantos de baixo já têm os
+  // comandos (alavanca e ◀▶) e os dois cantos de cima já têm o HUD
+  // (piloto, combustível, nível). Por isso, só ali, o botão de música
+  // muda pra um ponto neutro (meio da lateral direita) e fica compacto
+  // (só ícone, sem o texto "Aventura/Estrelas") pra não brigar com nada.
+  const isGame = pathname.startsWith("/across-age");
+
   return (
     <>
       <audio ref={audioRef} preload="none" />
@@ -87,13 +94,21 @@ export function Soundtrack() {
         onClick={() => setMuted((m) => !m)}
         aria-label={muted ? "Ativar trilha sonora" : "Silenciar trilha sonora"}
         title={muted ? "Ativar trilha sonora" : "Silenciar trilha sonora"}
-        className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-full glass border border-white/10 px-3 py-2 text-xs text-foreground shadow-lg backdrop-blur hover:bg-white/10 transition"
+        className={
+          isGame
+            ? "fixed top-1/2 right-2 -translate-y-1/2 z-50 inline-flex items-center justify-center rounded-full glass border border-white/10 w-9 h-9 text-foreground shadow-lg backdrop-blur hover:bg-white/10 transition"
+            : "fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-full glass border border-white/10 px-3 py-2 text-xs text-foreground shadow-lg backdrop-blur hover:bg-white/10 transition"
+        }
       >
         {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-accent" />}
-        <Music className="w-3.5 h-3.5 opacity-70" />
-        <span className="font-mono uppercase tracking-widest">
-          {hydrated && track === "stars" ? "Estrelas" : "Aventura"}
-        </span>
+        {!isGame && (
+          <>
+            <Music className="w-3.5 h-3.5 opacity-70" />
+            <span className="font-mono uppercase tracking-widest">
+              {hydrated && track === "stars" ? "Estrelas" : "Aventura"}
+            </span>
+          </>
+        )}
       </button>
     </>
   );
