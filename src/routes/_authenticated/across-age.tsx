@@ -802,7 +802,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, pilotName, startLevel, desti
         <button className="btn" id="retry-btn">↻ TENTAR NOVAMENTE</button>
         <SOSButton
           cost={25}
-          reason="sos_resgate_mineracao"
+          reason="sos_resgate_vacuo"
           label="Resgate"
           onSuccess={() => rescueRef.current?.()}
         />

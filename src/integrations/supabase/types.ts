@@ -311,6 +311,7 @@ export type Database = {
       }
       mining_progress: {
         Row: {
+          cleared_destinations: string[]
           collected: number
           crashed: number
           created_at: string
@@ -318,6 +319,7 @@ export type Database = {
           landed: number
           level: number
           material_key: string | null
+          purchased_ships: string[]
           purchased_skins: string[]
           selected_ship: string
           selected_skin: string | null
@@ -326,6 +328,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cleared_destinations?: string[]
           collected?: number
           crashed?: number
           created_at?: string
@@ -333,6 +336,7 @@ export type Database = {
           landed?: number
           level?: number
           material_key?: string | null
+          purchased_ships?: string[]
           purchased_skins?: string[]
           selected_ship?: string
           selected_skin?: string | null
@@ -341,6 +345,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cleared_destinations?: string[]
           collected?: number
           crashed?: number
           created_at?: string
@@ -348,6 +353,7 @@ export type Database = {
           landed?: number
           level?: number
           material_key?: string | null
+          purchased_ships?: string[]
           purchased_skins?: string[]
           selected_ship?: string
           selected_skin?: string | null
