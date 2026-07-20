@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { SHIPS, RACES } from "@/lib/alien";
 import {
   getHangarState, setHangarSelection, purchaseSkin, purchaseShip,
-  EXTRA_SHIPS, type ShipModel, type RaceSkin,
+  EXTRA_SHIPS, RACE_SKINS, type ShipModel, type RaceSkin,
 } from "@/lib/mining.functions";
 import shipEsportiva from "@/assets/ship-esportiva.png";
 import shipOffroad from "@/assets/ship-offroad.png";
@@ -144,20 +144,35 @@ export function HangarSelect({
   const buyShip = useServerFn(purchaseShip);
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({ queryKey: ["hangar-state"], queryFn: () => getHangar() });
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["hangar-state"],
+    queryFn: () => withHangarTimeout(getHangar(), 6500),
+    retry: false,
+  });
   const [ship, setShip] = useState<string | null>(null);
   const [skin, setSkin] = useState<RaceSkin | null | undefined>(undefined); // undefined = ainda não escolheu nada (usa próprio avatar)
   const [busySkin, setBusySkin] = useState<RaceSkin | null>(null);
   const [busyShip, setBusyShip] = useState<string | null>(null);
 
-  if (isLoading || !data) {
+  if (isLoading && !isError) {
     return <div className="text-center text-sm text-muted-foreground py-10">Carregando hangar...</div>;
   }
 
-  const selectedShip = ship ?? data.selectedShip;
-  const selectedSkin = skin === undefined ? data.selectedSkin : skin;
-  const unlockedSet = new Set(data.unlockedSkins);
-  const unlockedShipSet = new Set(data.unlockedExtraShips);
+  const hangarState = data ?? {
+    unlockedExtraShips: EXTRA_SHIPS.filter((s) => s.price === 0).map((s) => s.id),
+    raceSkins: RACE_SKINS,
+    unlockedSkins: [RACE_SKINS[0]],
+    selectedShip: "esportiva",
+    selectedSkin: null,
+    landed: 0,
+    skinPrice: 40,
+    unlockEveryNCollects: 5,
+  };
+
+  const selectedShip = ship ?? hangarState.selectedShip;
+  const selectedSkin = skin === undefined ? hangarState.selectedSkin : skin;
+  const unlockedSet = new Set(hangarState.unlockedSkins);
+  const unlockedShipSet = new Set(hangarState.unlockedExtraShips);
 
   async function handleBuyShip(id: string) {
     setBusyShip(id);
@@ -199,7 +214,7 @@ export function HangarSelect({
 
   async function handleStart() {
     try {
-      await saveSelection({ data: { selectedShip, selectedSkin: selectedSkin ?? null } });
+      await withHangarTimeout(saveSelection({ data: { selectedShip, selectedSkin: selectedSkin ?? null } }), 3500);
     } catch (e) {
       console.error(e);
     }
@@ -317,7 +332,7 @@ export function HangarSelect({
       </div>
 
       <h3 className="font-display text-sm mb-2 text-accent">
-        Skin do piloto <span className="text-[10px] text-muted-foreground">— desbloqueia 1 nova a cada {data.unlockEveryNCollects} coletas ({data.landed} até agora), ou compre por {data.skinPrice} 🪙</span>
+        Skin do piloto <span className="text-[10px] text-muted-foreground">— desbloqueia 1 nova a cada {hangarState.unlockEveryNCollects} coletas ({hangarState.landed} até agora), ou compre por {hangarState.skinPrice} 🪙</span>
       </h3>
       <div className="flex gap-2 overflow-x-auto pb-2 mb-6">
         <button
@@ -333,7 +348,7 @@ export function HangarSelect({
             <div className="w-16 h-16 flex items-center justify-center text-[9px] text-muted-foreground bg-input">Meu</div>
           )}
         </button>
-        {data.raceSkins.map((s) => {
+        {hangarState.raceSkins.map((s) => {
           const unlocked = unlockedSet.has(s);
           return (
             <div key={s} className="flex-shrink-0 flex flex-col items-center gap-1">
@@ -343,7 +358,7 @@ export function HangarSelect({
                 className={`relative w-16 h-16 rounded-full overflow-hidden border-2 ${
                   selectedSkin === s ? "border-accent shadow-neon" : "border-border"
                 }`}
-                title={unlocked ? skinLabel(s) : `Comprar por ${data.skinPrice} fichas`}
+                title={unlocked ? skinLabel(s) : `Comprar por ${hangarState.skinPrice} fichas`}
               >
                 <img src={SKIN_IMAGES[s]} alt={skinLabel(s)} className={`w-16 h-16 object-cover ${unlocked ? "" : "opacity-30 grayscale"}`} />
                 {!unlocked && (
@@ -355,7 +370,7 @@ export function HangarSelect({
               <span className="text-[8px] text-muted-foreground text-center leading-none max-w-[64px] truncate">{skinLabel(s)}</span>
               {!unlocked && (
                 <span className="text-[8px] flex items-center gap-0.5 text-amber-300">
-                  <Coins className="w-2.5 h-2.5" /> {data.skinPrice}
+                  <Coins className="w-2.5 h-2.5" /> {hangarState.skinPrice}
                 </span>
               )}
             </div>
@@ -371,4 +386,20 @@ export function HangarSelect({
       </button>
     </div>
   );
+}
+
+function withHangarTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("O hangar demorou demais para responder")), ms);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
 }
