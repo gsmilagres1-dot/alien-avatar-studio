@@ -467,6 +467,7 @@ function Criar() {
               onNew={createAnotherFromSamePhoto}
               canCreateAnother={availableDrafts.length > 0 || !!photo}
               onTravel={() => navigate({ to: "/galaxia", search: { identityId: savedIdentity.id } })}
+              onPlayGame={() => navigate({ to: "/rota" })}
             />
           )}
         </div>
@@ -487,6 +488,7 @@ setShipCategory: (c: ShipId) => void;
   onNew: () => void;
   canCreateAnother: boolean;
   onTravel: () => void;
+  onPlayGame: () => void;
 }) {
   const url = typeof window !== "undefined" ? window.location.origin : "";
   const [stlOpen, setStlOpen] = useState(false);
@@ -528,6 +530,9 @@ setShipCategory: (c: ShipId) => void;
         <div className="flex flex-wrap gap-2 justify-center">
           <button onClick={props.onTravel} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-alien-grad text-primary-foreground font-bold text-xs shadow-neon">
             <Rocket className="w-3.5 h-3.5" /> Viajar pela galáxia
+          </button>
+          <button onClick={props.onPlayGame} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-alien-grad text-primary-foreground font-bold text-xs shadow-neon">
+            🎮 Jogar (Across Age)
           </button>
           <button
             onClick={() => setStlOpen(true)}
