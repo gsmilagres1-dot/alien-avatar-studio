@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Lock, CheckCircle2 } from "lucide-react";
 import { WalletBadge } from "@/components/WalletBadge";
-import { getRouteState } from "@/lib/mining.functions";
+import { getRouteState, ROUTE_ORDER } from "@/lib/mining.functions";
 import { getBiomeTheme } from "@/lib/space-biomes";
 
 export const Route = createFileRoute("/_authenticated/rota")({
@@ -19,9 +19,13 @@ export const Route = createFileRoute("/_authenticated/rota")({
 function Rota() {
   const getRoute = useServerFn(getRouteState);
   const navigate = useNavigate();
-  const { data, isLoading } = useQuery({ queryKey: ["route-state"], queryFn: () => getRoute() });
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["route-state"],
+    queryFn: () => withRouteTimeout(getRoute(), 6500),
+    retry: false,
+  });
 
-  if (isLoading || !data) {
+  if (isLoading && !isError) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-muted-foreground text-sm">
         Carregando rota...
@@ -29,8 +33,13 @@ function Rota() {
     );
   }
 
-  const unlockedSet = new Set(data.unlockedDestinations);
-  const clearedSet = new Set(data.clearedDestinations);
+  const routeState = data ?? {
+    routeOrder: ROUTE_ORDER,
+    clearedDestinations: [],
+    unlockedDestinations: [ROUTE_ORDER[0]],
+  };
+  const unlockedSet = new Set(routeState.unlockedDestinations);
+  const clearedSet = new Set(routeState.clearedDestinations);
 
   return (
     <main className="px-4 py-6 max-w-2xl mx-auto pb-24">
@@ -43,7 +52,7 @@ function Rota() {
       </p>
 
       <div className="flex flex-col gap-3">
-        {data.routeOrder.map((id, i) => {
+        {routeState.routeOrder.map((id, i) => {
           const theme = getBiomeTheme(id);
           const unlocked = unlockedSet.has(id);
           const cleared = clearedSet.has(id);
@@ -105,4 +114,20 @@ function Rota() {
       </div>
     </main>
   );
+}
+
+function withRouteTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("A rota demorou demais para responder")), ms);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
 }
