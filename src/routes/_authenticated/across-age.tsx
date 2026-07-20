@@ -559,22 +559,33 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       c.restore();
     }
 
-    function drawShip(c: CanvasRenderingContext2D, thrustOnly: boolean, thrustOrTurn: boolean) {
+    function drawShip(c: CanvasRenderingContext2D, thrusting: boolean) {
       const noseRad = ((shipStats.noseAngleDeg ?? 0) * Math.PI) / 180;
-      // naves redondas/simétricas (moto, anelar, OVNI, hélice) giram livre em
-      // 360°; naves "de lado" (carro, jato) não podem girar de verdade — de
-      // cabeça pra baixo elas ficariam com as rodas pro alto sem sentido —
-      // então essas só ESPELHAM (viram como reflexo) pro lado que estão indo.
+      // naves redondas/simétricas (moto, anelar, OVNI, hélice) são desenhadas
+      // girando de verdade, em 360°. Naves "de lado" (carro, jato) usam o
+      // MESMO ângulo físico por trás (mesmo giro, mesmo motor na traseira),
+      // mas na hora de desenhar a gente limita a rotação visual a ±90° e
+      // espelha pro resto — assim elas viram pro lado certo sem nunca
+      // aparecer de cabeça pra baixo, e o motor continua sempre acompanhando.
       const freelyRotates = (shipStats.noseAngleDeg ?? 0) === -90;
-      // naves que giram só soltam fogo quando ▲ empurra de verdade; as que
-      // espelham soltam fogo com qualquer comando (◀▶▲), já que pra elas
-      // virar de lado também é o próprio motor trabalhando
-      const thrusting = freelyRotates ? thrustOnly : thrustOrTurn;
 
-      // direção "pra trás" da nave nesse instante — usada pra alinhar os
-      // itens coletados atrás dela, seja girando ou espelhando
-      const effAngle = freelyRotates ? noseRad + ship.angle : (ship.facing === -1 ? Math.PI - noseRad : noseRad);
-      const backX = -Math.cos(effAngle), backY = -Math.sin(effAngle);
+      let drawRot = ship.angle;
+      let mirror = 1;
+      if (!freelyRotates) {
+        let a = ship.angle % (Math.PI * 2);
+        if (a > Math.PI) a -= Math.PI * 2;
+        if (a < -Math.PI) a += Math.PI * 2;
+        if (Math.abs(a) <= Math.PI / 2) {
+          mirror = 1; drawRot = a;
+        } else {
+          mirror = -1; drawRot = a > 0 ? a - Math.PI : a + Math.PI;
+        }
+      }
+
+      // direção "pra trás" da nave nesse instante (ângulo físico real) —
+      // usada pra alinhar os itens coletados atrás dela
+      const totalAngle = noseRad + ship.angle;
+      const backX = -Math.cos(totalAngle), backY = -Math.sin(totalAngle);
       for (let i = 0; i < state.collected; i++) {
         const back = 30 + i * 15;
         const tx = ship.x + backX * back, ty = ship.y + backY * back;
@@ -584,8 +595,8 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
 
       c.save();
       c.translate(ship.x, ship.y);
-      if (freelyRotates) c.rotate(ship.angle);
-      else c.scale(ship.facing, 1); // espelha em vez de girar — mantém sempre "de pé"
+      c.rotate(drawRot);
+      if (!freelyRotates) c.scale(mirror, 1);
 
       if (shipImgReady) {
         c.drawImage(shipImg, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
@@ -595,16 +606,15 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       }
       // propulsor único, sempre no ponto da traseira DESSA imagem específica
       // (definido por noseAngleDeg em ship-stats.ts) — desenhado aqui dentro
-      // do mesmo save/restore, então gira ou espelha junto com a nave e
-      // nunca fica "descolado" do lugar certo, seja qual for o formato dela.
+      // do mesmo save/restore, então acompanha o giro/espelhamento e nunca
+      // fica "descolado" do lugar certo, seja qual for o formato dela.
       if (thrusting) {
         const flameDist = shipImgReady ? Math.max(shipDrawW, shipDrawH) / 2 - 4 : 10;
         const localRearX = -Math.cos(noseRad) * flameDist;
         const localRearY = -Math.sin(noseRad) * flameDist;
         c.save();
         c.translate(localRearX, localRearY);
-        if (freelyRotates) c.rotate(noseRad + Math.PI / 2); // alinha o triângulo com a direção da traseira
-        else c.rotate(Math.PI / 2); // pro tipo "de lado", a traseira já é sempre lateral — só gira 90° pro triângulo apontar pra fora
+        c.rotate(noseRad + Math.PI / 2); // alinha o triângulo com a direção da traseira
         c.fillStyle = "#ffd27a";
         c.beginPath();
         c.moveTo(-4, 0); c.lineTo(0, 12 + Math.random() * 8); c.lineTo(4, 0);
@@ -667,7 +677,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       drawBase(ctx, base);
       nodes.forEach((n) => { if (!n.collected) drawNode(ctx, n); });
       debris.forEach((d) => drawDebrisPiece(ctx, d));
-      drawShip(ctx, keys.thrust && state.fuel > 0, (keys.thrust || keys.left || keys.right) && state.fuel > 0);
+      drawShip(ctx, keys.thrust && state.fuel > 0);
       ctx.restore();
 
       if (state.flashT > 0) {
@@ -696,45 +706,28 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       // apontando NAQUELE instante, então o propulsor gira junto com a nave
       // e nunca fica "preso" empurrando pra cima só porque ela virou.
       //
-      // Isso só vale pra naves redondas/simétricas (moto, anelar, OVNI,
-      // hélice) — as "de lado" (carro, jato) usam o esquema antigo de
-      // empurrar reto + espelhar, porque girar de verdade deixaria elas de
-      // cabeça pra baixo em certos ângulos, sem sentido nenhum visualmente.
-      const freelyRotates = (shipStats.noseAngleDeg ?? 0) === -90;
+      // A física é a mesma pra todas as naves — sempre gira de verdade e o
+      // motor sempre empurra na direção do bico. A diferença entre nave
+      // "redonda" e nave "de lado" é só visual (em drawShip): a de lado
+      // espelha em vez de continuar girando quando passaria de cabeça pra
+      // baixo, mas o ângulo físico por trás continua o mesmo pras duas.
       const ROTATE_SPEED = 3.4; // rad/s
 
-      if (freelyRotates) {
-        if (keys.left && state.fuel > 0) {
-          ship.angle -= ROTATE_SPEED * dt;
-          fuelUsedRate += fuelBurnRate * 0.30; // virar gasta bem menos que acelerar
-        }
-        if (keys.right && state.fuel > 0) {
-          ship.angle += ROTATE_SPEED * dt;
-          fuelUsedRate += fuelBurnRate * 0.30;
-        }
-        if (keys.thrust && state.fuel > 0) {
-          const noseRad = ((shipStats.noseAngleDeg ?? 0) * Math.PI) / 180;
-          const totalAngle = noseRad + ship.angle;
-          const dirX = Math.cos(totalAngle), dirY = Math.sin(totalAngle);
-          ship.vx += dirX * thrustPower * dt;
-          ship.vy += dirY * thrustPower * dt;
-          fuelUsedRate += fuelBurnRate;
-        }
-      } else {
-        if (keys.left && state.fuel > 0) {
-          ship.vx -= thrustPower * dt;
-          ship.facing = -1;
-          fuelUsedRate += fuelBurnRate * 0.30;
-        }
-        if (keys.right && state.fuel > 0) {
-          ship.vx += thrustPower * dt;
-          ship.facing = 1;
-          fuelUsedRate += fuelBurnRate * 0.30;
-        }
-        if (keys.thrust && state.fuel > 0) {
-          ship.vy -= thrustPower * dt;
-          fuelUsedRate += fuelBurnRate;
-        }
+      if (keys.left && state.fuel > 0) {
+        ship.angle -= ROTATE_SPEED * dt;
+        fuelUsedRate += fuelBurnRate * 0.30; // virar gasta bem menos que acelerar
+      }
+      if (keys.right && state.fuel > 0) {
+        ship.angle += ROTATE_SPEED * dt;
+        fuelUsedRate += fuelBurnRate * 0.30;
+      }
+      if (keys.thrust && state.fuel > 0) {
+        const noseRad = ((shipStats.noseAngleDeg ?? 0) * Math.PI) / 180;
+        const totalAngle = noseRad + ship.angle;
+        const dirX = Math.cos(totalAngle), dirY = Math.sin(totalAngle);
+        ship.vx += dirX * thrustPower * dt;
+        ship.vy += dirY * thrustPower * dt;
+        fuelUsedRate += fuelBurnRate;
       }
       if (fuelUsedRate > 0) state.fuel = Math.max(0, state.fuel - fuelUsedRate * dt);
 
