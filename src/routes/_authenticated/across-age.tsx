@@ -560,12 +560,14 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
     }
 
     function drawShip(c: CanvasRenderingContext2D, thrustingUp: boolean) {
-      // direção "pra trás" da nave nesse instante (oposto do bico) — usada
-      // pra deixar os itens coletados alinhados atrás dela, seja qual for o ângulo
-      const backX = Math.sin(ship.angle), backY = -Math.cos(ship.angle);
+      const noseRad = ((shipStats.noseAngleDeg ?? 0) * Math.PI) / 180;
+      // direção "pra trás" da nave nesse instante (bico + ângulo atual de giro) —
+      // usada tanto pra alinhar os itens coletados quanto o fogo do motor
+      const totalAngle = noseRad + ship.angle;
+      const backX = -Math.cos(totalAngle), backY = -Math.sin(totalAngle);
       for (let i = 0; i < state.collected; i++) {
         const back = 30 + i * 15;
-        const tx = ship.x - backX * back, ty = ship.y - backY * back;
+        const tx = ship.x + backX * back, ty = ship.y + backY * back;
         c.font = "13px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
         c.fillText("📦", tx, ty);
       }
@@ -578,15 +580,22 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
         c.fillStyle = thrustingUp ? "#ff9d3d" : "#3ddbc9";
         c.beginPath(); c.moveTo(0, -12); c.lineTo(9, 10); c.lineTo(0, 6); c.lineTo(-9, 10); c.closePath(); c.fill();
       }
-      // único propulsor, sempre na traseira da nave (parte de baixo do sprite,
-      // ANTES da rotação) — por estar desenhado aqui dentro do mesmo save/restore,
-      // ele gira junto com a nave e nunca "descola" da base dela, em 360°.
+      // propulsor único, sempre no ponto da traseira DESSA imagem específica
+      // (definido por noseAngleDeg em ship-stats.ts) — desenhado aqui dentro
+      // do mesmo save/restore da rotação, então gira junto com a nave em 360°
+      // e nunca fica "descolado" do lugar certo, seja qual for o formato dela.
       if (thrustingUp) {
-        const flameY = shipImgReady ? shipDrawH / 2 - 3 : 10;
+        const flameDist = shipImgReady ? Math.max(shipDrawW, shipDrawH) / 2 - 4 : 10;
+        const localRearX = -Math.cos(noseRad) * flameDist;
+        const localRearY = -Math.sin(noseRad) * flameDist;
+        c.save();
+        c.translate(localRearX, localRearY);
+        c.rotate(noseRad + Math.PI / 2); // alinha o triângulo (que aponta pra baixo por padrão) com a direção da traseira
         c.fillStyle = "#ffd27a";
         c.beginPath();
-        c.moveTo(-4, flameY); c.lineTo(0, flameY + 12 + Math.random() * 8); c.lineTo(4, flameY);
+        c.moveTo(-4, 0); c.lineTo(0, 12 + Math.random() * 8); c.lineTo(4, 0);
         c.closePath(); c.fill();
+        c.restore();
       }
       c.restore();
     }
@@ -682,7 +691,9 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
         fuelUsedRate += fuelBurnRate * 0.30;
       }
       if (keys.thrust && state.fuel > 0) {
-        const dirX = Math.sin(ship.angle), dirY = -Math.cos(ship.angle);
+        const noseRad = ((shipStats.noseAngleDeg ?? 0) * Math.PI) / 180;
+        const totalAngle = noseRad + ship.angle;
+        const dirX = Math.cos(totalAngle), dirY = Math.sin(totalAngle);
         ship.vx += dirX * thrustPower * dt;
         ship.vy += dirY * thrustPower * dt;
         fuelUsedRate += fuelBurnRate;
