@@ -15,6 +15,7 @@ import { HangarSelect } from "@/components/HangarSelect";
 import { TeleporterLoadingIntro } from "@/components/TeleporterLoadingIntro";
 import { getBiomeTheme } from "@/lib/space-biomes";
 import { getShipStats } from "@/lib/ship-stats";
+import { getRouteState } from "@/lib/mining.functions";
 import shipEsportiva from "@/assets/ship-esportiva.jpg";
 import shipOffroad from "@/assets/ship-offroad.jpg";
 import shipCorrida from "@/assets/ship-corrida.jpg";
@@ -35,14 +36,31 @@ export const Route = createFileRoute("/_authenticated/across-age")({
 
 function AcrossAge() {
   const { identityId, destinationId } = Route.useSearch();
+  const navigate = useNavigate();
   const listIdentities = useServerFn(listMyIdentities);
   const getMining = useServerFn(getMiningState);
   const submitResult = useServerFn(submitMiningResult);
   const getUpgrades = useServerFn(listMyUpgrades);
   const clearWave = useServerFn(clearDestinationWave);
+  const getRoute = useServerFn(getRouteState);
   const qc = useQueryClient();
   const [showIntro, setShowIntro] = useState(true);
   const [loadout, setLoadout] = useState<{ shipImageUrl: string; pilotAvatarUrl: string | null; shipKey: string | null } | null>(null);
+
+  const { data: routeData, isLoading: loadingRoute } = useQuery({
+    queryKey: ["route-state"],
+    queryFn: () => getRoute(),
+  });
+
+  // primeira vez entrando direto no jogo (sem vir da /rota, sem destinationId
+  // na URL, e ainda sem nenhum destino completado) — manda pra /rota escolher
+  // um planeta antes. Depois da primeira fase completa, fica livre pra
+  // acessar o jogo direto sempre que quiser, sem essa trava.
+  useEffect(() => {
+    if (!destinationId && routeData && routeData.clearedDestinations.length === 0) {
+      navigate({ to: "/rota" });
+    }
+  }, [destinationId, routeData, navigate]);
 
   const { data: identitiesData, isLoading: loadingIdentities } = useQuery({
     queryKey: ["identities"],
@@ -103,10 +121,20 @@ function AcrossAge() {
     return <TeleporterLoadingIntro onComplete={() => setShowIntro(false)} />;
   }
 
-  if (loadingIdentities || loadingMining) {
+  if (loadingIdentities || loadingMining || loadingRoute) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center text-muted-foreground">
         <Loader2 className="animate-spin mr-2" /> Carregando...
+      </div>
+    );
+  }
+
+  // já sabemos que vai redirecionar pra /rota (useEffect acima) — evita
+  // mostrar o hangar por uma fração de segundo antes de sair da tela
+  if (!destinationId && routeData && routeData.clearedDestinations.length === 0) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center text-muted-foreground">
+        <Loader2 className="animate-spin mr-2" /> Levando você até a rota...
       </div>
     );
   }
@@ -300,6 +328,37 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
   const rescueRef = useRef<(() => void) | undefined>(undefined);
   const navigate = useNavigate();
   const [resourceInfo, setResourceInfo] = useState<"fuel" | "o2" | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  async function toggleFullscreen() {
+    const el = rootRef.current;
+    if (!el) return;
+    try {
+      if (!document.fullscreenElement) {
+        await el.requestFullscreen();
+        try {
+          const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
+          await orientation.lock?.("landscape");
+        } catch {
+          // API de rotação não suportada nesse navegador (comum no iOS) —
+          // o CSS de .force-landscape cuida de simular a tela deitada mesmo assim.
+        }
+      } else {
+        await document.exitFullscreen();
+        try {
+          (screen.orientation as ScreenOrientation & { unlock?: () => void }).unlock?.();
+        } catch {}
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
   const theme = getBiomeTheme(destinationId);
   const shipStats = getShipStats(shipKey);
   const ups = upgradeLevels ?? {};
@@ -501,30 +560,35 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
     }
 
     function drawShip(c: CanvasRenderingContext2D, thrustingUp: boolean) {
+      // direção "pra trás" da nave nesse instante (oposto do bico) — usada
+      // pra deixar os itens coletados alinhados atrás dela, seja qual for o ângulo
+      const backX = Math.sin(ship.angle), backY = -Math.cos(ship.angle);
       for (let i = 0; i < state.collected; i++) {
         const back = 30 + i * 15;
-        const tx = ship.x - ship.facing * back, ty = ship.y;
+        const tx = ship.x - backX * back, ty = ship.y - backY * back;
         c.font = "13px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
         c.fillText("📦", tx, ty);
       }
       c.save();
       c.translate(ship.x, ship.y);
       c.rotate(ship.angle);
-      c.scale(ship.facing, 1);
       if (shipImgReady) {
         c.drawImage(shipImg, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
       } else {
         c.fillStyle = thrustingUp ? "#ff9d3d" : "#3ddbc9";
-        c.beginPath(); c.moveTo(14, 0); c.lineTo(-10, -9); c.lineTo(-6, 0); c.lineTo(-10, 9); c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(0, -12); c.lineTo(9, 10); c.lineTo(0, 6); c.lineTo(-9, 10); c.closePath(); c.fill();
+      }
+      // único propulsor, sempre na traseira da nave (parte de baixo do sprite,
+      // ANTES da rotação) — por estar desenhado aqui dentro do mesmo save/restore,
+      // ele gira junto com a nave e nunca "descola" da base dela, em 360°.
+      if (thrustingUp) {
+        const flameY = shipImgReady ? shipDrawH / 2 - 3 : 10;
+        c.fillStyle = "#ffd27a";
+        c.beginPath();
+        c.moveTo(-4, flameY); c.lineTo(0, flameY + 12 + Math.random() * 8); c.lineTo(4, flameY);
+        c.closePath(); c.fill();
       }
       c.restore();
-      // único propulsor: fica embaixo da nave, só acende com a alavanca (▲).
-      // ◀ e ▶ apenas direcionam pra que lado ela vai, sem chama própria.
-      if (thrustingUp) {
-        const flameY = shipImgReady ? shipDrawH / 2 - 3 : 9;
-        c.fillStyle = "#ffd27a";
-        c.beginPath(); c.moveTo(ship.x - 4, ship.y + flameY); c.lineTo(ship.x, ship.y + flameY + 12 + Math.random() * 8); c.lineTo(ship.x + 4, ship.y + flameY); c.closePath(); c.fill();
-      }
     }
 
     function draw() {
@@ -604,43 +668,29 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       state.o2 = Math.max(0, state.o2 - O2_DRAIN_RATE * dt);
       let fuelUsedRate = 0; // acumula quanto gastar nesse frame (soma dos comandos ativos)
 
+      // ◀ ▶ giram a nave (direção pra onde ela aponta) — não empurram mais
+      // reto pro lado. ▲ empurra sempre na direção pro qual o bico está
+      // apontando NAQUELE instante, então o propulsor gira junto com a nave
+      // e nunca fica "preso" empurrando pra cima só porque ela virou.
+      const ROTATE_SPEED = 3.4; // rad/s
       if (keys.left && state.fuel > 0) {
-        ship.vx -= thrustPower * dt;
-        ship.facing = -1;
-        fuelUsedRate += fuelBurnRate * 0.30; // manobra lateral gasta bem menos que subir
+        ship.angle -= ROTATE_SPEED * dt;
+        fuelUsedRate += fuelBurnRate * 0.30; // virar gasta bem menos que acelerar
       }
       if (keys.right && state.fuel > 0) {
-        ship.vx += thrustPower * dt;
-        ship.facing = 1;
+        ship.angle += ROTATE_SPEED * dt;
         fuelUsedRate += fuelBurnRate * 0.30;
       }
       if (keys.thrust && state.fuel > 0) {
-        ship.vy -= thrustPower * dt;
+        const dirX = Math.sin(ship.angle), dirY = -Math.cos(ship.angle);
+        ship.vx += dirX * thrustPower * dt;
+        ship.vy += dirY * thrustPower * dt;
         fuelUsedRate += fuelBurnRate;
       }
       if (fuelUsedRate > 0) state.fuel = Math.max(0, state.fuel - fuelUsedRate * dt);
 
       ship.vx *= damping; ship.vy *= damping;
       ship.x += ship.vx * dt; ship.y += ship.vy * dt;
-
-      // giro por inércia — se a nave já está em movimento (embalo de uma
-      // aceleração) e você segura ◀ ou ▶, ela gira de verdade, cada vez mais
-      // rápido quanto mais tempo segurar (até um teto). Solta e o giro
-      // desacelera suave até ela voltar a ficar reta.
-      const speedNow = Math.hypot(ship.vx, ship.vy);
-      const MIN_SPIN_SPEED = 35; // precisa ter embalo — parada, virar não gira
-      const spinning = (keys.left || keys.right) && speedNow > MIN_SPIN_SPEED && state.fuel > 0;
-      if (spinning) {
-        const spinDir = keys.left ? -1 : 1;
-        const SPIN_ACCEL = 9; // rad/s² — quanto mais segura, mais rápido gira
-        const MAX_SPIN = 7; // rad/s — teto de velocidade do giro
-        ship.angularVel += spinDir * SPIN_ACCEL * dt;
-        ship.angularVel = Math.max(-MAX_SPIN, Math.min(MAX_SPIN, ship.angularVel));
-      } else {
-        ship.angularVel *= Math.max(0, 1 - dt * 4); // desacelera suave quando solta
-        if (Math.abs(ship.angularVel) < 0.02) ship.angularVel = 0;
-      }
-      ship.angle += ship.angularVel * dt;
 
       const margin = shipImgReady ? Math.max(shipDrawW, shipDrawH) / 2 + 4 : 18;
       const clampedX = Math.max(margin, Math.min(WORLD_W - margin, ship.x));
@@ -802,7 +852,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
   }, []);
 
   return (
-    <div ref={rootRef} className="across-age-root">
+    <div ref={rootRef} className={`across-age-root${isFullscreen ? " force-landscape" : ""}`}>
       <style>{ACROSS_AGE_CSS}</style>
       <div id="hud">
         <div id="hud-normal">
@@ -818,6 +868,15 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
         </div>
         <div id="fichas-badge" className="pixel">🪙 0</div>
         <div id="level-badge" className="pixel">NÍVEL {startLevel}/5</div>
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          className="fullscreen-btn"
+          aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia e deitada"}
+          title={isFullscreen ? "Sair da tela cheia" : "Tela cheia e deitada"}
+        >
+          {isFullscreen ? "⤡" : "⛶"}
+        </button>
       </div>
 
       {resourceInfo && (
@@ -931,6 +990,22 @@ const ACROSS_AGE_CSS = `
 .across-age-root #stage{ position:relative; height:calc(100% - 46px); overflow:hidden; }
 .across-age-root canvas{ position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
 .across-age-root #controls{ position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; align-items:flex-end; padding:12px 18px calc(14px + env(safe-area-inset-bottom)) 18px; z-index:6; pointer-events:none; }
+.across-age-root .fullscreen-btn{ font-size:14px; padding:6px 10px; border:1px solid var(--gold); border-radius:20px; color:var(--gold); background:transparent; cursor:pointer; height:fit-content; line-height:1; }
+.across-age-root .fullscreen-btn:active{ background:var(--gold); color:var(--void-deep); }
+/* tela cheia de verdade: some com o cantinho arredondado e ocupa 100% do dispositivo */
+.across-age-root:fullscreen{ width:100vw !important; height:100vh !important; max-height:none !important; min-height:0 !important; border-radius:0; }
+.across-age-root:-webkit-full-screen{ width:100vw !important; height:100vh !important; max-height:none !important; min-height:0 !important; border-radius:0; }
+/* navegadores que não suportam travar a orientação (ex: iOS) — gira o jogo
+   por CSS enquanto o celular continuar em pé, simulando a tela deitada */
+@media (orientation: portrait){
+  .across-age-root.force-landscape{
+    position:fixed; inset:0; z-index:9999;
+    width:100vh; height:100vw;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%) rotate(90deg);
+    border-radius:0; max-height:none; min-height:0;
+  }
+}
 .across-age-root .collect-btn{ position:absolute; left:50%; bottom:112px; transform:translateX(-50%); z-index:7; padding:10px 18px; font-size:12px; animation:collectPulse 1s ease-in-out infinite; }
 @keyframes collectPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(232,179,74,.55); } 50%{ box-shadow:0 0 0 14px rgba(232,179,74,0); } }
 .across-age-root .ctrl-btn{
