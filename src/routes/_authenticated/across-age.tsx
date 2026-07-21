@@ -336,6 +336,15 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
+  // mesma classe que o CSS global (__root) usa pra girar a faixa de toasts
+  // junto com o jogo quando ele está no modo paisagem simulado — sem isso
+  // a faixa de prêmio/coleta/fichas aparece sempre na horizontal por cima
+  // e cobre um dos botões.
+  useEffect(() => {
+    document.body.classList.toggle("aa-landscape-lock", isFullscreen);
+    return () => document.body.classList.remove("aa-landscape-lock");
+  }, [isFullscreen]);
+
   async function toggleFullscreen() {
     const el = rootRef.current;
     if (!el) return;
@@ -568,10 +577,13 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       // espelha pro resto — assim elas viram pro lado certo sem nunca
       // aparecer de cabeça pra baixo, e o motor continua sempre acompanhando.
       const freelyRotates = (shipStats.noseAngleDeg ?? 0) === -90;
-      // só ativa pra naves com noseAngleDeg 180 — marcadas assim depois de
-      // conferir a imagem de verdade (bico da arte nasce virado pra
-      // esquerda). Espelha o corpo desde o início; o propulsor (mesmo
-      // referencial local) acompanha certo, na traseira de verdade.
+      // algumas artes nascem com o bico virado pra ESQUERDA (noseAngleDeg
+      // 180) em vez do padrão pra direita — pra essas, espelha o corpo
+      // desde o início. Isso soma com o espelhamento dinâmico de voo (que
+      // já assume bico-direita por padrão), então a nave sempre acaba
+      // virada pra direção certa, e o propulsor (calculado a partir do
+      // mesmo noseAngleDeg, no mesmo referencial local) acompanha
+      // corretamente na traseira de verdade, nunca no "farol".
       const baseFlip = (shipStats.noseAngleDeg ?? 0) === 180 ? -1 : 1;
 
       let drawRot = ship.angle;
