@@ -43,15 +43,15 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
 export const SHIP_STATS: Record<string, ShipStats> = {
   // ---- naves base (SHIPS) ----
   esportiva: { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.85, speedMult: 1.15, blurb: "Ágil, carga baixa", noseAngleDeg: 180 },
-  offroad: { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Equilibrada, um pouco mais robusta", noseAngleDeg: 180 },
+  offroad: { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Equilibrada, um pouco mais robusta", noseAngleDeg: 0 },
   corrida: { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.85, speedMult: 1.20, blurb: "Rápida, carga baixa", noseAngleDeg: 0 },
   teleportadora: { category: "grande", fuelMult: 0.85, o2Mult: 0.90, cargoMult: 1.30, speedMult: 0.90, blurb: "Carrega muito, mais lenta", noseAngleDeg: -90 },
 
   // ---- 11 naves extras (EXTRA_SHIPS) ----
-  aerodeslizador: { category: "medio", fuelMult: 1.05, o2Mult: 1.00, cargoMult: 1.00, speedMult: 1.05, blurb: "Equilibrada", noseAngleDeg: 180 },
-  "vtol-classica": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Estável, carga um pouco maior", noseAngleDeg: 180 },
+  aerodeslizador: { category: "medio", fuelMult: 1.05, o2Mult: 1.00, cargoMult: 1.00, speedMult: 1.05, blurb: "Equilibrada", noseAngleDeg: -90 },
+  "vtol-classica": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Estável, carga um pouco maior", noseAngleDeg: -90 },
   quadricoptero: { category: "micro", fuelMult: 1.35, o2Mult: 1.25, cargoMult: 0.60, speedMult: 1.30, blurb: "Muita autonomia, carga mínima", noseAngleDeg: -90 },
-  furtiva: { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.80, speedMult: 1.15, blurb: "Ágil e discreta", noseAngleDeg: 180 },
+  furtiva: { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.80, speedMult: 1.15, blurb: "Ágil e discreta", noseAngleDeg: 0 },
   "bronze-jato": { category: "medio", fuelMult: 0.95, o2Mult: 0.95, cargoMult: 1.10, speedMult: 1.10, blurb: "Veloz, carga um pouco maior", noseAngleDeg: 0 },
   "asa-negra": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.00, speedMult: 1.00, blurb: "Padrão", noseAngleDeg: 0 },
   "limusine-voadora": { category: "grande", fuelMult: 0.75, o2Mult: 0.85, cargoMult: 1.50, speedMult: 0.80, blurb: "Carga máxima, autonomia baixa", noseAngleDeg: 0 },
@@ -62,13 +62,13 @@ export const SHIP_STATS: Record<string, ShipStats> = {
 
   // ---- leva de 15 naves novas ----
   "delorean-classic": { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.90, speedMult: 1.10, blurb: "Clássica e ágil", noseAngleDeg: 0 },
-  "cadillactic-zx": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.20, blurb: "Turbina traseira, bem rápida", noseAngleDeg: 180 },
+  "cadillactic-zx": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.20, blurb: "Turbina traseira, bem rápida", noseAngleDeg: 0 },
   "nano-mold": { category: "micro", fuelMult: 1.35, o2Mult: 1.25, cargoMult: 0.55, speedMult: 1.30, blurb: "Minúscula, autonomia enorme", noseAngleDeg: 0 },
-  "modulo-c23": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 1.00, blurb: "Módulo equilibrado", noseAngleDeg: 180 },
+  "modulo-c23": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 1.00, blurb: "Módulo equilibrado", noseAngleDeg: 0 },
   "navigator-original": { category: "grande", fuelMult: 0.78, o2Mult: 0.85, cargoMult: 1.45, speedMult: 0.80, blurb: "Disco grande, carga alta", noseAngleDeg: 0 },
   "shadow-slim-2": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.15, blurb: "Furtiva e ágil", noseAngleDeg: 0 },
   "love-flyer": { category: "medio", fuelMult: 0.98, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Helicóptero estável", noseAngleDeg: -90 },
-  "supersonic-force1": { category: "medio", fuelMult: 0.95, o2Mult: 0.98, cargoMult: 1.10, speedMult: 1.10, blurb: "Veloz, carga um pouco maior", noseAngleDeg: 180 },
+  "supersonic-force1": { category: "medio", fuelMult: 0.95, o2Mult: 0.98, cargoMult: 1.10, speedMult: 1.10, blurb: "Veloz, carga um pouco maior", noseAngleDeg: 0 },
   "easy-rider-bus": { category: "grande", fuelMult: 0.72, o2Mult: 0.82, cargoMult: 1.55, speedMult: 0.78, blurb: "Ônibus espacial, carga máxima", noseAngleDeg: 0 },
   "unilander-77": { category: "micro", fuelMult: 1.38, o2Mult: 1.28, cargoMult: 0.55, speedMult: 1.28, blurb: "Moto voadora, autonomia enorme", noseAngleDeg: 0 },
   "unilander": { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.80, speedMult: 1.20, blurb: "VTOL leve e ágil", noseAngleDeg: 0 },
