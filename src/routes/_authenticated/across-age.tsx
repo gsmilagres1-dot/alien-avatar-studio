@@ -616,7 +616,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       if (!freelyRotates) c.scale(mirror, 1);
 
       if (shipImgReady) {
-        c.drawImage(shipImg, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
+        c.drawImage(shipDrawSource, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
       } else {
         c.fillStyle = thrusting ? "#ff9d3d" : "#3ddbc9";
         c.beginPath(); c.moveTo(0, -12); c.lineTo(9, 10); c.lineTo(0, 6); c.lineTo(-9, 10); c.closePath(); c.fill();
