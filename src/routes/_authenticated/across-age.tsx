@@ -633,8 +633,14 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       ctx.translate(-camX, -camY);
 
       if (bgImgReady) {
+        // encaixe tipo "cover" — preenche o mundo todo sem esticar/distorcer
+        // a foto, cortando a sobra em vez de espremer ela pra caber
+        const imgW = bgImg.naturalWidth || WORLD_W, imgH = bgImg.naturalHeight || WORLD_H;
+        const scale = Math.max(WORLD_W / imgW, WORLD_H / imgH);
+        const drawW = imgW * scale, drawH = imgH * scale;
+        const offX = (WORLD_W - drawW) / 2, offY = (WORLD_H - drawH) / 2;
         ctx.globalAlpha = 0.8;
-        ctx.drawImage(bgImg, 0, 0, WORLD_W, WORLD_H);
+        ctx.drawImage(bgImg, offX, offY, drawW, drawH);
         ctx.globalAlpha = 1;
         // véu escuro pra manter nós/detritos/HUD legíveis por cima da foto
         ctx.fillStyle = "rgba(5,7,20,0.28)";
@@ -894,7 +900,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
   }, []);
 
   return (
-    <div ref={rootRef} className={`across-age-root${isFullscreen ? " force-landscape" : ""}`}>
+    <div ref={rootRef} className="across-age-root force-landscape">
       <style>{ACROSS_AGE_CSS}</style>
       <div id="hud">
         <div id="hud-normal">
@@ -918,6 +924,15 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
           title={isFullscreen ? "Sair da tela cheia" : "Tela cheia e deitada"}
         >
           {isFullscreen ? "⤡" : "⛶"}
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/rota" })}
+          className="fullscreen-btn"
+          aria-label="Sair do jogo"
+          title="Sair do jogo"
+        >
+          ✕
         </button>
       </div>
 
@@ -1045,6 +1060,15 @@ const ACROSS_AGE_CSS = `
     width:100vh; height:100vw;
     top:50%; left:50%;
     transform:translate(-50%,-50%) rotate(90deg);
+    border-radius:0; max-height:none; min-height:0;
+  }
+}
+/* celular já deitado de verdade — não precisa do truque de rotação, só
+   ocupa a tela toda direto (por cima do menu, pra aproveitar tudo) */
+@media (orientation: landscape){
+  .across-age-root.force-landscape{
+    position:fixed; inset:0; z-index:9999;
+    width:100vw; height:100vh;
     border-radius:0; max-height:none; min-height:0;
   }
 }
