@@ -5,7 +5,7 @@ import { TEAM_DESTINATIONS } from "@/lib/team-destinations";
 
 export type MaterialKey = "ouro" | "monumento" | "niquel" | "ferramenta" | "cadmio" | "alien";
 
-const FICHAS_PER_COLLECT = 1;
+const FICHAS_PER_COLLECT = 10;
 
 // Ordem da rota de fases — sistema solar primeiro (por `level` 1-5 já
 // existente em cada destino de intergalactic.ts), depois as 30 galáxias/
@@ -31,27 +31,21 @@ export type ShipModel = (typeof SHIP_MODELS)[number];
 // são grátis; o resto custa fichas até ser comprado. Preço varia pela
 // categoria da nave (ver src/lib/ship-stats.ts): naves "micro"/leves são
 // mais baratas, "grande" (carregam mais material) são mais caras.
+//
+// 12 naves removidas (duplicidade / imagem ruim): Jato Bronze, Asa
+// Negra, Limusine Voadora, Biplano Retrô, Prancha Prateada, Hexacóptero,
+// Concept Vermelho, Delorean Classic, Nano Mold, Shadow Slim, Love
+// Flyer, Lander RZ-9.
 export const EXTRA_SHIPS = [
   { id: "aerodeslizador", name: "Aerodeslizador", price: 0 },
   { id: "vtol-classica", name: "VTOL Clássica", price: 0 },
   { id: "quadricoptero", name: "Quadricóptero", price: 0 },
   { id: "furtiva", name: "Furtiva", price: 0 },
-  { id: "bronze-jato", name: "Jato Bronze", price: 800 },
-  { id: "asa-negra", name: "Asa Negra", price: 800 },
-  { id: "limusine-voadora", name: "Limusine Voadora", price: 800 },
-  { id: "biplano-retro", name: "Biplano Retrô", price: 800 },
-  { id: "prancha-prata", name: "Prancha Prateada", price: 800 },
-  { id: "hexacoptero", name: "Hexacóptero", price: 800 },
-  { id: "concept-vermelho", name: "Concept Vermelho", price: 800 },
 
   // ---- leva de 15 naves novas (recortadas no contorno) ----
-  { id: "delorean-classic", name: "Delorean Classic", price: 800 },
   { id: "cadillactic-zx", name: "El Cadillactic ZX", price: 850 },
-  { id: "nano-mold", name: "Nano Mold", price: 600 },
   { id: "modulo-c23", name: "Módulo Intergaláctico C-23", price: 1000 },
   { id: "navigator-original", name: "Navigator Original", price: 1400 },
-  { id: "shadow-slim-2", name: "Shadow Slim", price: 800 },
-  { id: "love-flyer", name: "Love Flyer", price: 1000 },
   { id: "supersonic-force1", name: "Super-Sonic Force 1", price: 1050 },
   { id: "easy-rider-bus", name: "Easy Rider Bus", price: 1500 },
   { id: "unilander-77", name: "Uni-Lander 77", price: 650 },
@@ -59,7 +53,6 @@ export const EXTRA_SHIPS = [
   { id: "egg-lander-1001", name: "Egg Lander 1001", price: 600 },
   { id: "navigator", name: "Navigator", price: 1600 },
   { id: "hover-coupe-rz", name: "Hover Coupe RZ", price: 800 },
-  { id: "lander-rz9", name: "Lander RZ-9", price: 850 },
 
   // ---- leva nova: 12 naves ----
   { id: "cruzer-noturno", name: "Cruzer Noturno", price: 850 },
@@ -85,9 +78,15 @@ export const RACE_SKINS = [
 ] as const;
 export type RaceSkin = (typeof RACE_SKINS)[number];
 
-const SKIN_PRICE = 40;
-const UNLOCK_EVERY_N_COLLECTS = 5;
+const SKIN_PRICE = 100;
 const PHASE_CLEAR_BONUS = 50;
+// A primeira skin (starseed) vem liberada de graça, como ponto de
+// partida — todas as outras só saem comprando com fichas. Removido o
+// desbloqueio automático por quantidade de coletas (antigo
+// UNLOCK_EVERY_N_COLLECTS): isso fazia as skins abrirem sozinhas com o
+// tempo, sem precisar gastar fichas, o que tirava o incentivo de jogar
+// mais pra comprar.
+const FREE_STARTER_SKINS = 1;
 
 async function ensureProgress(supabaseAdmin: any, userId: string) {
   const { data } = await supabaseAdmin
@@ -165,11 +164,7 @@ export const getHangarState = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const progress = await ensureProgress(supabaseAdmin, userId);
 
-    const freeUnlockedCount = Math.min(
-      RACE_SKINS.length,
-      Math.floor((progress.landed as number) / UNLOCK_EVERY_N_COLLECTS) + 1
-    );
-    const freeUnlocked = RACE_SKINS.slice(0, freeUnlockedCount);
+    const freeUnlocked = RACE_SKINS.slice(0, FREE_STARTER_SKINS);
     const purchased = (progress.purchased_skins as string[] | null) ?? [];
     const purchasedShips = (progress.purchased_ships as string[] | null) ?? [];
 
@@ -183,7 +178,6 @@ export const getHangarState = createServerFn({ method: "GET" })
       selectedSkin: (progress.selected_skin as RaceSkin | null) ?? null,
       landed: progress.landed as number,
       skinPrice: SKIN_PRICE,
-      unlockEveryNCollects: UNLOCK_EVERY_N_COLLECTS,
     };
   });
 
@@ -209,11 +203,7 @@ export const setHangarSelection = createServerFn({ method: "POST" })
     }
 
     if (data.selectedSkin) {
-      const freeUnlockedCount = Math.min(
-        RACE_SKINS.length,
-        Math.floor((progress.landed as number) / UNLOCK_EVERY_N_COLLECTS) + 1
-      );
-      const freeUnlocked = RACE_SKINS.slice(0, freeUnlockedCount) as string[];
+      const freeUnlocked = RACE_SKINS.slice(0, FREE_STARTER_SKINS) as string[];
       const purchased = (progress.purchased_skins as string[] | null) ?? [];
       if (!freeUnlocked.includes(data.selectedSkin) && !purchased.includes(data.selectedSkin)) {
         throw new Error("Essa skin ainda não foi desbloqueada");
