@@ -382,11 +382,28 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
     let shipImgReady = false;
     const SHIP_TARGET_SIZE = 96;
     let shipDrawW = SHIP_TARGET_SIZE, shipDrawH = SHIP_TARGET_SIZE;
+    // Fonte final usada no drawImage. Se a nave tiver flipX=true (imagem
+    // desenhada de costas pro sentido de vôo), a gente pré-espelha ela
+    // num canvas offscreen e usa esse canvas — assim física, comando e
+    // propulsor continuam intocados, muda só o desenho.
+    let shipDrawSource: CanvasImageSource = shipImg;
     shipImg.onload = () => {
-      shipImgReady = true;
       const ar = shipImg.naturalWidth / shipImg.naturalHeight || 1;
       if (ar >= 1) { shipDrawW = SHIP_TARGET_SIZE; shipDrawH = SHIP_TARGET_SIZE / ar; }
       else { shipDrawH = SHIP_TARGET_SIZE; shipDrawW = SHIP_TARGET_SIZE * ar; }
+      if (shipStats.flipX) {
+        const off = document.createElement("canvas");
+        off.width = shipImg.naturalWidth;
+        off.height = shipImg.naturalHeight;
+        const octx = off.getContext("2d");
+        if (octx) {
+          octx.translate(off.width, 0);
+          octx.scale(-1, 1);
+          octx.drawImage(shipImg, 0, 0);
+          shipDrawSource = off;
+        }
+      }
+      shipImgReady = true;
     };
 
     let bgImgReady = false;
