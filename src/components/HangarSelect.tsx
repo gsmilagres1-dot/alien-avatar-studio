@@ -97,8 +97,19 @@ const EXTRA_SHIP_IMAGES: Record<string, string> = {
 // lista que recebeu noseAngleDeg: 180 em ship-stats.ts. A miniatura da
 // loja é espelhada (scaleX(-1)) pra mostrar a nave já virada pro lado
 // certo (bico/farol pra direita), igual vai aparecer parada no jogo.
-function shipThumbTransform(_id: string) {
-  return "scale(1.08)";
+const NEEDS_MIRROR = new Set([
+  "esportiva",
+  "offroad",
+  "aerodeslizador",
+  "vtol-classica",
+  "furtiva",
+  "cadillactic-zx",
+  "modulo-c23",
+  "supersonic-force1",
+]);
+
+function shipThumbTransform(id: string) {
+  return NEEDS_MIRROR.has(id) ? "scale(1.08) scaleX(-1)" : "scale(1.08)";
 }
 
 const SKIN_IMAGES: Record<RaceSkin, string> = {
@@ -284,7 +295,7 @@ export function HangarSelect({
                 <img
                   src={EXTRA_SHIP_IMAGES[s.id]}
                   alt={s.name}
-                  className={`w-full aspect-square object-contain bg-black/20 ${unlocked ? "" : "opacity-90"}`}
+                  className={`w-full aspect-square object-contain bg-black/20 ${unlocked ? "" : "opacity-35 grayscale"}`}
                   style={{
                     transform: shipThumbTransform(s.id),
                   }}
