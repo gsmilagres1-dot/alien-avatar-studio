@@ -25,13 +25,9 @@ import racePleiadiano from "@/assets/race-pleiadiano.jpg";
 import raceLyriano from "@/assets/race-lyriano.jpg";
 import raceKashyapa from "@/assets/race-kashyapa.jpg";
 import { getShipStats } from "@/lib/ship-stats";
-import shipDeloreanClassic from "@/assets/ship-extra-delorean-classic.png";
 import shipCadillacticZx from "@/assets/ship-extra-cadillactic-zx.png";
-import shipNanoMold from "@/assets/ship-extra-nano-mold.png";
 import shipModuloC23 from "@/assets/ship-extra-modulo-c23.png";
 import shipNavigatorOriginal from "@/assets/ship-extra-navigator-original.png";
-import shipShadowSlim2 from "@/assets/ship-extra-shadow-slim-2.png";
-import shipLoveFlyer from "@/assets/ship-extra-love-flyer.png";
 import shipSupersonicForce1 from "@/assets/ship-extra-supersonic-force1.png";
 import shipEasyRiderBus from "@/assets/ship-extra-easy-rider-bus.png";
 import shipUnilander77 from "@/assets/ship-extra-unilander-77.png";
@@ -39,7 +35,6 @@ import shipUnilander from "@/assets/ship-extra-unilander.png";
 import shipEggLander1001 from "@/assets/ship-extra-egg-lander-1001.png";
 import shipNavigator from "@/assets/ship-extra-navigator.png";
 import shipHoverCoupeRz from "@/assets/ship-extra-hover-coupe-rz.png";
-import shipLanderRz9 from "@/assets/ship-extra-lander-rz9.png";
 
 // ---- leva nova: 12 naves, todas suas próprias imagens (fundo removido) ----
 import shipCruzerNoturno from "@/assets/ship-extra-cruzer-noturno.png";
@@ -70,22 +65,11 @@ const EXTRA_SHIP_IMAGES: Record<string, string> = {
   "vtol-classica": shipOffroad,
   quadricoptero: shipCorrida,
   furtiva: shipTeleportadora,
-  "bronze-jato": shipEsportiva,
-  "asa-negra": shipOffroad,
-  "limusine-voadora": shipCorrida,
-  "biplano-retro": shipTeleportadora,
-  "prancha-prata": shipEsportiva,
-  hexacoptero: shipOffroad,
-  "concept-vermelho": shipCorrida,
 
   // ---- leva de 15 naves novas — imagens reais, recortadas no contorno ----
-  "delorean-classic": shipDeloreanClassic,
   "cadillactic-zx": shipCadillacticZx,
-  "nano-mold": shipNanoMold,
   "modulo-c23": shipModuloC23,
   "navigator-original": shipNavigatorOriginal,
-  "shadow-slim-2": shipShadowSlim2,
-  "love-flyer": shipLoveFlyer,
   "supersonic-force1": shipSupersonicForce1,
   "easy-rider-bus": shipEasyRiderBus,
   "unilander-77": shipUnilander77,
@@ -93,7 +77,6 @@ const EXTRA_SHIP_IMAGES: Record<string, string> = {
   "egg-lander-1001": shipEggLander1001,
   "navigator": shipNavigator,
   "hover-coupe-rz": shipHoverCoupeRz,
-  "lander-rz9": shipLanderRz9,
 
   // ---- leva nova: 12 naves ----
   "cruzer-noturno": shipCruzerNoturno,
@@ -109,6 +92,32 @@ const EXTRA_SHIP_IMAGES: Record<string, string> = {
   "cruzer-aereo": shipCruzerAereo,
   "bolha-lander": shipBolhaLander,
 };
+
+// Naves cuja arte original nasce com o bico virado pra ESQUERDA — mesma
+// lista que recebeu noseAngleDeg: 180 em ship-stats.ts. A miniatura da
+// loja é espelhada (scaleX(-1)) pra mostrar a nave já virada pro lado
+// certo (bico/farol pra direita), igual vai aparecer parada no jogo.
+const NEEDS_MIRROR = new Set([
+  "furtiva",
+  "cadillactic-zx",
+  "modulo-c23",
+  "navigator-original",
+  "supersonic-force1",
+  "easy-rider-bus",
+  "hover-coupe-rz",
+  "cruzer-noturno",
+  "cruzador-aurun",
+  "aranha-lander",
+  "super-duty-vanguard",
+  "speed-bee-predator",
+  "lander-expedicao",
+  "speed-bee-rubi",
+  "bolha-lander",
+]);
+
+function shipThumbTransform(id: string) {
+  return NEEDS_MIRROR.has(id) ? "scale(1.08) scaleX(-1)" : "scale(1.08)";
+}
 
 const SKIN_IMAGES: Record<RaceSkin, string> = {
   starseed: raceStarseed,
@@ -165,8 +174,7 @@ export function HangarSelect({
     selectedShip: "esportiva",
     selectedSkin: null,
     landed: 0,
-    skinPrice: 40,
-    unlockEveryNCollects: 5,
+    skinPrice: 100,
   };
 
   const selectedShip = ship ?? hangarState.selectedShip;
@@ -258,11 +266,9 @@ export function HangarSelect({
             <img
               src={SHIP_IMAGES[s.id]}
               alt={s.name}
-              className="w-full aspect-square object-cover"
+              className="w-full aspect-square object-contain bg-black/20"
               style={{
-                transform: "scale(1.08)",
-                WebkitMaskImage: "radial-gradient(ellipse 78% 78% at 50% 46%, black 62%, transparent 92%)",
-                maskImage: "radial-gradient(ellipse 78% 78% at 50% 46%, black 62%, transparent 92%)",
+                transform: shipThumbTransform(s.id),
               }}
             />
             <div className="p-1.5 bg-black/40">
@@ -296,11 +302,9 @@ export function HangarSelect({
                 <img
                   src={EXTRA_SHIP_IMAGES[s.id]}
                   alt={s.name}
-                  className={`w-full aspect-square object-cover ${unlocked ? "" : "opacity-35 grayscale"}`}
+                  className={`w-full aspect-square object-contain bg-black/20 ${unlocked ? "" : "opacity-35 grayscale"}`}
                   style={{
-                    transform: "scale(1.08)",
-                    WebkitMaskImage: "radial-gradient(ellipse 78% 78% at 50% 46%, black 62%, transparent 92%)",
-                    maskImage: "radial-gradient(ellipse 78% 78% at 50% 46%, black 62%, transparent 92%)",
+                    transform: shipThumbTransform(s.id),
                   }}
                 />
                 {!unlocked && (
@@ -332,7 +336,7 @@ export function HangarSelect({
       </div>
 
       <h3 className="font-display text-sm mb-2 text-accent">
-        Skin do piloto <span className="text-[10px] text-muted-foreground">— desbloqueia 1 nova a cada {hangarState.unlockEveryNCollects} coletas ({hangarState.landed} até agora), ou compre por {hangarState.skinPrice} 🪙</span>
+        Skin do piloto <span className="text-[10px] text-muted-foreground">— compre por {hangarState.skinPrice} 🪙 (fichas ganhas jogando ou compradas)</span>
       </h3>
       <div className="flex gap-2 overflow-x-auto pb-2 mb-6">
         <button
