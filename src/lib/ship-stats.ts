@@ -46,8 +46,8 @@ export const DEFAULT_SHIP_STATS: ShipStats = {
 
 export const SHIP_STATS: Record<string, ShipStats> = {
   // ---- naves base (SHIPS) ----
-  esportiva: { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.85, speedMult: 1.15, blurb: "Ágil, carga baixa", noseAngleDeg: 0 },
-  offroad: { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Equilibrada, um pouco mais robusta", noseAngleDeg: 0 },
+  esportiva: { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.85, speedMult: 1.15, blurb: "Ágil, carga baixa", noseAngleDeg: 0, flipX: true },
+  offroad: { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Equilibrada, um pouco mais robusta", noseAngleDeg: 0, flipX: true },
   corrida: { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.85, speedMult: 1.20, blurb: "Rápida, carga baixa", noseAngleDeg: 0 },
   teleportadora: { category: "grande", fuelMult: 0.85, o2Mult: 0.90, cargoMult: 1.30, speedMult: 0.90, blurb: "Carrega muito, mais lenta", noseAngleDeg: -90 },
 
