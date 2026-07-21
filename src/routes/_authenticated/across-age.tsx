@@ -336,6 +336,15 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
+  // mesma classe que o CSS global (__root) usa pra girar a faixa de toasts
+  // junto com o jogo quando ele está no modo paisagem simulado — sem isso
+  // a faixa de prêmio/coleta/fichas aparece sempre na horizontal por cima
+  // e cobre um dos botões.
+  useEffect(() => {
+    document.body.classList.toggle("aa-landscape-lock", isFullscreen);
+    return () => document.body.classList.remove("aa-landscape-lock");
+  }, [isFullscreen]);
+
   async function toggleFullscreen() {
     const el = rootRef.current;
     if (!el) return;
@@ -396,7 +405,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       bgImg.src = theme.bgImageUrl;
     }
 
-    const FICHAS_PER_COLLECT = 1;
+    const FICHAS_PER_COLLECT = 10;
     const decorPoints: { x: number; y: number; emoji: string; size: number }[] = [];
     // base +60% em relação ao valor antigo (era 100), depois ajustada pelo
     // multiplicador da nave escolhida (naves pequenas/ágeis rendem mais
@@ -568,6 +577,14 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       // espelha pro resto — assim elas viram pro lado certo sem nunca
       // aparecer de cabeça pra baixo, e o motor continua sempre acompanhando.
       const freelyRotates = (shipStats.noseAngleDeg ?? 0) === -90;
+      // algumas artes nascem com o bico virado pra ESQUERDA (noseAngleDeg
+      // 180) em vez do padrão pra direita — pra essas, espelha o corpo
+      // desde o início. Isso soma com o espelhamento dinâmico de voo (que
+      // já assume bico-direita por padrão), então a nave sempre acaba
+      // virada pra direção certa, e o propulsor (calculado a partir do
+      // mesmo noseAngleDeg, no mesmo referencial local) acompanha
+      // corretamente na traseira de verdade, nunca no "farol".
+      const baseFlip = (shipStats.noseAngleDeg ?? 0) === 180 ? -1 : 1;
 
       let drawRot = ship.angle;
       let mirror = 1;
@@ -581,6 +598,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
           mirror = -1; drawRot = a > 0 ? a - Math.PI : a + Math.PI;
         }
       }
+      mirror *= baseFlip;
 
       // direção "pra trás" da nave nesse instante (ângulo físico real) —
       // usada pra alinhar os itens coletados atrás dela
@@ -633,14 +651,8 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       ctx.translate(-camX, -camY);
 
       if (bgImgReady) {
-        // encaixe tipo "cover" — preenche o mundo todo sem esticar/distorcer
-        // a foto, cortando a sobra em vez de espremer ela pra caber
-        const imgW = bgImg.naturalWidth || WORLD_W, imgH = bgImg.naturalHeight || WORLD_H;
-        const scale = Math.max(WORLD_W / imgW, WORLD_H / imgH);
-        const drawW = imgW * scale, drawH = imgH * scale;
-        const offX = (WORLD_W - drawW) / 2, offY = (WORLD_H - drawH) / 2;
         ctx.globalAlpha = 0.8;
-        ctx.drawImage(bgImg, offX, offY, drawW, drawH);
+        ctx.drawImage(bgImg, 0, 0, WORLD_W, WORLD_H);
         ctx.globalAlpha = 1;
         // véu escuro pra manter nós/detritos/HUD legíveis por cima da foto
         ctx.fillStyle = "rgba(5,7,20,0.28)";
@@ -900,7 +912,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
   }, []);
 
   return (
-    <div ref={rootRef} className="across-age-root force-landscape">
+    <div ref={rootRef} className={`across-age-root${isFullscreen ? " force-landscape" : ""}`}>
       <style>{ACROSS_AGE_CSS}</style>
       <div id="hud">
         <div id="hud-normal">
@@ -924,15 +936,6 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
           title={isFullscreen ? "Sair da tela cheia" : "Tela cheia e deitada"}
         >
           {isFullscreen ? "⤡" : "⛶"}
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate({ to: "/rota" })}
-          className="fullscreen-btn"
-          aria-label="Sair do jogo"
-          title="Sair do jogo"
-        >
-          ✕
         </button>
       </div>
 
@@ -1060,15 +1063,6 @@ const ACROSS_AGE_CSS = `
     width:100vh; height:100vw;
     top:50%; left:50%;
     transform:translate(-50%,-50%) rotate(90deg);
-    border-radius:0; max-height:none; min-height:0;
-  }
-}
-/* celular já deitado de verdade — não precisa do truque de rotação, só
-   ocupa a tela toda direto (por cima do menu, pra aproveitar tudo) */
-@media (orientation: landscape){
-  .across-age-root.force-landscape{
-    position:fixed; inset:0; z-index:9999;
-    width:100vw; height:100vh;
     border-radius:0; max-height:none; min-height:0;
   }
 }
