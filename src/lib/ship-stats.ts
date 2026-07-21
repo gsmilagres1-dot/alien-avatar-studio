@@ -26,6 +26,12 @@ export type ShipStats = {
   // saber de que lado exato desenhar o fogo do propulsor, e a nave sempre
   // acelera na direção do bico, girando 360° com ela.
   noseAngleDeg: number;
+  // Se a imagem original foi desenhada com a frente virada pro lado
+  // ERRADO (nariz apontando pra esquerda quando noseAngleDeg=0 diz que
+  // deveria estar pra direita, por exemplo), marcar flipX: true faz o
+  // jogo espelhar a imagem antes de renderizar — sem mexer em física,
+  // comando ou posição do propulsor.
+  flipX?: boolean;
 };
 
 export const DEFAULT_SHIP_STATS: ShipStats = {
