@@ -98,21 +98,14 @@ const EXTRA_SHIP_IMAGES: Record<string, string> = {
 // loja é espelhada (scaleX(-1)) pra mostrar a nave já virada pro lado
 // certo (bico/farol pra direita), igual vai aparecer parada no jogo.
 const NEEDS_MIRROR = new Set([
+  "esportiva",
+  "offroad",
+  "aerodeslizador",
+  "vtol-classica",
   "furtiva",
   "cadillactic-zx",
   "modulo-c23",
-  "navigator-original",
   "supersonic-force1",
-  "easy-rider-bus",
-  "hover-coupe-rz",
-  "cruzer-noturno",
-  "cruzador-aurun",
-  "aranha-lander",
-  "super-duty-vanguard",
-  "speed-bee-predator",
-  "lander-expedicao",
-  "speed-bee-rubi",
-  "bolha-lander",
 ]);
 
 function shipThumbTransform(id: string) {
