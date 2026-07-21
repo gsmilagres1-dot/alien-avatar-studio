@@ -83,17 +83,17 @@ export const SHIP_STATS: Record<string, ShipStats> = {
 
   // ---- leva nova: 12 naves ----
   "cruzer-noturno": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.18, blurb: "Ágil, visual furtivo", noseAngleDeg: 0 },
-  "cruzador-aurun": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Cruzador robusto e equilibrado", noseAngleDeg: 0 },
+  "cruzador-aurun": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Cruzador robusto e equilibrado", noseAngleDeg: 0, flipX: true },
   "aranha-lander": { category: "grande", fuelMult: 0.75, o2Mult: 0.85, cargoMult: 1.45, speedMult: 0.80, blurb: "Mecânica pesada, carga alta", noseAngleDeg: 0 },
-  "galactic-diamond": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.20, blurb: "Angular e rápida", noseAngleDeg: 0 },
+  "galactic-diamond": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.20, blurb: "Angular e rápida", noseAngleDeg: 0, flipX: true },
   "modal-multidimensional": { category: "medio", fuelMult: 0.98, o2Mult: 1.00, cargoMult: 1.10, speedMult: 1.00, blurb: "Tecnologia densa, carga extra", noseAngleDeg: 0 },
-  "super-duty-vanguard": { category: "grande", fuelMult: 0.72, o2Mult: 0.82, cargoMult: 1.55, speedMult: 0.78, blurb: "Nave de guerra, carga máxima", noseAngleDeg: 0 },
+  "super-duty-vanguard": { category: "grande", fuelMult: 0.72, o2Mult: 0.82, cargoMult: 1.55, speedMult: 0.78, blurb: "Nave de guerra, carga máxima", noseAngleDeg: 0, flipX: true },
   "speed-bee-predator": { category: "medio", fuelMult: 0.95, o2Mult: 0.98, cargoMult: 1.05, speedMult: 1.10, blurb: "Ágil e agressiva", noseAngleDeg: 0 },
-  "cruzer-dourado": { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.85, speedMult: 1.15, blurb: "Clássica, elegante", noseAngleDeg: 0 },
-  "lander-expedicao": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.92, blurb: "Robusta pra terrenos difíceis", noseAngleDeg: 0 },
-  "speed-bee-rubi": { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.88, speedMult: 1.16, blurb: "Ágil, carga moderada", noseAngleDeg: 0 },
+  "cruzer-dourado": { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.85, speedMult: 1.15, blurb: "Clássica, elegante", noseAngleDeg: 0, flipX: true },
+  "lander-expedicao": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.92, blurb: "Robusta pra terrenos difíceis", noseAngleDeg: 0, flipX: true },
+  "speed-bee-rubi": { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.88, speedMult: 1.16, blurb: "Ágil, carga moderada", noseAngleDeg: 0, flipX: true },
   "cruzer-aereo": { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.80, speedMult: 1.12, blurb: "Leve, feita pra voar", noseAngleDeg: -90 },
-  "bolha-lander": { category: "micro", fuelMult: 1.35, o2Mult: 1.25, cargoMult: 0.55, speedMult: 1.30, blurb: "Compacta, autonomia enorme", noseAngleDeg: 0 },
+  "bolha-lander": { category: "micro", fuelMult: 1.35, o2Mult: 1.25, cargoMult: 0.55, speedMult: 1.30, blurb: "Compacta, autonomia enorme", noseAngleDeg: 0, flipX: true },
 };
 
 export function getShipStats(shipId: string | null | undefined): ShipStats {
