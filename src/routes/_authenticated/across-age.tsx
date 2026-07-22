@@ -650,19 +650,32 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       ctx.translate(-camX, -camY);
 
       if (bgImgReady) {
-        // encaixe tipo "cover" — preenche o mundo todo sem esticar/distorcer
-        // a foto, cortando a sobra em vez de espremer ela pra caber
-        const imgW = bgImg.naturalWidth || WORLD_W, imgH = bgImg.naturalHeight || WORLD_H;
-        const scale = Math.max(WORLD_W / imgW, WORLD_H / imgH);
-        const drawW = imgW * scale, drawH = imgH * scale;
-        const offX = (WORLD_W - drawW) / 2, offY = (WORLD_H - drawH) / 2;
-        ctx.globalAlpha = 0.8;
-        ctx.drawImage(bgImg, offX, offY, drawW, drawH);
-        ctx.globalAlpha = 1;
-        // véu escuro pra manter nós/detritos/HUD legíveis por cima da foto
-        ctx.fillStyle = "rgba(5,7,20,0.28)";
-        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
-      }
+  if ((theme.bgFit ?? "cover") === "distant") {
+    const isStar = theme.kind === "star";
+    const size = Math.min(W, H) * (isStar ? 0.5 : 0.28);
+    const ar = bgImg.naturalWidth / bgImg.naturalHeight || 1;
+    const dw = ar >= 1 ? size : size * ar;
+    const dh = ar >= 1 ? size / ar : size;
+    const px = W - dw - (isStar ? 10 : 30) - camX * 0.05;
+    const py = (isStar ? 10 : 30) - camY * 0.05;
+    ctx.save();
+    ctx.shadowColor = theme.glowColor;
+    ctx.shadowBlur = isStar ? 40 + Math.sin(performance.now() / 900) * 18 : 30;
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(bgImg, px, py, dw, dh);
+    ctx.restore();
+  } else {
+    const scale = Math.max(W / bgImg.naturalWidth, H / bgImg.naturalHeight) * 1.15;
+    const dw = bgImg.naturalWidth * scale, dh = bgImg.naturalHeight * scale;
+    const tX = WORLD_W > W ? camX / (WORLD_W - W) : 0.5;
+    const tY = WORLD_H > H ? camY / (WORLD_H - H) : 0.5;
+    ctx.globalAlpha = 0.8;
+    ctx.drawImage(bgImg, -(dw - W) * tX, -(dh - H) * tY, dw, dh);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "rgba(5,7,20,0.28)";
+    ctx.fillRect(0, 0, W, H);
+  }
+}
 
       ctx.fillStyle = theme.starColor;
       stars.forEach((s) => {
