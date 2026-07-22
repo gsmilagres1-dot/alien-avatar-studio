@@ -15,6 +15,8 @@
 //        "distant" = astro pequeno no céu (discos e estrelas).
 // =========================================================
 
+import bgMarte from "@/assets/bg-marte.jpg";
+import bgLua from "@/assets/bg-lua.jpg";
 import bgVenus from "@/assets/bg-venus.jpg";
 import bgSaturno from "@/assets/bg-saturno.jpg";
 import bgGanimedes from "@/assets/bg-ganimedes.jpg";
@@ -93,10 +95,8 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#3a1f12", skyBottom: "#a85a2e", starColor: "#ffcfa0",
     horizonColor: "#6a3418", horizonGlow: "rgba(232,120,60,0.25)", glowColor: "#e8783c",
     danger: false, decor: ["🦴", "🛸", "👽", "🪐"],
-    // Superfície de Marte em quadro CHEIO (Cratera Gale, Curiosity) —
-    // foto real NASA/JPL-Caltech/MSSS. Com bgFit cover, preenche a
-    // tela inteira do jogo sem esticar.
-    bgImageUrl: "https://svs.gsfc.nasa.gov/vis/a030000/a031300/a031343/mars_PIA26551_zoom_and_pan_1920x1080.jpg",
+    // Panorâmica do rover Curiosity na Cratera Gale — NASA/JPL-Caltech/MSSS.
+    bgImageUrl: bgMarte,
     bgFit: "cover",
   },
 
@@ -116,9 +116,8 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#0a0a14", skyBottom: "#3a3a4a", starColor: "#eef0ff",
     horizonColor: "#1c1c28", horizonGlow: "rgba(200,200,220,0.2)", glowColor: "#c8c8dc",
     danger: false, decor: ["🚩", "👣", "📷👽", "🛰️"],
-    // Superfície lunar em quadro CHEIO — Apollo 11, Tranquility Base
-    // (1969), foto real NASA. Preenche a tela inteira com bgFit cover.
-    bgImageUrl: "https://www.nasa.gov/wp-content/uploads/2023/03/152495main_image_feature_616b_ys_full.jpg",
+    // Panorâmica da Cratera Shorty, Apollo 17 (1972) — foto real NASA.
+    bgImageUrl: bgLua,
     bgFit: "cover",
   },
 
@@ -311,7 +310,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
   },
   messier_87: {
     id: "messier_87", label: "M87 (Virgo A)", ...GALAXY_BASE,
-    danger: false, // sem efeito no jogo — só fato educativo no comentário // buraco negro supermassivo de verdade
+    danger: true, // buraco negro supermassivo de verdade
     decor: ["⚫📸", "👽😱", "🍩🔥"],
     // A 1ª foto real de um buraco negro (EHT, 2019) — ESO/EHT, CC BY 4.0.
     bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1907a.jpg",
@@ -335,7 +334,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
   },
   crab_nebula: {
     id: "crab_nebula", label: "Nebulosa do Caranguejo", ...NEBULA_BASE,
-    danger: false, // sem efeito no jogo — só fato educativo no comentário // pulsar girando 30x por segundo no centro
+    danger: true, // pulsar girando 30x por segundo no centro
     decor: ["🦀🌌", "💥1054", "🌀⚡"],
     // M1 pelo Hubble — ESA/Hubble, CC BY 4.0. Textura → cover.
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0515a.jpg",
@@ -386,19 +385,19 @@ export const BIOMES: Record<string, BiomeTheme> = {
   },
   proxima_c: {
     id: "proxima_c", label: "Proxima Centauri c", ...EXO_BASE,
-    danger: false, // sem efeito no jogo — só fato educativo no comentário
+    danger: true,
     decor: ["🥶🪐", "🔴⭐", "👽🧊"],
     // sem foto por enquanto — paleta de exoplaneta
   },
   hd_209458b: {
     id: "hd_209458b", label: "Osiris (HD 209458 b)", ...EXO_BASE,
-    danger: false, // sem efeito no jogo — só fato educativo no comentário // planeta evaporando de verdade
+    danger: true, // planeta evaporando de verdade
     decor: ["💨🪐", "☄️🔥", "👽🏜️"],
     // sem foto por enquanto — paleta de exoplaneta
   },
   "55_cancri_e": {
     id: "55_cancri_e", label: "55 Cancri e", ...EXO_BASE,
-    danger: false, // sem efeito no jogo — só fato educativo no comentário // oceano de lava de verdade
+    danger: true, // oceano de lava de verdade
     decor: ["💎🪐", "🌋🔥", "👽🤑"],
     // sem foto por enquanto — paleta de exoplaneta
   },
@@ -421,7 +420,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
   },
   betelgeuse_team: {
     id: "betelgeuse_team", label: "Betelgeuse (visita guiada)", ...STARSYS_BASE,
-    danger: false, // sem efeito no jogo — só fato educativo no comentário // supergigante prestes a explodir (em escala cósmica!)
+    danger: true, // supergigante prestes a explodir (em escala cósmica!)
     decor: ["🔴💣", "💥⏳", "👽🏃"],
     // Betelgeuse pelo ALMA — ESO/ALMA, CC BY 4.0. Estrela → distant.
     bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1721a.jpg",
@@ -452,7 +451,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     id: "3c_273", label: "Quasar 3C 273", kind: "quasar",
     skyTop: "#0a0614", skyBottom: "#2c1050", starColor: "#e0c8ff",
     horizonColor: "#1a0a30", horizonGlow: "rgba(200,140,255,0.3)", glowColor: "#c88aff",
-    danger: false, // sem efeito no jogo — só fato educativo no comentário // mais brilhante que 100 Vias Lácteas de verdade
+    danger: true, // mais brilhante que 100 Vias Lácteas de verdade
     decor: ["💡🌌", "👽🕶️🕶️", "⚫🔦"],
     // sem foto por enquanto — paleta de quasar
   },
