@@ -145,6 +145,7 @@ function AuthBridge() {
       if (!mounted) return;
       publish({
         isAuthenticated: !!s,
+        isAnonymous: !!s?.user?.is_anonymous,
         userId: s?.user.id ?? null,
         email: s?.user.email ?? null,
         loading: false,
