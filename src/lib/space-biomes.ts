@@ -6,9 +6,20 @@
 // mais distantes da rota (exoplanetas, estrelas) ainda estão só
 // com paleta de cor — dá pra adicionar foto real neles depois
 // do mesmo jeito.
+//
+// bgFit controla o ENQUADRAMENTO da foto na fase:
+//   - "cover"   → textura de superfície/nuvens: preenche a tela
+//                 cortando o excesso, SEM esticar (proporção real),
+//                 com parallax conforme a câmera anda pelo mundo.
+//   - "distant" → foto do astro inteiro (disco): desenhado pequeno
+//                 no canto do céu, como cenário distante — evita o
+//                 planeta "gigante/estourado" em relação às naves.
+// Sem bgFit definido, o jogo assume "cover".
 // =========================================================
 
 export type DestinationKind = "planet" | "moon" | "star" | "exoplanet" | "dwarf-planet";
+
+export type BgFit = "cover" | "distant";
 
 export type BiomeTheme = {
   id: string;
@@ -23,6 +34,7 @@ export type BiomeTheme = {
   danger: boolean;
   decor: string[]; // objetos cômicos espalhados pelo cenário (estilo HCR2)
   bgImageUrl?: string; // foto real (NASA/ESA, domínio público) quando existir
+  bgFit?: BgFit; // como enquadrar a foto (padrão: "cover")
 };
 
 const DEFAULT_THEME: Omit<BiomeTheme, "id" | "label"> = {
@@ -44,8 +56,9 @@ export const BIOMES: Record<string, BiomeTheme> = {
     horizonColor: "#6a3418", horizonGlow: "rgba(232,120,60,0.25)", glowColor: "#e8783c",
     danger: false, decor: ["🦴", "🛸", "👽", "🪐"],
     // Cratera Gale, vista do rover Curiosity (Mastcam) — foto real NASA.
-    // Crédito: NASA/JPL-Caltech/MSSS.
+    // Crédito: NASA/JPL-Caltech/MSSS. Textura de superfície → cover.
     bgImageUrl: "https://svs.gsfc.nasa.gov/vis/a030000/a031300/a031343/mars_PIA26551_zoom_and_pan_1920x1080.jpg",
+    bgFit: "cover",
   },
 
   mercurio: {
@@ -57,6 +70,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     // Vista global da superfície de Mercúrio, sonda MESSENGER — foto real NASA.
     // Crédito: NASA/Johns Hopkins APL/Carnegie Institution of Washington.
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia12/pia12051/PIA12051.jpg",
+    bgFit: "cover",
   },
 
   lua: {
@@ -65,7 +79,9 @@ export const BIOMES: Record<string, BiomeTheme> = {
     horizonColor: "#1c1c28", horizonGlow: "rgba(200,200,220,0.2)", glowColor: "#c8c8dc",
     danger: false, decor: ["🚩", "👣", "📷👽", "🛰️"],
     // Tranquility Base, Apollo 11, 1969 — foto real NASA, domínio público.
+    // Superfície fotografada do chão → cover (sem esticar, corta o excesso).
     bgImageUrl: "https://www.nasa.gov/wp-content/uploads/2023/03/152495main_image_feature_616b_ys_full.jpg",
+    bgFit: "cover",
   },
 
   venus: {
@@ -77,6 +93,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     // Maat Mons, o maior vulcão de Vênus — reconstrução por radar da
     // sonda Magellan (1992). Foto real NASA, domínio público.
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia00/pia00254/PIA00254.jpg",
+    bgFit: "cover",
   },
 
   jupiter: {
@@ -85,7 +102,9 @@ export const BIOMES: Record<string, BiomeTheme> = {
     horizonColor: "#5a3418", horizonGlow: "rgba(230,140,60,0.25)", glowColor: "#e6823c",
     danger: false, decor: ["🌪️👽", "🛰️💫", "🔴👀", "🪐"],
     // Grande Mancha Vermelha, sonda Voyager 1, 1979 — foto real NASA.
+    // Close das nuvens (textura) → cover.
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia00/pia00014/PIA00014.jpg",
+    bgFit: "cover",
   },
 
   plutao: {
@@ -100,8 +119,10 @@ export const BIOMES: Record<string, BiomeTheme> = {
       "🌡️❄️",   // frio extremo
     ],
     // O "coração" de Plutão (Tombaugh Regio), sonda New Horizons, 2015.
-    // Crédito: NASA/JHUAPL/SwRI.
+    // Crédito: NASA/JHUAPL/SwRI. Disco inteiro do planeta → distant
+    // (pequeno no céu, senão fica gigante/estourado perto das naves).
     bgImageUrl: "https://www.nasa.gov/wp-content/uploads/2023/03/nh-pluto_crop.jpg.png",
+    bgFit: "distant",
   },
 
   saturno: {
@@ -111,7 +132,9 @@ export const BIOMES: Record<string, BiomeTheme> = {
     danger: false, decor: ["💍👽", "🛰️📸", "❄️💫", "🪨"],
     // Tempestade gigante no hemisfério norte de Saturno, sonda Cassini,
     // 2010/2011 — foto real NASA. Crédito: NASA/JPL-Caltech/Space Science Institute.
+    // Close das nuvens (textura) → cover.
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia12/pia12824/PIA12824.jpg",
+    bgFit: "cover",
   },
 
   urano: {
@@ -126,7 +149,9 @@ export const BIOMES: Record<string, BiomeTheme> = {
       "👽💍",   // procurando os anéis, que são bem fracos e difíceis de ver
     ],
     // Urano fotografado pela sonda Voyager 2 em 1986 — foto real NASA.
+    // Disco inteiro do planeta → distant (pequeno no céu).
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia18/pia18182/PIA18182.jpg",
+    bgFit: "distant",
   },
 
   netuno: {
@@ -140,7 +165,9 @@ export const BIOMES: Record<string, BiomeTheme> = {
       "🛰️👋",   // último planeta visitado pela Voyager 2
     ],
     // Netuno, sonda Voyager 2, 1989 — foto real NASA.
+    // Disco inteiro do planeta → distant (pequeno no céu).
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia02/pia02210/PIA02210.jpg",
+    bgFit: "distant",
   },
 
   // ---- ainda sem foto real — só paleta de cor por enquanto ----
@@ -173,6 +200,18 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#3a1400", skyBottom: "#ff6a00", starColor: "#ffd080",
     horizonColor: "#5a2000", horizonGlow: "rgba(255,120,20,0.45)", glowColor: "#ff6a00",
     danger: true, decor: ["🔥🔥", "☀️", "🛰️💥", "👽🥵"],
+    // O Sol AGORA, filtro 304Å (laranja dramático) — observatório
+    // SDO/NASA, domínio público. Essa URL é atualizada automaticamente
+    // pela NASA a cada ~15 minutos, então o jogador vê o Sol como ele
+    // está DE VERDADE hoje, com manchas e erupções do dia.
+    // Outros filtros (troque o sufixo): 0171 (dourado),
+    // 0131 (azul-esverdeado), HMIIC (luz visível, amarelo clássico).
+    bgImageUrl: "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0304.jpg",
+    // Disco inteiro da estrela → distant. No draw(), estrelas (kind
+    // "star") são desenhadas maiores que planetas distantes (~50% da
+    // tela) e com brilho pulsante — Sol dominando o céu enquanto o
+    // combustível drena mais rápido (danger: true).
+    bgFit: "distant",
   },
   betelgeuse: {
     id: "betelgeuse", label: "Betelgeuse", kind: "star",
