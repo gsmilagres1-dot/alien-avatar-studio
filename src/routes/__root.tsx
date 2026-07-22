@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TranslationSync } from "@/components/TranslationSync";
 import { Soundtrack } from "@/components/Soundtrack";
+import { SaveAccountBanner } from "@/components/SaveAccountBanner";
 
 import appCss from "../styles.css?url";
 import type { AuthState } from "@/router";
