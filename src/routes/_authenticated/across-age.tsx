@@ -382,28 +382,11 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
     let shipImgReady = false;
     const SHIP_TARGET_SIZE = 96;
     let shipDrawW = SHIP_TARGET_SIZE, shipDrawH = SHIP_TARGET_SIZE;
-    // Fonte final usada no drawImage. Se a nave tiver flipX=true (imagem
-    // desenhada de costas pro sentido de vôo), a gente pré-espelha ela
-    // num canvas offscreen e usa esse canvas — assim física, comando e
-    // propulsor continuam intocados, muda só o desenho.
-    let shipDrawSource: CanvasImageSource = shipImg;
     shipImg.onload = () => {
+      shipImgReady = true;
       const ar = shipImg.naturalWidth / shipImg.naturalHeight || 1;
       if (ar >= 1) { shipDrawW = SHIP_TARGET_SIZE; shipDrawH = SHIP_TARGET_SIZE / ar; }
       else { shipDrawH = SHIP_TARGET_SIZE; shipDrawW = SHIP_TARGET_SIZE * ar; }
-      if (shipStats.flipX) {
-        const off = document.createElement("canvas");
-        off.width = shipImg.naturalWidth;
-        off.height = shipImg.naturalHeight;
-        const octx = off.getContext("2d");
-        if (octx) {
-          octx.translate(off.width, 0);
-          octx.scale(-1, 1);
-          octx.drawImage(shipImg, 0, 0);
-          shipDrawSource = off;
-        }
-      }
-      shipImgReady = true;
     };
 
     let bgImgReady = false;
@@ -413,7 +396,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       bgImg.src = theme.bgImageUrl;
     }
 
-    const FICHAS_PER_COLLECT = 1;
+    const FICHAS_PER_COLLECT = 10;
     const decorPoints: { x: number; y: number; emoji: string; size: number }[] = [];
     // base +60% em relação ao valor antigo (era 100), depois ajustada pelo
     // multiplicador da nave escolhida (naves pequenas/ágeis rendem mais
@@ -585,6 +568,11 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       // espelha pro resto — assim elas viram pro lado certo sem nunca
       // aparecer de cabeça pra baixo, e o motor continua sempre acompanhando.
       const freelyRotates = (shipStats.noseAngleDeg ?? 0) === -90;
+      // só ativa pra naves com noseAngleDeg 180 — marcadas assim depois de
+      // conferir a imagem de verdade (bico da arte nasce virado pra
+      // esquerda). Espelha o corpo desde o início; o propulsor (mesmo
+      // referencial local) acompanha certo, na traseira de verdade.
+      const baseFlip = (shipStats.noseAngleDeg ?? 0) === 180 ? -1 : 1;
 
       let drawRot = ship.angle;
       let mirror = 1;
@@ -598,6 +586,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
           mirror = -1; drawRot = a > 0 ? a - Math.PI : a + Math.PI;
         }
       }
+      mirror *= baseFlip;
 
       // direção "pra trás" da nave nesse instante (ângulo físico real) —
       // usada pra alinhar os itens coletados atrás dela
@@ -616,7 +605,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       if (!freelyRotates) c.scale(mirror, 1);
 
       if (shipImgReady) {
-        c.drawImage(shipDrawSource, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
+        c.drawImage(shipImg, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
       } else {
         c.fillStyle = thrusting ? "#ff9d3d" : "#3ddbc9";
         c.beginPath(); c.moveTo(0, -12); c.lineTo(9, 10); c.lineTo(0, 6); c.lineTo(-9, 10); c.closePath(); c.fill();
@@ -646,35 +635,45 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       bgGrad.addColorStop(0, theme.skyTop);
       bgGrad.addColorStop(1, theme.skyBottom);
       ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+
+      // ===== FUNDO COM FOTO (coordenadas de TELA, antes do translate
+      // da câmera). Dois modos, controlados por theme.bgFit:
+      //   "cover"   → a foto ENCHE a tela inteira mantendo a proporção
+      //               (corta o excesso, nunca estica) e desliza junto com
+      //               a câmera (parallax) — pra texturas de superfície.
+      //   "distant" → o astro é desenhado pequeno no canto do céu, como
+      //               cenário distante — pra fotos do disco inteiro
+      //               (Plutão, Urano, Netuno) e estrelas (Sol). =====
+      if (bgImgReady) {
+        if ((theme.bgFit ?? "cover") === "distant") {
+          const isStar = theme.kind === "star";
+          const size = Math.min(W, H) * (isStar ? 0.5 : 0.28);
+          const ar = bgImg.naturalWidth / bgImg.naturalHeight || 1;
+          const dw = ar >= 1 ? size : size * ar;
+          const dh = ar >= 1 ? size / ar : size;
+          ctx.save();
+          ctx.shadowColor = theme.glowColor;
+          ctx.shadowBlur = isStar ? 40 + Math.sin(performance.now() / 900) * 18 : 30;
+          ctx.globalAlpha = 0.95;
+          ctx.drawImage(bgImg, W - dw - 20 - camX * 0.05, 20 - camY * 0.05, dw, dh);
+          ctx.restore();
+        } else {
+          const scale = Math.max(W / bgImg.naturalWidth, H / bgImg.naturalHeight) * 1.15;
+          const dw = bgImg.naturalWidth * scale;
+          const dh = bgImg.naturalHeight * scale;
+          const tX = WORLD_W > W ? camX / (WORLD_W - W) : 0.5;
+          const tY = WORLD_H > H ? camY / (WORLD_H - H) : 0.5;
+          ctx.globalAlpha = 0.85;
+          ctx.drawImage(bgImg, -(dw - W) * tX, -(dh - H) * tY, dw, dh);
+          ctx.globalAlpha = 1;
+          // véu escuro pra manter nós/detritos/HUD legíveis por cima da foto
+          ctx.fillStyle = "rgba(5,7,20,0.22)";
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
+
       ctx.save();
       ctx.translate(-camX, -camY);
-
-      if (bgImgReady) {
-        ctx.globalAlpha = 0.8;
-        ctx.drawImage(bgImg, 0, 0, WORLD_W, WORLD_H);
-        ctx.globalAlpha = 1;
-        // véu escuro pra manter nós/detritos/HUD legíveis por cima da foto
-        ctx.fillStyle = "rgba(5,7,20,0.28)";
-        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
-      }
-    ctx.save();
-    ctx.shadowColor = theme.glowColor;
-    ctx.shadowBlur = isStar ? 40 + Math.sin(performance.now() / 900) * 18 : 30;
-    ctx.globalAlpha = 0.95;
-    ctx.drawImage(bgImg, px, py, dw, dh);
-    ctx.restore();
-  } else {
-    const scale = Math.max(W / bgImg.naturalWidth, H / bgImg.naturalHeight) * 1.15;
-    const dw = bgImg.naturalWidth * scale, dh = bgImg.naturalHeight * scale;
-    const tX = WORLD_W > W ? camX / (WORLD_W - W) : 0.5;
-    const tY = WORLD_H > H ? camY / (WORLD_H - H) : 0.5;
-    ctx.globalAlpha = 0.8;
-    ctx.drawImage(bgImg, -(dw - W) * tX, -(dh - H) * tY, dw, dh);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = "rgba(5,7,20,0.28)";
-    ctx.fillRect(0, 0, W, H);
-  }
-}
 
       ctx.fillStyle = theme.starColor;
       stars.forEach((s) => {
@@ -929,7 +928,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
   }, []);
 
   return (
-    <div ref={rootRef} className="across-age-root force-landscape">
+    <div ref={rootRef} className={`across-age-root${isFullscreen ? " force-landscape" : ""}`}>
       <style>{ACROSS_AGE_CSS}</style>
       <div id="hud">
         <div id="hud-normal">
@@ -953,15 +952,6 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
           title={isFullscreen ? "Sair da tela cheia" : "Tela cheia e deitada"}
         >
           {isFullscreen ? "⤡" : "⛶"}
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate({ to: "/rota" })}
-          className="fullscreen-btn"
-          aria-label="Sair do jogo"
-          title="Sair do jogo"
-        >
-          ✕
         </button>
       </div>
 
@@ -1089,15 +1079,6 @@ const ACROSS_AGE_CSS = `
     width:100vh; height:100vw;
     top:50%; left:50%;
     transform:translate(-50%,-50%) rotate(90deg);
-    border-radius:0; max-height:none; min-height:0;
-  }
-}
-/* celular já deitado de verdade — não precisa do truque de rotação, só
-   ocupa a tela toda direto (por cima do menu, pra aproveitar tudo) */
-@media (orientation: landscape){
-  .across-age-root.force-landscape{
-    position:fixed; inset:0; z-index:9999;
-    width:100vw; height:100vh;
     border-radius:0; max-height:none; min-height:0;
   }
 }
