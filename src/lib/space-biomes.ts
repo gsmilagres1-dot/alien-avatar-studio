@@ -1,21 +1,21 @@
 // =========================================================
 // Biomas do Across Age — um tema visual por destino da rota.
-// Os 9 primeiros do sistema solar já têm foto REAL da NASA
-// (domínio público, sem direitos autorais) como fundo da fase,
-// além de decoração cômica (emoji) no estilo HCR2. Os destinos
-// mais distantes da rota (exoplanetas, estrelas) ainda estão só
-// com paleta de cor — dá pra adicionar foto real neles depois
-// do mesmo jeito.
+// Fundos com foto REAL (NASA, domínio público) ficam em
+// src/assets/ (bg-*.jpg, já cortadas em 2560x1440 paisagem).
 //
 // bgFit controla o ENQUADRAMENTO da foto na fase:
-//   - "cover"   → textura de superfície/nuvens: preenche a tela
-//                 cortando o excesso, SEM esticar (proporção real),
-//                 com parallax conforme a câmera anda pelo mundo.
-//   - "distant" → foto do astro inteiro (disco): desenhado pequeno
-//                 no canto do céu, como cenário distante — evita o
-//                 planeta "gigante/estourado" em relação às naves.
+//   - "cover"   → preenche a tela cortando o excesso, SEM
+//                 esticar (proporção real), com parallax.
+//   - "distant" → astro desenhado pequeno no canto do céu,
+//                 como cenário distante (discos de planeta).
 // Sem bgFit definido, o jogo assume "cover".
 // =========================================================
+
+import bgMarte from "@/assets/bg-marte.jpg";
+import bgLua from "@/assets/bg-lua.jpg";
+import bgVenus from "@/assets/bg-venus.jpg";
+import bgSaturno from "@/assets/bg-saturno.jpg";
+import bgGanimedes from "@/assets/bg-ganimedes.jpg";
 
 export type DestinationKind = "planet" | "moon" | "star" | "exoplanet" | "dwarf-planet";
 
@@ -33,7 +33,7 @@ export type BiomeTheme = {
   glowColor: string;
   danger: boolean;
   decor: string[]; // objetos cômicos espalhados pelo cenário (estilo HCR2)
-  bgImageUrl?: string; // foto real (NASA/ESA, domínio público) quando existir
+  bgImageUrl?: string; // foto real quando existir (asset local ou URL)
   bgFit?: BgFit; // como enquadrar a foto (padrão: "cover")
 };
 
@@ -55,9 +55,10 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#3a1f12", skyBottom: "#a85a2e", starColor: "#ffcfa0",
     horizonColor: "#6a3418", horizonGlow: "rgba(232,120,60,0.25)", glowColor: "#e8783c",
     danger: false, decor: ["🦴", "🛸", "👽", "🪐"],
-    // Cratera Gale, vista do rover Curiosity (Mastcam) — foto real NASA.
-    // Crédito: NASA/JPL-Caltech/MSSS. Textura de superfície → cover.
-    bgImageUrl: "https://svs.gsfc.nasa.gov/vis/a030000/a031300/a031343/mars_PIA26551_zoom_and_pan_1920x1080.jpg",
+    // Panorâmica do rover Curiosity na Cratera Gale — foto real NASA,
+    // com céu espacial estendido pra caber em paisagem 2560x1440.
+    // Crédito: NASA/JPL-Caltech/MSSS.
+    bgImageUrl: bgMarte,
     bgFit: "cover",
   },
 
@@ -67,7 +68,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     horizonColor: "#4a3a20", horizonGlow: "rgba(200,160,90,0.25)", glowColor: "#e0b060",
     danger: true, // mais perto do sol, variação de temperatura extrema de verdade
     decor: ["🥵🥶", "☀️🛰️", "👽🕶️", "🌋"],
-    // Vista global da superfície de Mercúrio, sonda MESSENGER — foto real NASA.
+    // Superfície de Mercúrio, sonda MESSENGER — foto real NASA (hotlink).
     // Crédito: NASA/Johns Hopkins APL/Carnegie Institution of Washington.
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia12/pia12051/PIA12051.jpg",
     bgFit: "cover",
@@ -78,9 +79,9 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#0a0a14", skyBottom: "#3a3a4a", starColor: "#eef0ff",
     horizonColor: "#1c1c28", horizonGlow: "rgba(200,200,220,0.2)", glowColor: "#c8c8dc",
     danger: false, decor: ["🚩", "👣", "📷👽", "🛰️"],
-    // Tranquility Base, Apollo 11, 1969 — foto real NASA, domínio público.
-    // Superfície fotografada do chão → cover (sem esticar, corta o excesso).
-    bgImageUrl: "https://www.nasa.gov/wp-content/uploads/2023/03/152495main_image_feature_616b_ys_full.jpg",
+    // Panorâmica da Cratera Shorty, Apollo 17 (1972) — foto real NASA,
+    // com céu espacial estendido pra paisagem 2560x1440.
+    bgImageUrl: bgLua,
     bgFit: "cover",
   },
 
@@ -90,9 +91,11 @@ export const BIOMES: Record<string, BiomeTheme> = {
     horizonColor: "#5a4418", horizonGlow: "rgba(230,190,60,0.3)", glowColor: "#e6c23c",
     danger: true, // planeta mais quente do sistema solar de verdade
     decor: ["🛰️💀", "👽🍳", "🌡️💥", "👽☂️"],
-    // Maat Mons, o maior vulcão de Vênus — reconstrução por radar da
-    // sonda Magellan (1992). Foto real NASA, domínio público.
-    bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia00/pia00254/PIA00254.jpg",
+    // Vale de fenda em Vênus, radar da sonda Magellan — foto real NASA.
+    // Curiosidade extra pro banco de fatos: a única foto tirada DO CHÃO
+    // de Vênus é da sonda soviética Venera 13 (1982), que derreteu em
+    // ~2h no calor de 460°C.
+    bgImageUrl: bgVenus,
     bgFit: "cover",
   },
 
@@ -101,9 +104,26 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#2a1a0a", skyBottom: "#c97a3a", starColor: "#ffd0a0",
     horizonColor: "#5a3418", horizonGlow: "rgba(230,140,60,0.25)", glowColor: "#e6823c",
     danger: false, decor: ["🌪️👽", "🛰️💫", "🔴👀", "🪐"],
-    // Grande Mancha Vermelha, sonda Voyager 1, 1979 — foto real NASA.
-    // Close das nuvens (textura) → cover.
+    // Grande Mancha Vermelha, sonda Voyager 1, 1979 — foto real NASA (hotlink).
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia00/pia00014/PIA00014.jpg",
+    bgFit: "cover",
+  },
+
+  ganimedes: {
+    id: "ganimedes", label: "Ganimedes", kind: "moon",
+    skyTop: "#0e0e16", skyBottom: "#4a4a58", starColor: "#eef0ff",
+    horizonColor: "#22222e", horizonGlow: "rgba(190,195,220,0.22)", glowColor: "#b8bcd8",
+    danger: false,
+    decor: [
+      "🥇🌕",   // a MAIOR lua do sistema solar — maior até que Mercúrio!
+      "🧲👽",   // única lua com campo magnético próprio
+      "🌊🧊",   // oceano de água salgada escondido sob o gelo
+      "🛰️📸",   // fotografada de perto pela sonda Juno em 2021
+    ],
+    // Ganimedes, a maior lua do sistema solar, sobrevoo da sonda Juno
+    // (2021, PIA25012) — foto real NASA, cortada em paisagem com o
+    // horizonte curvo. Crédito: NASA/JPL-Caltech/SwRI/MSSS.
+    bgImageUrl: bgGanimedes,
     bgFit: "cover",
   },
 
@@ -118,9 +138,8 @@ export const BIOMES: Record<string, BiomeTheme> = {
       "🛰️👋",   // a sonda só passou de raspão, nem entrou em órbita
       "🌡️❄️",   // frio extremo
     ],
-    // O "coração" de Plutão (Tombaugh Regio), sonda New Horizons, 2015.
-    // Crédito: NASA/JHUAPL/SwRI. Disco inteiro do planeta → distant
-    // (pequeno no céu, senão fica gigante/estourado perto das naves).
+    // O "coração" de Plutão (Tombaugh Regio), New Horizons, 2015 —
+    // disco inteiro → distant (pequeno no céu). Crédito: NASA/JHUAPL/SwRI.
     bgImageUrl: "https://www.nasa.gov/wp-content/uploads/2023/03/nh-pluto_crop.jpg.png",
     bgFit: "distant",
   },
@@ -130,10 +149,10 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#2a2410", skyBottom: "#c9b06a", starColor: "#fff0c0",
     horizonColor: "#4a4020", horizonGlow: "rgba(230,200,120,0.25)", glowColor: "#e6c87c",
     danger: false, decor: ["💍👽", "🛰️📸", "❄️💫", "🪨"],
-    // Tempestade gigante no hemisfério norte de Saturno, sonda Cassini,
-    // 2010/2011 — foto real NASA. Crédito: NASA/JPL-Caltech/Space Science Institute.
-    // Close das nuvens (textura) → cover.
-    bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia12/pia12824/PIA12824.jpg",
+    // Saturno e seus anéis pela sonda Cassini — foto real NASA, composta
+    // num céu espacial 2560x1440 (planeta grande à direita da cena).
+    // Crédito: NASA/JPL-Caltech/Space Science Institute.
+    bgImageUrl: bgSaturno,
     bgFit: "cover",
   },
 
@@ -148,8 +167,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
       "🥶🌡️",   // atmosfera mais fria do sistema solar, mais até que Netuno
       "👽💍",   // procurando os anéis, que são bem fracos e difíceis de ver
     ],
-    // Urano fotografado pela sonda Voyager 2 em 1986 — foto real NASA.
-    // Disco inteiro do planeta → distant (pequeno no céu).
+    // Urano, Voyager 2 (1986) — disco inteiro → distant (pequeno no céu).
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia18/pia18182/PIA18182.jpg",
     bgFit: "distant",
   },
@@ -164,24 +182,40 @@ export const BIOMES: Record<string, BiomeTheme> = {
       "🌀⚫",   // Grande Mancha Escura, tempestade do tamanho da Terra
       "🛰️👋",   // último planeta visitado pela Voyager 2
     ],
-    // Netuno, sonda Voyager 2, 1989 — foto real NASA.
-    // Disco inteiro do planeta → distant (pequeno no céu).
+    // Netuno, Voyager 2 (1989) — disco inteiro → distant (pequeno no céu).
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia02/pia02210/PIA02210.jpg",
     bgFit: "distant",
   },
 
-  // ---- ainda sem foto real — só paleta de cor por enquanto ----
   europa: {
     id: "europa", label: "Europa", kind: "moon",
     skyTop: "#1a2a3a", skyBottom: "#5a7a9a", starColor: "#d0e8ff",
     horizonColor: "#243444", horizonGlow: "rgba(120,180,220,0.25)", glowColor: "#7ab4dc",
     danger: false, decor: ["🧊", "🐟👽", "🛰️", "❄️"],
+    // Pôster "Europa: Discover Life Under The Ice" — série de viagem
+    // da NASA/JPL-Caltech, domínio público. Formato retrato: o modo
+    // cover recorta a faixa central em paisagem automaticamente.
+    bgImageUrl: "https://science.nasa.gov/wp-content/uploads/2024/05/europa-travel-poster-image.jpg",
+    bgFit: "cover",
   },
   kepler: {
-    id: "kepler", label: "Kepler-22b", kind: "exoplanet",
+    id: "kepler", label: "Kepler-16b", kind: "exoplanet",
     skyTop: "#0a1a2a", skyBottom: "#2a6a7a", starColor: "#a0f0ff",
     horizonColor: "#123040", horizonGlow: "rgba(60,200,220,0.25)", glowColor: "#3cc8dc",
-    danger: false, decor: ["🌊", "👽🏝️", "🛰️", "🪐"],
+    danger: false,
+    decor: [
+      "☀️☀️",   // orbita DOIS sóis, como Tatooine de Star Wars
+      "👤👤",   // "onde sua sombra sempre tem companhia" (2 sombras!)
+      "🥶",     // frio como gelo seco
+      "🛰️",
+    ],
+    // Pôster "Kepler-16b: where your shadow always has company" —
+    // série Visions of the Future, NASA/JPL, domínio público.
+    // ATENÇÃO: o rótulo mudou de Kepler-22b pra Kepler-16b (o planeta
+    // real do pôster, o dos dois sóis) — atualize também o nome e as
+    // perguntas desse destino no intergalactic.ts pra manter coerente.
+    bgImageUrl: "https://d2pn8kiwq2w21t.cloudfront.net/original_images/kepler16b.jpg",
+    bgFit: "cover",
   },
   alpha_a: {
     id: "alpha_a", label: "Alpha Centauri A", kind: "star",
@@ -194,23 +228,21 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#2a0a0a", skyBottom: "#9a2a2a", starColor: "#ffb0a0",
     horizonColor: "#4a1010", horizonGlow: "rgba(220,80,60,0.3)", glowColor: "#dc503c",
     danger: true, decor: ["🌋", "👽🔴", "🛰️"],
+    // Ilustração oficial da superfície de Proxima b (eso1629a), já em
+    // paisagem 1920x1200 — licença CC-BY 4.0, crédito OBRIGATÓRIO:
+    // "ESO/M. Kornmesser" (mantenha nos créditos do jogo).
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1629a.jpg",
+    bgFit: "cover",
   },
   sol: {
     id: "sol", label: "Sol", kind: "star",
     skyTop: "#3a1400", skyBottom: "#ff6a00", starColor: "#ffd080",
     horizonColor: "#5a2000", horizonGlow: "rgba(255,120,20,0.45)", glowColor: "#ff6a00",
     danger: true, decor: ["🔥🔥", "☀️", "🛰️💥", "👽🥵"],
-    // O Sol AGORA, filtro 304Å (laranja dramático) — observatório
-    // SDO/NASA, domínio público. Essa URL é atualizada automaticamente
-    // pela NASA a cada ~15 minutos, então o jogador vê o Sol como ele
-    // está DE VERDADE hoje, com manchas e erupções do dia.
-    // Outros filtros (troque o sufixo): 0171 (dourado),
-    // 0131 (azul-esverdeado), HMIIC (luz visível, amarelo clássico).
-    bgImageUrl: "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0304.jpg",
-    // Disco inteiro da estrela → distant. No draw(), estrelas (kind
-    // "star") são desenhadas maiores que planetas distantes (~50% da
-    // tela) e com brilho pulsante — Sol dominando o céu enquanto o
-    // combustível drena mais rápido (danger: true).
+    // O Sol AGORA, filtro 304Å — observatório SDO/NASA, atualizado
+    // automaticamente a cada ~15 min. O jogador vê o Sol como ele está
+    // DE VERDADE hoje, com manchas e erupções do dia.
+    bgImageUrl: "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_2048_0304.jpg",
     bgFit: "distant",
   },
   betelgeuse: {
