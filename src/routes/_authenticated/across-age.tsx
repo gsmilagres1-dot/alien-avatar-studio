@@ -650,14 +650,13 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       ctx.translate(-camX, -camY);
 
       if (bgImgReady) {
-  if ((theme.bgFit ?? "cover") === "distant") {
-    const isStar = theme.kind === "star";
-    const size = Math.min(W, H) * (isStar ? 0.5 : 0.28);
-    const ar = bgImg.naturalWidth / bgImg.naturalHeight || 1;
-    const dw = ar >= 1 ? size : size * ar;
-    const dh = ar >= 1 ? size / ar : size;
-    const px = W - dw - (isStar ? 10 : 30) - camX * 0.05;
-    const py = (isStar ? 10 : 30) - camY * 0.05;
+        ctx.globalAlpha = 0.8;
+        ctx.drawImage(bgImg, 0, 0, WORLD_W, WORLD_H);
+        ctx.globalAlpha = 1;
+        // véu escuro pra manter nós/detritos/HUD legíveis por cima da foto
+        ctx.fillStyle = "rgba(5,7,20,0.28)";
+        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+      }
     ctx.save();
     ctx.shadowColor = theme.glowColor;
     ctx.shadowBlur = isStar ? 40 + Math.sin(performance.now() / 900) * 18 : 30;
