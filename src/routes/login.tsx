@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
-import { Loader2, Mail, Sparkles } from "lucide-react";
+import { Loader2, Mail, Sparkles, Wand2 } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -12,34 +12,79 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+type Mode = "magic" | "signin" | "signup";
+
 function LoginPage() {
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
   const { auth } = Route.useRouteContext();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<Mode>("magic");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
 
+  // Only redirect away if the user has a REAL account (not the anon session).
   useEffect(() => {
-    if (auth.isAuthenticated) navigate({ to: redirect, replace: true });
-  }, [auth.isAuthenticated, navigate, redirect]);
+    if (auth.isAuthenticated && !auth.isAnonymous) {
+      navigate({ to: redirect, replace: true });
+    }
+  }, [auth.isAuthenticated, auth.isAnonymous, navigate, redirect]);
+
+  async function handleMagic(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // If the user is currently anonymous, upgrading via updateUser preserves
+      // the same user_id — all avatars, seals and progress travel with the account.
+      if (auth.isAnonymous) {
+        const { error } = await supabase.auth.updateUser({ email });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: window.location.origin,
+            shouldCreateUser: true,
+          },
+        });
+        if (error) throw error;
+      }
+      setMagicSent(true);
+      toast.success("Enviamos um link para " + email);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email, password,
-          options: {
+        if (auth.isAnonymous) {
+          // Preserve progress: convert the anon user to a permanent email account.
+          const { error } = await supabase.auth.updateUser({
+            email,
+            password,
             data: { display_name: name || email.split("@")[0] },
-            emailRedirectTo: window.location.origin,
-          },
-        });
-        if (error) throw error;
-        toast.success("Conta criada!");
+          });
+          if (error) throw error;
+          toast.success("Conta criada! Confirme pelo link enviado ao seu e-mail.");
+        } else {
+          const { error } = await supabase.auth.signUp({
+            email, password,
+            options: {
+              data: { display_name: name || email.split("@")[0] },
+              emailRedirectTo: window.location.origin,
+            },
+          });
+          if (error) throw error;
+          toast.success("Conta criada!");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -69,7 +114,14 @@ function LoginPage() {
             <Sparkles className="w-4 h-4" />
             <span className="font-mono text-[11px] uppercase tracking-widest">Federação Galáctica</span>
           </div>
-          <h1 className="font-display text-2xl text-gradient-neon mt-1">Acesso da nave</h1>
+          <h1 className="font-display text-2xl text-gradient-neon mt-1">
+            {auth.isAnonymous ? "Salve seu progresso" : "Acesso da nave"}
+          </h1>
+          {auth.isAnonymous && (
+            <p className="text-[11px] text-muted-foreground mt-1 px-2">
+              Vinculando seu e-mail, seus avatares e selos ficam guardados para sempre.
+            </p>
+          )}
         </Link>
 
         <button
@@ -85,21 +137,68 @@ function LoginPage() {
           <div className="h-px flex-1 bg-border" /> ou e-mail <div className="h-px flex-1 bg-border" />
         </div>
 
-        <form onSubmit={handleEmail} className="space-y-3">
-          {mode === "signup" && (
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" className="w-full px-3 py-2.5 rounded-lg bg-input border border-border focus:ring-2 focus:ring-ring outline-none" />
-          )}
-          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail" className="w-full px-3 py-2.5 rounded-lg bg-input border border-border focus:ring-2 focus:ring-ring outline-none" />
-          <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Senha (mín 6)" className="w-full px-3 py-2.5 rounded-lg bg-input border border-border focus:ring-2 focus:ring-ring outline-none" />
-          <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-accent-foreground font-display font-bold disabled:opacity-60">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-            {mode === "signup" ? "Criar conta" : "Entrar"}
-          </button>
-        </form>
+        {/* Mode tabs */}
+        <div className="grid grid-cols-3 gap-1 mb-3 p-1 rounded-lg bg-input">
+          {([
+            { id: "magic", label: "Link mágico" },
+            { id: "signin", label: "Entrar" },
+            { id: "signup", label: "Criar" },
+          ] as const).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => { setMode(t.id); setMagicSent(false); }}
+              className={`text-[11px] py-1.5 rounded-md transition ${
+                mode === t.id ? "bg-accent text-accent-foreground font-bold" : "text-muted-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-        <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="block w-full text-center text-xs text-muted-foreground mt-4 hover:text-accent">
-          {mode === "signin" ? "Não tem conta? Cadastre-se" : "Já tem conta? Entrar"}
-        </button>
+        {mode === "magic" ? (
+          magicSent ? (
+            <div className="text-center py-4 space-y-2">
+              <Mail className="w-6 h-6 text-accent mx-auto" />
+              <p className="text-sm">Verifique seu e-mail</p>
+              <p className="text-[11px] text-muted-foreground">Abra o link pelo mesmo navegador para concluir.</p>
+              <button
+                onClick={() => { setMagicSent(false); setEmail(""); }}
+                className="text-[11px] text-accent hover:underline mt-2"
+              >
+                Enviar para outro e-mail
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleMagic} className="space-y-3">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Seu e-mail"
+                className="w-full px-3 py-2.5 rounded-lg bg-input border border-border focus:ring-2 focus:ring-ring outline-none"
+              />
+              <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-accent-foreground font-display font-bold disabled:opacity-60">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                Enviar link mágico
+              </button>
+              <p className="text-[10px] text-muted-foreground text-center">Sem senha — receba um link por e-mail.</p>
+            </form>
+          )
+        ) : (
+          <form onSubmit={handleEmail} className="space-y-3">
+            {mode === "signup" && (
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" className="w-full px-3 py-2.5 rounded-lg bg-input border border-border focus:ring-2 focus:ring-ring outline-none" />
+            )}
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail" className="w-full px-3 py-2.5 rounded-lg bg-input border border-border focus:ring-2 focus:ring-ring outline-none" />
+            <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Senha (mín 6)" className="w-full px-3 py-2.5 rounded-lg bg-input border border-border focus:ring-2 focus:ring-ring outline-none" />
+            <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-accent-foreground font-display font-bold disabled:opacity-60">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              {mode === "signup" ? "Criar conta" : "Entrar"}
+            </button>
+          </form>
+        )}
       </div>
     </main>
   );

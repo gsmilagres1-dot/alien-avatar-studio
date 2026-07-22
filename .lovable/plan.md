@@ -1,51 +1,68 @@
-# Plano — Melhorias visuais + GAME HUB "A&A Across Ages"
+# Plano — persistência de histórico via login (sem IP)
 
-## 1. Botões da home (`src/routes/index.tsx`)
+## Objetivo
 
-- **"Criar Molde 3D"** ganha cor dourada (gradiente `#e6c067 → #c9a84c → #8b6a1f`) com borda/sombra dourada, ícone `Box` dourado, mantendo o mesmo tamanho lado a lado com "Criar identidade".
-- **Reorganizar os 6 botões de ação (Equipe, Fichas, Mapa, Batalha, Upgrades, Galeria) em favo de hexágono 3×3**, com o **botão central sendo o GAME HUB "A&A · Across Ages"** (novo, destacado com gradiente neon + selo "NOVO"). O botão leva para a nova rota `/gamehub`.
+Manter o fluxo atual (usuário entra e usa como anônimo), mas deixar **visível e simples** salvar a conta antes de perder o histórico ao trocar de dispositivo/limpar cache. Sem usar IP.
 
-  Layout aproximado (cada célula é um "hex" com `clip-path: polygon` hexagonal, mantendo grid responsivo em mobile):
+## Como está hoje (confirmado no código)
 
-  ```text
-  [Equipe]   [Fichas]   [Mapa]
-  [Batalha]  [A&A HUB]  [Galeria]
-             [Upgrades]
-  ```
+- `src/routes/__root.tsx` → `AuthBridge` cria sessão anônima automática via `supabase.auth.signInAnonymously()`.
+- Todo histórico (identities, journeys, seals, prizes, wallet, teams, mining) é indexado por `user_id`.
+- Sessão persiste no `localStorage` do navegador. Sem login "real", trocar de dispositivo = novo user_id.
+- `/login` já existe com Google + e-mail/senha, mas nada no app convida o usuário a usá-lo.
 
-  Em telas estreitas, cai para grid 2 colunas mas o botão A&A HUB permanece em destaque (largura dupla).
+## Mudanças
 
-## 2. Galeria — contadores de selos com emblemas (`src/routes/_authenticated/galeria.tsx`)
+### 1. Habilitar Magic Link (link mágico por e-mail)
 
-Nos totais **Bronze / Prata / Ouro**, renderizar o **`DestinationBadge` real** (imagens `badge-bronze.png`, `badge-silver.png`, `badge-gold.png`) em tamanho ~48px, com o número sobreposto no canto inferior direito num chip. Substitui os círculos coloridos genéricos atuais.
+- Chamar `supabase--configure_auth` (mantém e-mail habilitado; magic link usa o mesmo canal de e-mail).
+- Chamar `email_domain--check_email_domain_status`; se ainda não houver domínio de e-mail, mostrar o setup e depois scaffoldar os templates de auth (`email_domain--scaffold_auth_email_templates`) para que o link mágico chegue com a marca do app.
+- Se o domínio de e-mail exigir setup do usuário (DNS), o link mágico continua funcionando pelos templates padrão do Lovable até a verificação concluir.
 
-## 3. Nova rota `/gamehub` — A&A Across Ages (`src/routes/_authenticated/gamehub.tsx`)
+### 2. Ligar sessão anônima → conta (linkIdentity)
 
-Aba exclusiva do mini-jogo. Estrutura da tela:
+Ponto crítico para não perder o histórico já criado por quem entrou como anônimo:
 
-- Cabeçalho: título "A&A · ACROSS AGES", HUD do piloto ativo (nave selecionada da galeria, escudos, reator).
-- **Seletor de nave**: usa avatares/identidades criados pelo usuário (via `pilots.functions`); usuário escolhe qual nave pilotar.
-- **Mapa de mineração** (canvas HTML 2D com fundo galáctico):
-  - Nós flutuantes de 4 tipos: **Asteroide ☄️**, **Meteoro 🌠**, **Planeta 🪐**, **Constelação ✨**.
-  - Nave do jogador se move com toque/arrastar (mobile-first) ou setas (desktop).
-  - Ao colidir com um nó → mini-ação "minerar" (barra de progresso 1-2s) → recompensa em **fichas** (via `wallet.functions.addFichas`) e material acumulado local.
-  - Nós reaparecem em posições aleatórias após minerados.
-- **Painel de recursos minerados** (contadores por tipo, sessão).
-- Botões: "Nova rodada", "Voltar ao painel".
+- Em `/login`, antes de `signUp`/`signInWithOtp`/OAuth, se `auth.user.is_anonymous === true`, usar `supabase.auth.updateUser({ email })` (para e-mail/OTP) ou `supabase.auth.linkIdentity({ provider: 'google' })` (para Google). Isso **converte o usuário anônimo atual em uma conta permanente mantendo o mesmo `user_id`** → todos os avatares, selos, prêmios e equipes seguem juntos.
+- Se o usuário não estiver anônimo (já é conta), seguir o fluxo atual (`signInWithPassword`, `signInWithOtp`, `signInWithOAuth`).
 
-Sem backend novo: reusa `wallet.functions.ts` para creditar fichas ganhas (cap de X fichas por sessão para evitar farm). Estado do jogo é local (`useState`).
+### 3. Adicionar Magic Link em `src/routes/login.tsx`
 
-## 4. Navegação (`src/routes/_authenticated.tsx`)
+- Novo modo "Link mágico": campo de e-mail + botão "Enviar link".
+- Chama `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin, shouldCreateUser: true } })` — ou `updateUser({ email })` se anônimo, para preservar histórico.
+- Toast: "Enviamos um link para <e-mail>. Abra pelo mesmo dispositivo."
+- Mantém Google e e-mail/senha como estão.
 
-Adicionar link "A&A" (ícone `Gamepad2`) na barra superior, ao lado de "Pilotos".
+### 4. CTA "Salvar minha conta" visível no app
 
-## Arquivos
+- Componente novo `SaveAccountBanner` (barra fina, dispensável):
+  - Aparece apenas quando `auth.user?.is_anonymous === true` e o usuário já criou pelo menos 1 identity/seal.
+  - Texto: "Salve seu progresso — sem conta o histórico pode sumir ao trocar de navegador." + botão "Salvar minha conta" → leva a `/login`.
+  - Dispensável (X) com `localStorage` para não ficar chato; reaparece depois de N dias ou ao criar novos itens.
+- Renderizar em `__root.tsx` (dentro de `RootComponent`, acima do `<Outlet />`) para cobrir todas as rotas autenticadas.
 
-- editar `src/routes/index.tsx` — botão dourado 3D + hexágono com HUB central
-- editar `src/routes/_authenticated/galeria.tsx` — contadores com emblemas reais
-- editar `src/routes/_authenticated.tsx` — link nav A&A
-- criar `src/routes/_authenticated/gamehub.tsx` — tela do jogo
-- criar `src/components/MiningGameCanvas.tsx` — canvas do mini-jogo
-- criar `src/lib/mining-game.ts` — tipos, spawn de nós, recompensas
+### 5. Menu do usuário no header (opcional, dentro do mesmo turno)
 
-Confirmar para eu implementar?
+- Pequeno ícone no cabeçalho do Hub / Galeria mostrando:
+  - Se anônimo: "Convidado — salvar conta" (link para `/login`).
+  - Se logado: e-mail + "Sair" (`supabase.auth.signOut()` com o teardown do knowledge: `cancelQueries` + `clear` + `signOut` + `navigate('/', replace: true)`).
+
+## Fora do escopo (deliberadamente)
+
+- **Não** vamos registrar/identificar por IP nem fingerprint. Motivos: IP muda (4G/CGNAT/VPN), é compartilhado (Wi-Fi público, casa) → causaria colisão entre usuários e perda de histórico, além de ser dado pessoal sob LGPD.
+- **Não** vamos forçar login: fluxo continua livre para anônimos como antes.
+- **Não** vamos mexer em RLS/tabelas — a chave `user_id` já é a mesma antes e depois do `linkIdentity`.
+
+## Detalhes técnicos
+
+Arquivos alterados:
+- `src/routes/login.tsx` — adicionar aba "Link mágico", lógica de `linkIdentity`/`updateUser` para sessões anônimas.
+- `src/routes/__root.tsx` — montar `<SaveAccountBanner />` dentro de `RootComponent`.
+- `src/components/SaveAccountBanner.tsx` (novo) — banner dispensável com CTA.
+- (Opcional) `src/components/UserMenu.tsx` (novo) — ícone/menu com estado da sessão.
+
+Backend:
+- `supabase--configure_auth` (mantém e-mail; garante magic link ativo).
+- `email_domain--check_email_domain_status` + `email_domain--scaffold_auth_email_templates` se o projeto ainda não tem templates de auth com a marca.
+
+Sem mudanças de schema. Sem novas policies. Sem migração de dados.

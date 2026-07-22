@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TranslationSync } from "@/components/TranslationSync";
 import { Soundtrack } from "@/components/Soundtrack";
+import { SaveAccountBanner } from "@/components/SaveAccountBanner";
 
 import appCss from "../styles.css?url";
 import type { AuthState } from "@/router";
@@ -112,6 +113,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthBridge />
       <TranslationSync />
+      <SaveAccountBanner />
       <Outlet />
       <Soundtrack />
       <Toaster theme="dark" position="top-center" richColors />
@@ -145,6 +147,7 @@ function AuthBridge() {
       if (!mounted) return;
       publish({
         isAuthenticated: !!s,
+        isAnonymous: !!s?.user?.is_anonymous,
         userId: s?.user.id ?? null,
         email: s?.user.email ?? null,
         loading: false,
@@ -154,6 +157,7 @@ function AuthBridge() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, session) => {
       publish({
         isAuthenticated: !!session,
+        isAnonymous: !!session?.user?.is_anonymous,
         userId: session?.user.id ?? null,
         email: session?.user.email ?? null,
         loading: false,
