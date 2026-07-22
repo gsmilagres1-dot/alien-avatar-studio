@@ -4,6 +4,7 @@ import { routeTree } from "./routeTree.gen";
 
 export interface AuthState {
   isAuthenticated: boolean;
+  isAnonymous: boolean;
   userId: string | null;
   email: string | null;
   loading: boolean;
