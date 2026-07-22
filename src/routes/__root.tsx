@@ -113,6 +113,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthBridge />
       <TranslationSync />
+      <SaveAccountBanner />
       <Outlet />
       <Soundtrack />
       <Toaster theme="dark" position="top-center" richColors />
