@@ -155,6 +155,7 @@ function AuthBridge() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, session) => {
       publish({
         isAuthenticated: !!session,
+        isAnonymous: !!session?.user?.is_anonymous,
         userId: session?.user.id ?? null,
         email: session?.user.email ?? null,
         loading: false,
