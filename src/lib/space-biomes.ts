@@ -16,6 +16,7 @@ import bgLua from "@/assets/bg-lua.jpg";
 import bgVenus from "@/assets/bg-venus.jpg";
 import bgSaturno from "@/assets/bg-saturno.jpg";
 import bgGanimedes from "@/assets/bg-ganimedes.jpg";
+import bgJupiter from "@/assets/bg-jupiter.jpg";
 
 export type DestinationKind = "planet" | "moon" | "star" | "exoplanet" | "dwarf-planet";
 
@@ -104,8 +105,10 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#2a1a0a", skyBottom: "#c97a3a", starColor: "#ffd0a0",
     horizonColor: "#5a3418", horizonGlow: "rgba(230,140,60,0.25)", glowColor: "#e6823c",
     danger: false, decor: ["🌪️👽", "🛰️💫", "🔴👀", "🪐"],
-    // Grande Mancha Vermelha, sonda Voyager 1, 1979 — foto real NASA (hotlink).
-    bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia00/pia00014/PIA00014.jpg",
+    // Nuvens de Júpiter com horizonte curvo, sonda Juno (JunoCam) —
+    // processamento de cientista cidadão. Crédito OBRIGATÓRIO nos
+    // créditos do jogo: NASA/JPL-Caltech/SwRI/MSSS/Thomas Thomopoulos.
+    bgImageUrl: bgJupiter,
     bgFit: "cover",
   },
 
