@@ -1,14 +1,18 @@
 // =========================================================
 // Biomas do Across Age — um tema visual por destino da rota.
-// Fundos com foto REAL (NASA, domínio público) ficam em
-// src/assets/ (bg-*.jpg, já cortadas em 2560x1440 paisagem).
+// Cobre as 45 fases: 15 destinos solo + 30 destinos da rota
+// estendida (galáxias, nebulosas, aglomerados, exoplanetas).
 //
-// bgFit controla o ENQUADRAMENTO da foto na fase:
-//   - "cover"   → preenche a tela cortando o excesso, SEM
-//                 esticar (proporção real), com parallax.
-//   - "distant" → astro desenhado pequeno no canto do céu,
-//                 como cenário distante (discos de planeta).
-// Sem bgFit definido, o jogo assume "cover".
+// Fundos: fotos REAIS (NASA/ESA-Hubble/ESO) em src/assets/
+// (bg-*.jpg) ou por hotlink oficial. Se um hotlink falhar,
+// a fase usa só a paleta de cor — o jogo nunca quebra.
+//
+// CRÉDITOS OBRIGATÓRIOS na tela de créditos do jogo:
+//   NASA/JPL-Caltech · ESA/Hubble (CC BY 4.0) · ESO (CC BY 4.0)
+//   NASA/JPL-Caltech/SwRI/MSSS/Thomas Thomopoulos (Júpiter)
+//
+// bgFit: "cover" = foto preenche a tela (texturas/superfícies);
+//        "distant" = astro pequeno no céu (discos e estrelas).
 // =========================================================
 
 import bgMarte from "@/assets/bg-marte.jpg";
@@ -18,7 +22,9 @@ import bgSaturno from "@/assets/bg-saturno.jpg";
 import bgGanimedes from "@/assets/bg-ganimedes.jpg";
 import bgJupiter from "@/assets/bg-jupiter.jpg";
 
-export type DestinationKind = "planet" | "moon" | "star" | "exoplanet" | "dwarf-planet";
+export type DestinationKind =
+  | "planet" | "moon" | "star" | "exoplanet" | "dwarf-planet"
+  | "galaxy" | "nebula" | "cluster" | "quasar";
 
 export type BgFit = "cover" | "distant";
 
@@ -50,15 +56,46 @@ const DEFAULT_THEME: Omit<BiomeTheme, "id" | "label"> = {
   decor: ["🛸", "👽", "⭐"],
 };
 
+// paletas-base pros novos tipos de destino (config compartilhada)
+const GALAXY_BASE = {
+  kind: "galaxy" as const,
+  skyTop: "#070714", skyBottom: "#1c1440", starColor: "#e8e0ff",
+  horizonColor: "#120f2e", horizonGlow: "rgba(150,120,255,0.22)", glowColor: "#a08aff",
+  danger: false,
+};
+const NEBULA_BASE = {
+  kind: "nebula" as const,
+  skyTop: "#12071a", skyBottom: "#3a1450", starColor: "#ffd8f0",
+  horizonColor: "#22103a", horizonGlow: "rgba(230,120,220,0.25)", glowColor: "#e07ae0",
+  danger: false,
+};
+const CLUSTER_BASE = {
+  kind: "cluster" as const,
+  skyTop: "#060a18", skyBottom: "#12245a", starColor: "#cfe4ff",
+  horizonColor: "#0c1638", horizonGlow: "rgba(120,180,255,0.25)", glowColor: "#7ab0ff",
+  danger: false,
+};
+const STARSYS_BASE = {
+  kind: "star" as const,
+  skyTop: "#1a1206", skyBottom: "#5a4416", starColor: "#fff0c0",
+  horizonColor: "#2e2410", horizonGlow: "rgba(255,210,90,0.3)", glowColor: "#ffd25a",
+  danger: false,
+};
+const EXO_BASE = {
+  kind: "exoplanet" as const,
+  skyTop: "#0a141c", skyBottom: "#1e4a5a", starColor: "#b0ecff",
+  horizonColor: "#102834", horizonGlow: "rgba(80,200,220,0.25)", glowColor: "#4ac8dc",
+  danger: false,
+};
+
 export const BIOMES: Record<string, BiomeTheme> = {
+  // ================= ROTA SOLO (15) =================
   marte: {
     id: "marte", label: "Marte", kind: "planet",
     skyTop: "#3a1f12", skyBottom: "#a85a2e", starColor: "#ffcfa0",
     horizonColor: "#6a3418", horizonGlow: "rgba(232,120,60,0.25)", glowColor: "#e8783c",
     danger: false, decor: ["🦴", "🛸", "👽", "🪐"],
-    // Panorâmica do rover Curiosity na Cratera Gale — foto real NASA,
-    // com céu espacial estendido pra caber em paisagem 2560x1440.
-    // Crédito: NASA/JPL-Caltech/MSSS.
+    // Panorâmica do rover Curiosity na Cratera Gale — NASA/JPL-Caltech/MSSS.
     bgImageUrl: bgMarte,
     bgFit: "cover",
   },
@@ -69,8 +106,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     horizonColor: "#4a3a20", horizonGlow: "rgba(200,160,90,0.25)", glowColor: "#e0b060",
     danger: true, // mais perto do sol, variação de temperatura extrema de verdade
     decor: ["🥵🥶", "☀️🛰️", "👽🕶️", "🌋"],
-    // Superfície de Mercúrio, sonda MESSENGER — foto real NASA (hotlink).
-    // Crédito: NASA/Johns Hopkins APL/Carnegie Institution of Washington.
+    // Superfície de Mercúrio, sonda MESSENGER — NASA/JHU-APL/Carnegie.
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia12/pia12051/PIA12051.jpg",
     bgFit: "cover",
   },
@@ -80,8 +116,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#0a0a14", skyBottom: "#3a3a4a", starColor: "#eef0ff",
     horizonColor: "#1c1c28", horizonGlow: "rgba(200,200,220,0.2)", glowColor: "#c8c8dc",
     danger: false, decor: ["🚩", "👣", "📷👽", "🛰️"],
-    // Panorâmica da Cratera Shorty, Apollo 17 (1972) — foto real NASA,
-    // com céu espacial estendido pra paisagem 2560x1440.
+    // Panorâmica da Cratera Shorty, Apollo 17 (1972) — foto real NASA.
     bgImageUrl: bgLua,
     bgFit: "cover",
   },
@@ -93,9 +128,6 @@ export const BIOMES: Record<string, BiomeTheme> = {
     danger: true, // planeta mais quente do sistema solar de verdade
     decor: ["🛰️💀", "👽🍳", "🌡️💥", "👽☂️"],
     // Vale de fenda em Vênus, radar da sonda Magellan — foto real NASA.
-    // Curiosidade extra pro banco de fatos: a única foto tirada DO CHÃO
-    // de Vênus é da sonda soviética Venera 13 (1982), que derreteu em
-    // ~2h no calor de 460°C.
     bgImageUrl: bgVenus,
     bgFit: "cover",
   },
@@ -105,9 +137,8 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#2a1a0a", skyBottom: "#c97a3a", starColor: "#ffd0a0",
     horizonColor: "#5a3418", horizonGlow: "rgba(230,140,60,0.25)", glowColor: "#e6823c",
     danger: false, decor: ["🌪️👽", "🛰️💫", "🔴👀", "🪐"],
-    // Nuvens de Júpiter com horizonte curvo, sonda Juno (JunoCam) —
-    // processamento de cientista cidadão. Crédito OBRIGATÓRIO nos
-    // créditos do jogo: NASA/JPL-Caltech/SwRI/MSSS/Thomas Thomopoulos.
+    // Nuvens de Júpiter, JunoCam — crédito obrigatório:
+    // NASA/JPL-Caltech/SwRI/MSSS/Thomas Thomopoulos.
     bgImageUrl: bgJupiter,
     bgFit: "cover",
   },
@@ -117,15 +148,8 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#0e0e16", skyBottom: "#4a4a58", starColor: "#eef0ff",
     horizonColor: "#22222e", horizonGlow: "rgba(190,195,220,0.22)", glowColor: "#b8bcd8",
     danger: false,
-    decor: [
-      "🥇🌕",   // a MAIOR lua do sistema solar — maior até que Mercúrio!
-      "🧲👽",   // única lua com campo magnético próprio
-      "🌊🧊",   // oceano de água salgada escondido sob o gelo
-      "🛰️📸",   // fotografada de perto pela sonda Juno em 2021
-    ],
-    // Ganimedes, a maior lua do sistema solar, sobrevoo da sonda Juno
-    // (2021, PIA25012) — foto real NASA, cortada em paisagem com o
-    // horizonte curvo. Crédito: NASA/JPL-Caltech/SwRI/MSSS.
+    decor: ["🥇🌕", "🧲👽", "🌊🧊", "🛰️📸"],
+    // Ganimedes, sobrevoo da Juno (2021) — NASA/JPL-Caltech/SwRI/MSSS.
     bgImageUrl: bgGanimedes,
     bgFit: "cover",
   },
@@ -135,14 +159,8 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#0a0a1a", skyBottom: "#2a2a4a", starColor: "#d0d0ff",
     horizonColor: "#151530", horizonGlow: "rgba(150,150,230,0.2)", glowColor: "#8a8ae6",
     danger: false,
-    decor: [
-      "🪐❌",   // ainda chateado por ter sido rebaixado de planeta em 2006
-      "👽😢",   // emocionado com o coração de gelo
-      "🛰️👋",   // a sonda só passou de raspão, nem entrou em órbita
-      "🌡️❄️",   // frio extremo
-    ],
-    // O "coração" de Plutão (Tombaugh Regio), New Horizons, 2015 —
-    // disco inteiro → distant (pequeno no céu). Crédito: NASA/JHUAPL/SwRI.
+    decor: ["🪐❌", "👽😢", "🛰️👋", "🌡️❄️"],
+    // "Coração" de Plutão, New Horizons (2015) — NASA/JHUAPL/SwRI.
     bgImageUrl: "https://www.nasa.gov/wp-content/uploads/2023/03/nh-pluto_crop.jpg.png",
     bgFit: "distant",
   },
@@ -152,9 +170,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#2a2410", skyBottom: "#c9b06a", starColor: "#fff0c0",
     horizonColor: "#4a4020", horizonGlow: "rgba(230,200,120,0.25)", glowColor: "#e6c87c",
     danger: false, decor: ["💍👽", "🛰️📸", "❄️💫", "🪨"],
-    // Saturno e seus anéis pela sonda Cassini — foto real NASA, composta
-    // num céu espacial 2560x1440 (planeta grande à direita da cena).
-    // Crédito: NASA/JPL-Caltech/Space Science Institute.
+    // Saturno e anéis, Cassini — NASA/JPL-Caltech/Space Science Institute.
     bgImageUrl: bgSaturno,
     bgFit: "cover",
   },
@@ -164,13 +180,8 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#0f2a3a", skyBottom: "#4ab5c9", starColor: "#c0f0ff",
     horizonColor: "#153a48", horizonGlow: "rgba(90,210,230,0.25)", glowColor: "#5ad2e6",
     danger: false,
-    decor: [
-      "❄️", "🛸", "👾",
-      "🙃👽",   // o planeta gira praticamente deitado de lado — de verdade
-      "🥶🌡️",   // atmosfera mais fria do sistema solar, mais até que Netuno
-      "👽💍",   // procurando os anéis, que são bem fracos e difíceis de ver
-    ],
-    // Urano, Voyager 2 (1986) — disco inteiro → distant (pequeno no céu).
+    decor: ["❄️", "🛸", "👾", "🙃👽", "🥶🌡️", "👽💍"],
+    // Urano, Voyager 2 (1986) — disco inteiro → distant.
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia18/pia18182/PIA18182.jpg",
     bgFit: "distant",
   },
@@ -180,12 +191,8 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#0a1a3a", skyBottom: "#2a5ac9", starColor: "#c0d0ff",
     horizonColor: "#122048", horizonGlow: "rgba(90,120,230,0.25)", glowColor: "#5a7ce6",
     danger: true, // ventos mais fortes do sistema solar, até 2.100 km/h
-    decor: [
-      "💨👽",   // arrastado pelo vento
-      "🌀⚫",   // Grande Mancha Escura, tempestade do tamanho da Terra
-      "🛰️👋",   // último planeta visitado pela Voyager 2
-    ],
-    // Netuno, Voyager 2 (1989) — disco inteiro → distant (pequeno no céu).
+    decor: ["💨👽", "🌀⚫", "🛰️👋"],
+    // Netuno, Voyager 2 (1989) — disco inteiro → distant.
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia02/pia02210/PIA02210.jpg",
     bgFit: "distant",
   },
@@ -195,9 +202,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#1a2a3a", skyBottom: "#5a7a9a", starColor: "#d0e8ff",
     horizonColor: "#243444", horizonGlow: "rgba(120,180,220,0.25)", glowColor: "#7ab4dc",
     danger: false, decor: ["🧊", "🐟👽", "🛰️", "❄️"],
-    // Pôster "Europa: Discover Life Under The Ice" — série de viagem
-    // da NASA/JPL-Caltech, domínio público. Formato retrato: o modo
-    // cover recorta a faixa central em paisagem automaticamente.
+    // Pôster "Europa" (Exoplanet Travel Bureau) — NASA/JPL-Caltech.
     bgImageUrl: "https://science.nasa.gov/wp-content/uploads/2024/05/europa-travel-poster-image.jpg",
     bgFit: "cover",
   },
@@ -206,17 +211,8 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#0a1a2a", skyBottom: "#2a6a7a", starColor: "#a0f0ff",
     horizonColor: "#123040", horizonGlow: "rgba(60,200,220,0.25)", glowColor: "#3cc8dc",
     danger: false,
-    decor: [
-      "☀️☀️",   // orbita DOIS sóis, como Tatooine de Star Wars
-      "👤👤",   // "onde sua sombra sempre tem companhia" (2 sombras!)
-      "🥶",     // frio como gelo seco
-      "🛰️",
-    ],
-    // Pôster "Kepler-16b: where your shadow always has company" —
-    // série Visions of the Future, NASA/JPL, domínio público.
-    // ATENÇÃO: o rótulo mudou de Kepler-22b pra Kepler-16b (o planeta
-    // real do pôster, o dos dois sóis) — atualize também o nome e as
-    // perguntas desse destino no intergalactic.ts pra manter coerente.
+    decor: ["☀️☀️", "👤👤", "🥶", "🛰️"],
+    // Pôster "Kepler-16b" (Visions of the Future) — NASA/JPL.
     bgImageUrl: "https://d2pn8kiwq2w21t.cloudfront.net/original_images/kepler16b.jpg",
     bgFit: "cover",
   },
@@ -231,9 +227,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#2a0a0a", skyBottom: "#9a2a2a", starColor: "#ffb0a0",
     horizonColor: "#4a1010", horizonGlow: "rgba(220,80,60,0.3)", glowColor: "#dc503c",
     danger: true, decor: ["🌋", "👽🔴", "🛰️"],
-    // Ilustração oficial da superfície de Proxima b (eso1629a), já em
-    // paisagem 1920x1200 — licença CC-BY 4.0, crédito OBRIGATÓRIO:
-    // "ESO/M. Kornmesser" (mantenha nos créditos do jogo).
+    // Superfície de Proxima b (ilustração oficial) — ESO/M. Kornmesser, CC BY 4.0.
     bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1629a.jpg",
     bgFit: "cover",
   },
@@ -242,9 +236,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#3a1400", skyBottom: "#ff6a00", starColor: "#ffd080",
     horizonColor: "#5a2000", horizonGlow: "rgba(255,120,20,0.45)", glowColor: "#ff6a00",
     danger: true, decor: ["🔥🔥", "☀️", "🛰️💥", "👽🥵"],
-    // O Sol AGORA, filtro 304Å — observatório SDO/NASA, atualizado
-    // automaticamente a cada ~15 min. O jogador vê o Sol como ele está
-    // DE VERDADE hoje, com manchas e erupções do dia.
+    // O Sol AGORA — SDO/NASA, imagem atualizada a cada ~15 min.
     bgImageUrl: "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_2048_0304.jpg",
     bgFit: "distant",
   },
@@ -253,6 +245,215 @@ export const BIOMES: Record<string, BiomeTheme> = {
     skyTop: "#2a0000", skyBottom: "#c9302a", starColor: "#ffb0a0",
     horizonColor: "#4a0808", horizonGlow: "rgba(220,50,40,0.4)", glowColor: "#dc3228",
     danger: true, decor: ["💥", "👽🔴", "🛰️💫", "⭐💀"],
+  },
+
+  // ============ ROTA ESTENDIDA — GALÁXIAS ============
+  // Fotos: ESA/Hubble (CC BY 4.0) e ESO (CC BY 4.0).
+  andromeda: {
+    id: "andromeda", label: "Galáxia de Andrômeda", ...GALAXY_BASE,
+    decor: ["🌌", "👽🔭", "💥🕰️", "🛸"],
+    // Mosaico de Andrômeda pelo Hubble — ESA/Hubble, CC BY 4.0.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic1502a.jpg",
+    bgFit: "cover",
+  },
+  triangulum: {
+    id: "triangulum", label: "Galáxia do Triângulo", ...GALAXY_BASE,
+    decor: ["🔺🌌", "👽👀", "⭐⭐"],
+    // M33 pelo Hubble — ESA/Hubble, CC BY 4.0.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic1901a.jpg",
+    bgFit: "cover",
+  },
+  sombrero: {
+    id: "sombrero", label: "Galáxia do Sombreiro", ...GALAXY_BASE,
+    decor: ["👒🌌", "👽🎩", "⚫💫"],
+    // M104 pelo Hubble — ESA/Hubble & NASA. Disco → distant.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/opo0328a.jpg",
+    bgFit: "distant",
+  },
+  whirlpool: {
+    id: "whirlpool", label: "Galáxia Redemoinho", ...GALAXY_BASE,
+    decor: ["🌀🌌", "👽😵‍💫", "🛸💫"],
+    // M51 pelo Hubble — ESA/Hubble, CC BY 4.0. Disco → distant.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0506a.jpg",
+    bgFit: "distant",
+  },
+  pinwheel: {
+    id: "pinwheel", label: "Galáxia Cata-Vento", ...GALAXY_BASE,
+    decor: ["🎡🌌", "👽🌟", "🛰️"],
+    // M101 pelo Hubble — ESA/Hubble, CC BY 4.0. Disco → distant.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0602a.jpg",
+    bgFit: "distant",
+  },
+  cigar: {
+    id: "cigar", label: "Galáxia do Charuto", ...GALAXY_BASE,
+    decor: ["💨🌌", "👽🚬❌", "⭐🏭"],
+    // M82 pelo Hubble — ESA/Hubble, CC BY 4.0. Disco → distant.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0604a.jpg",
+    bgFit: "distant",
+  },
+  centaurus_a: {
+    id: "centaurus_a", label: "Centaurus A", ...GALAXY_BASE,
+    decor: ["📡🌌", "👽🎧", "⚫💨"],
+    // Centaurus A pelo ESO — ESO, CC BY 4.0. Disco → distant.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso0903a.jpg",
+    bgFit: "distant",
+  },
+  smc: {
+    id: "smc", label: "Pequena Nuvem de Magalhães", ...GALAXY_BASE,
+    decor: ["☁️⭐", "👽🇧🇷🔭", "🛸"],
+    // sem foto por enquanto — paleta de galáxia
+  },
+  lmc: {
+    id: "lmc", label: "Grande Nuvem de Magalhães", ...GALAXY_BASE,
+    decor: ["☁️🌟", "🕷️🌌", "💥1987"],
+    // sem foto por enquanto — paleta de galáxia
+  },
+  messier_87: {
+    id: "messier_87", label: "M87 (Virgo A)", ...GALAXY_BASE,
+    danger: true, // buraco negro supermassivo de verdade
+    decor: ["⚫📸", "👽😱", "🍩🔥"],
+    // A 1ª foto real de um buraco negro (EHT, 2019) — ESO/EHT, CC BY 4.0.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1907a.jpg",
+    bgFit: "distant",
+  },
+
+  // ============ ROTA ESTENDIDA — NEBULOSAS ============
+  orion_nebula: {
+    id: "orion_nebula", label: "Nebulosa de Órion", ...NEBULA_BASE,
+    decor: ["⭐🍼", "👽🔭", "🏹"],
+    // M42 pelo Hubble — ESA/Hubble, CC BY 4.0. Textura → cover.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0601a.jpg",
+    bgFit: "cover",
+  },
+  eagle_nebula: {
+    id: "eagle_nebula", label: "Nebulosa da Águia", ...NEBULA_BASE,
+    decor: ["🦅🌌", "🏛️⭐", "👽📸"],
+    // Pilares da Criação pelo Hubble (2015) — ESA/Hubble, CC BY 4.0.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic1501a.jpg",
+    bgFit: "cover",
+  },
+  crab_nebula: {
+    id: "crab_nebula", label: "Nebulosa do Caranguejo", ...NEBULA_BASE,
+    danger: true, // pulsar girando 30x por segundo no centro
+    decor: ["🦀🌌", "💥1054", "🌀⚡"],
+    // M1 pelo Hubble — ESA/Hubble, CC BY 4.0. Textura → cover.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0515a.jpg",
+    bgFit: "cover",
+  },
+  horsehead: {
+    id: "horsehead", label: "Cabeça de Cavalo", ...NEBULA_BASE,
+    decor: ["🐴🌌", "👽🤠", "🌑"],
+    // Cabeça de Cavalo (infravermelho, Hubble) — ESA/Hubble, CC BY 4.0.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic1307a.jpg",
+    bgFit: "cover",
+  },
+  carina_nebula: {
+    id: "carina_nebula", label: "Nebulosa de Carina", ...NEBULA_BASE,
+    decor: ["🏔️🌌", "🔭✨", "👽🤩"],
+    // "Penhascos Cósmicos" — 1ª leva de imagens do James Webb (2022).
+    // NASA/ESA/CSA/STScI, CC BY 4.0. Textura → cover.
+    bgImageUrl: "https://cdn.esawebb.org/archives/images/screen/weic2205a.jpg",
+    bgFit: "cover",
+  },
+  ring_nebula: {
+    id: "ring_nebula", label: "Nebulosa do Anel", ...NEBULA_BASE,
+    decor: ["💍🌌", "👽💎", "⚪🔥"],
+    // sem foto por enquanto — paleta de nebulosa
+  },
+
+  // ============ ROTA ESTENDIDA — EXOPLANETAS ============
+  trappist_1e: {
+    id: "trappist_1e", label: "TRAPPIST-1e", ...EXO_BASE,
+    decor: ["7️⃣🪐", "👽🏠", "🔴☀️"],
+    // Superfície de TRAPPIST-1 (ilustração oficial) — ESO/M. Kornmesser, CC BY 4.0.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1706a.jpg",
+    bgFit: "cover",
+  },
+  kepler_186f: {
+    id: "kepler_186f", label: "Kepler-186f", ...EXO_BASE,
+    decor: ["🌍👯", "🔴🌅", "👽🌱"],
+    // Ilustração oficial Kepler-186f — NASA Ames/SETI/JPL-Caltech.
+    bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia17/pia17999/PIA17999.jpg",
+    bgFit: "cover",
+  },
+  kepler_452b: {
+    id: "kepler_452b", label: "Kepler-452b", ...EXO_BASE,
+    decor: ["🌍👵", "☀️😎", "👽📅385"],
+    // Ilustração oficial Kepler-452b — NASA Ames/JPL-Caltech/T. Pyle.
+    bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia19/pia19827/PIA19827.jpg",
+    bgFit: "cover",
+  },
+  proxima_c: {
+    id: "proxima_c", label: "Proxima Centauri c", ...EXO_BASE,
+    danger: true,
+    decor: ["🥶🪐", "🔴⭐", "👽🧊"],
+    // sem foto por enquanto — paleta de exoplaneta
+  },
+  hd_209458b: {
+    id: "hd_209458b", label: "Osiris (HD 209458 b)", ...EXO_BASE,
+    danger: true, // planeta evaporando de verdade
+    decor: ["💨🪐", "☄️🔥", "👽🏜️"],
+    // sem foto por enquanto — paleta de exoplaneta
+  },
+  "55_cancri_e": {
+    id: "55_cancri_e", label: "55 Cancri e", ...EXO_BASE,
+    danger: true, // oceano de lava de verdade
+    decor: ["💎🪐", "🌋🔥", "👽🤑"],
+    // sem foto por enquanto — paleta de exoplaneta
+  },
+
+  // ============ ROTA ESTENDIDA — SISTEMAS ESTELARES ============
+  alpha_cen_b: {
+    id: "alpha_cen_b", label: "Alpha Centauri B", ...STARSYS_BASE,
+    decor: ["🟠⭐", "3️⃣☀️", "👽🏡"],
+  },
+  sirius: {
+    id: "sirius", label: "Sirius A & B", ...STARSYS_BASE,
+    decor: ["💎⭐", "🐕🌟", "👽😎"],
+    // Sirius A e B pelo Hubble — ESA/Hubble, CC BY 4.0. Estrela → distant.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0516a.jpg",
+    bgFit: "distant",
+  },
+  vega: {
+    id: "vega", label: "Vega", ...STARSYS_BASE,
+    decor: ["📏⭐", "🧭🔮", "👽📡"],
+  },
+  betelgeuse_team: {
+    id: "betelgeuse_team", label: "Betelgeuse (visita guiada)", ...STARSYS_BASE,
+    danger: true, // supergigante prestes a explodir (em escala cósmica!)
+    decor: ["🔴💣", "💥⏳", "👽🏃"],
+    // Betelgeuse pelo ALMA — ESO/ALMA, CC BY 4.0. Estrela → distant.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1721a.jpg",
+    bgFit: "distant",
+  },
+
+  // ============ ROTA ESTENDIDA — AGLOMERADOS ============
+  pleiades: {
+    id: "pleiades", label: "Plêiades (M45)", ...CLUSTER_BASE,
+    decor: ["7️⃣⭐", "💙✨", "👽🚗"],
+    // sem foto por enquanto — paleta de aglomerado
+  },
+  hyades: {
+    id: "hyades", label: "Híades", ...CLUSTER_BASE,
+    decor: ["🐂⭐", "🏠✨", "👽🔭"],
+    // sem foto por enquanto — paleta de aglomerado
+  },
+  omega_centauri: {
+    id: "omega_centauri", label: "Omega Centauri", ...CLUSTER_BASE,
+    decor: ["💫🌟", "🔟M⭐", "👽😵"],
+    // Omega Centauri pelo Hubble — ESA/Hubble, CC BY 4.0. Textura → cover.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0809a.jpg",
+    bgFit: "cover",
+  },
+
+  // ============ ROTA ESTENDIDA — QUASAR ============
+  "3c_273": {
+    id: "3c_273", label: "Quasar 3C 273", kind: "quasar",
+    skyTop: "#0a0614", skyBottom: "#2c1050", starColor: "#e0c8ff",
+    horizonColor: "#1a0a30", horizonGlow: "rgba(200,140,255,0.3)", glowColor: "#c88aff",
+    danger: true, // mais brilhante que 100 Vias Lácteas de verdade
+    decor: ["💡🌌", "👽🕶️🕶️", "⚫🔦"],
+    // sem foto por enquanto — paleta de quasar
   },
 };
 
