@@ -17,7 +17,7 @@ export const getRouter = () => {
     routeTree,
     context: {
       queryClient,
-      auth: { isAuthenticated: false, userId: null, email: null, loading: true } as AuthState,
+      auth: { isAuthenticated: false, isAnonymous: false, userId: null, email: null, loading: true } as AuthState,
     },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
