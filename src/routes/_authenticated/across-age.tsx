@@ -930,6 +930,12 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
   return (
     <div ref={rootRef} className={`across-age-root${isFullscreen ? " force-landscape" : ""}`}>
       <style>{ACROSS_AGE_CSS}</style>
+      <Toaster
+        theme="dark"
+        position="top-center"
+        richColors
+        className="across-age-toaster"
+      />
       <div id="hud">
         <div id="hud-normal">
           <div className="gauge">
