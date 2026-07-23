@@ -250,3 +250,21 @@
     filter: brightness(1.25) saturate(1.15);
   }
 }
+
+/* Across Ages: usa Toaster local dentro do wrapper rotacionado.
+   Some o Toaster global só enquanto o jogo está montado, pra não duplicar
+   nem cair na lateral quando a tela é forçada em paisagem. */
+body:has(.across-age-root) [data-sonner-toaster]:not(.across-age-toaster) {
+  display: none !important;
+}
+.across-age-root .across-age-toaster {
+  position: absolute !important;
+  top: 8px !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
+  width: min(520px, 92%) !important;
+  max-width: 92% !important;
+}

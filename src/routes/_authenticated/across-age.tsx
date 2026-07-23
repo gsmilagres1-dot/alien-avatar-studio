@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Rocket } from "lucide-react";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import { listMyIdentities } from "@/lib/identities.functions";
 import { getMiningState, submitMiningResult, clearDestinationWave, type MaterialKey } from "@/lib/mining.functions";
 import { getDestination } from "@/lib/intergalactic";
@@ -930,6 +930,12 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
   return (
     <div ref={rootRef} className={`across-age-root${isFullscreen ? " force-landscape" : ""}`}>
       <style>{ACROSS_AGE_CSS}</style>
+      <Toaster
+        theme="dark"
+        position="top-center"
+        richColors
+        className="across-age-toaster"
+      />
       <div id="hud">
         <div id="hud-normal">
           <div className="gauge">
