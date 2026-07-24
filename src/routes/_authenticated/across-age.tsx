@@ -578,6 +578,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       // espelha pro resto — assim elas viram pro lado certo sem nunca
       // aparecer de cabeça pra baixo, e o motor continua sempre acompanhando.
       const freelyRotates = (shipStats.noseAngleDeg ?? 0) === -90;
+      const mirrorsOnCurve = !freelyRotates || Boolean(shipStats.flipX);
       // Espelhamento da ARTE: naves cuja imagem nasce com o bico virado pra
       // ESQUERDA são marcadas com flipX:true em ship-stats.ts.
       // (CORRIGIDO: antes isso só olhava noseAngleDeg===180, e como nenhuma
@@ -585,11 +586,11 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       // por isso que as naves continuavam voando invertidas.)
       // Espelha o corpo desde o início; o propulsor usa o mesmo referencial
       // local, então acompanha certo, na traseira de verdade.
-      const baseFlip = (shipStats.flipX || (shipStats.noseAngleDeg ?? 0) === 180) ? -1 : 1;
+      const baseFlip = (!mirrorsOnCurve && (shipStats.flipX || (shipStats.noseAngleDeg ?? 0) === 180)) ? -1 : 1;
 
       let drawRot = ship.angle;
       let mirror = 1;
-      if (!freelyRotates) {
+      if (mirrorsOnCurve) {
         let a = ship.angle % (Math.PI * 2);
         if (a > Math.PI) a -= Math.PI * 2;
         if (a < -Math.PI) a += Math.PI * 2;
