@@ -1032,8 +1032,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       </div>
 
       <div id="start-overlay" className="overlay">
-        <div className="title-big pixel">ACROSS<br />AGE</div>
-        <img id="ship-briefing-img" src={shipImageUrl} alt="Sua nave" style={{ width: "min(260px, 60%)", borderRadius: 14, border: "2px solid var(--gold-dim)" }} />
+        <div className="title-big pixel">ACROSS<br />AGE</div><img id="ship-briefing-img" src={shipImageUrl} alt="Sua nave" style={{ transform: shipKey && getShipStats(shipKey)?.flipX ? "scaleX(-1)" : "none", width: "min(260px, 60%)", borderRadius: 14, border: "2px solid var(--gold-dim)" }} />
         <div className="subtitle" style={{ marginTop: -6, opacity: 0.8 }}>Piloto: {pilotName}</div>
         <div className="subtitle" style={{ marginTop: -10, color: theme.glowColor }}>
           Destino: {theme.label}{theme.danger ? " ☢️ (combustível some mais rápido aqui)" : ""}
