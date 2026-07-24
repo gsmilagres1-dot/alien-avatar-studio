@@ -625,24 +625,26 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
         c.fillStyle = thrusting ? "#ff9d3d" : "#3ddbc9";
         c.beginPath(); c.moveTo(0, -12); c.lineTo(9, 10); c.lineTo(0, 6); c.lineTo(-9, 10); c.closePath(); c.fill();
       }
-      // propulsor único, sempre no ponto da traseira DESSA imagem específica
-      // (definido por noseAngleDeg em ship-stats.ts) — desenhado aqui dentro
-      // do mesmo save/restore, então acompanha o giro/espelhamento e nunca
-      // fica "descolado" do lugar certo, seja qual for o formato dela.
+      c.restore();
+
+      // PROPULSOR — desenhado em coordenadas do MUNDO, FORA do save/restore
+      // acima. (CORRIGIDO: antes ele era desenhado dentro do espelhamento,
+      // então em nave espelhada o fogo era espelhado junto e aparecia na
+      // FRENTE em vez de atrás.)
+      // Aqui usamos o ângulo FÍSICO real da nave — o mesmo que empurra ela —
+      // então o fogo sai sempre do lado oposto ao bico, em qualquer nave,
+      // espelhada ou não, girando ou não.
       if (thrusting) {
         const flameDist = shipImgReady ? Math.max(shipDrawW, shipDrawH) / 2 - 4 : 10;
-        const localRearX = -Math.cos(noseRad) * flameDist;
-        const localRearY = -Math.sin(noseRad) * flameDist;
         c.save();
-        c.translate(localRearX, localRearY);
-        c.rotate(noseRad + Math.PI / 2); // alinha o triângulo com a direção da traseira
+        c.translate(ship.x + backX * flameDist, ship.y + backY * flameDist);
+        c.rotate(totalAngle + Math.PI / 2); // aponta o triângulo pra trás
         c.fillStyle = "#ffd27a";
         c.beginPath();
         c.moveTo(-4, 0); c.lineTo(0, 12 + Math.random() * 8); c.lineTo(4, 0);
         c.closePath(); c.fill();
         c.restore();
       }
-      c.restore();
     }
 
     function draw() {
