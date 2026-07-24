@@ -1,17 +1,14 @@
-## Diagnóstico
+Ajustar orientação de 7 naves em `src/lib/ship-stats.ts` para corrigir frente invertida e posição do propulsor, sem alterar nenhum outro arquivo.
 
-- `src/components/HangarSelect.tsx` está truncado com **22 linhas** (para na linha `import raceAnunna`) — é isso que quebra o build (`Expected "from" but found end of file`) e trava a prévia.
-- `src/routes/_authenticated/across-age.tsx` tem **1208 linhas** — está íntegro, não foi cortado.
-- No histórico do git, o commit imediatamente anterior ao truncamento é **`a5bd271` ("Update HangarSelect.tsx")** com **417 linhas**. Inspecionando esse commit, ele **já contém exatamente as duas mudanças pedidas**:
-  - `shipThumbTransform` já usa `getShipStats(id).flipX` (sem `NEEDS_MIRROR`).
-  - `UNLOCK_ALL_SHIPS_FOR_TESTING` já existe e `unlockedShipSet` já faz o `new Set(EXTRA_SHIPS.map((s) => s.id))` quando true.
+Mudanças:
+- `corrida`: adicionar `flipX: true` (arte compartilhada precisa espelhamento).
+- `aerodeslizador`: trocar `noseAngleDeg` de `-90` para `0` (perfil, propulsor na traseira), mantendo `flipX: true`.
+- `vtol-classica`: trocar `noseAngleDeg` de `-90` para `0`, mantendo `flipX: true`.
+- `unilander-77`: adicionar `flipX: true`.
+- `cruzador-aurun`: adicionar `flipX: true`.
+- `galactic-diamond`: remover `flipX: true`.
+- `modal-multidimensional`: remover `flipX: true`.
 
-Ou seja: basta restaurar o arquivo dessa revisão — nenhuma edição adicional necessária.
+Arquivo: `src/lib/ship-stats.ts`.
 
-## Passos
-
-1. Restaurar `src/components/HangarSelect.tsx` a partir do commit `a5bd271` via `git show a5bd271:src/components/HangarSelect.tsx > src/components/HangarSelect.tsx`.
-2. Conferir que o arquivo voltou com 417 linhas e que contém `UNLOCK_ALL_SHIPS_FOR_TESTING`, `shipThumbTransform` usando `flipX`, e não contém `NEEDS_MIRROR`.
-3. Deixar o build/typecheck rodar para confirmar que o erro `Expected "from"` sumiu e a prévia volta a atualizar.
-
-Nenhum outro arquivo é tocado. `across-age.tsx` permanece como está.
+Nota: o usuário mencionou 6 naves no texto, mas a lista detalhada inclui 7 alterações (incluindo `corrida`). Aplicar as 7 conforme a especificação completa.
