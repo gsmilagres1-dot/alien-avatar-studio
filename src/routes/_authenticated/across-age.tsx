@@ -458,7 +458,17 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       };
     }
 
-    function resize() { W = canvas!.width = canvas!.clientWidth; H = canvas!.height = canvas!.clientHeight; }
+    // usa o tamanho REAL que o palco ficou na tela (clientWidth/Height), que
+    // agora vem do layout flex — não mais de uma conta fixa de altura.
+    // devicePixelRatio deixa o desenho nítido em tela de celular.
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas!.clientWidth;
+      H = canvas!.clientHeight;
+      canvas!.width = Math.round(W * dpr);
+      canvas!.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
 
     function makeStars() {
       stars = Array.from({ length: 160 }, () => ({
@@ -568,11 +578,14 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       // espelha pro resto — assim elas viram pro lado certo sem nunca
       // aparecer de cabeça pra baixo, e o motor continua sempre acompanhando.
       const freelyRotates = (shipStats.noseAngleDeg ?? 0) === -90;
-      // só ativa pra naves com noseAngleDeg 180 — marcadas assim depois de
-      // conferir a imagem de verdade (bico da arte nasce virado pra
-      // esquerda). Espelha o corpo desde o início; o propulsor (mesmo
-      // referencial local) acompanha certo, na traseira de verdade.
-      const baseFlip = (shipStats.noseAngleDeg ?? 0) === 180 ? -1 : 1;
+      // Espelhamento da ARTE: naves cuja imagem nasce com o bico virado pra
+      // ESQUERDA são marcadas com flipX:true em ship-stats.ts.
+      // (CORRIGIDO: antes isso só olhava noseAngleDeg===180, e como nenhuma
+      // nave usa 180, o flipX ficava declarado mas nunca era aplicado — era
+      // por isso que as naves continuavam voando invertidas.)
+      // Espelha o corpo desde o início; o propulsor usa o mesmo referencial
+      // local, então acompanha certo, na traseira de verdade.
+      const baseFlip = (shipStats.flipX || (shipStats.noseAngleDeg ?? 0) === 180) ? -1 : 1;
 
       let drawRot = ship.angle;
       let mirror = 1;
@@ -602,7 +615,9 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       c.save();
       c.translate(ship.x, ship.y);
       c.rotate(drawRot);
-      if (!freelyRotates) c.scale(mirror, 1);
+      // aplica sempre que houver espelhamento — inclusive nas naves que giram
+      // 360° (noseAngleDeg -90), que antes ficavam de fora dessa linha
+      if (mirror !== 1) c.scale(mirror, 1);
 
       if (shipImgReady) {
         c.drawImage(shipImg, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
@@ -663,8 +678,12 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
           const dh = bgImg.naturalHeight * scale;
           const tX = WORLD_W > W ? camX / (WORLD_W - W) : 0.5;
           const tY = WORLD_H > H ? camY / (WORLD_H - H) : 0.5;
+          // arredonda pra pixel inteiro — sem isso aparece uma "costura"
+          // fininha na borda da foto quando a câmera para em meio pixel
+          const bx = Math.round(-(dw - W) * tX);
+          const by = Math.round(-(dh - H) * tY);
           ctx.globalAlpha = 0.85;
-          ctx.drawImage(bgImg, -(dw - W) * tX, -(dh - H) * tY, dw, dh);
+          ctx.drawImage(bgImg, bx, by, Math.ceil(dw), Math.ceil(dh));
           ctx.globalAlpha = 1;
           // véu escuro pra manter nós/detritos/HUD legíveis por cima da foto
           ctx.fillStyle = "rgba(5,7,20,0.22)";
@@ -685,18 +704,24 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       ctx.strokeStyle = theme.horizonGlow; ctx.lineWidth = 4;
       ctx.strokeRect(2, 2, WORLD_W - 4, WORLD_H - 4);
 
-      // silhueta de horizonte decorativa (estilo HCR2), fixa perto do fundo do mundo
-      ctx.fillStyle = theme.horizonColor;
-      ctx.beginPath();
-      const ridgeY = WORLD_H - 26;
-      ctx.moveTo(0, WORLD_H);
-      ctx.lineTo(0, ridgeY);
-      for (let x = 0; x <= WORLD_W; x += 60) {
-        const bump = Math.sin(x * 0.01 + 1.3) * 14 + Math.sin(x * 0.037) * 6;
-        ctx.lineTo(x, ridgeY + bump);
+      // silhueta de horizonte decorativa (estilo HCR2), fixa perto do fundo
+      // do mundo. Quando existe FOTO de superfície no fundo, essa silhueta
+      // vira uma segunda "linha de chão" e cria aquela emenda em degrau —
+      // então nesse caso ela não é desenhada.
+      // Pra trazer de volta: troque a linha abaixo por `if (true) {`
+      if (!bgImgReady || (theme.bgFit ?? "cover") === "distant") {
+        ctx.fillStyle = theme.horizonColor;
+        ctx.beginPath();
+        const ridgeY = WORLD_H - 26;
+        ctx.moveTo(0, WORLD_H);
+        ctx.lineTo(0, ridgeY);
+        for (let x = 0; x <= WORLD_W; x += 60) {
+          const bump = Math.sin(x * 0.01 + 1.3) * 14 + Math.sin(x * 0.037) * 6;
+          ctx.lineTo(x, ridgeY + bump);
+        }
+        ctx.lineTo(WORLD_W, WORLD_H);
+        ctx.closePath(); ctx.fill();
       }
-      ctx.lineTo(WORLD_W, WORLD_H);
-      ctx.closePath(); ctx.fill();
 
       // objetos cômicos decorativos (não interagem, só dão graça ao cenário)
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -919,10 +944,15 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
 
     resize(); makeStars(); draw();
     window.addEventListener("resize", resize);
+    // no celular a barra de endereço do navegador aparece/some e muda a
+    // altura útil — o ResizeObserver pega isso, o evento "resize" sozinho não
+    const ro = new ResizeObserver(() => { resize(); draw(); });
+    ro.observe(canvas);
     return () => {
       stopLoop();
       rescueRef.current = undefined;
       window.removeEventListener("resize", resize);
+      ro.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -946,19 +976,21 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
             <div className="gauge-label gauge-label-tap" onClick={() => setResourceInfo(resourceInfo === "o2" ? null : "o2")}>🫁 O2 ℹ️</div>
             <div className="gauge-track"><div id="o2-fill" className="gauge-fill o2" style={{ width: "100%" }} /></div>
           </div>
-          <div id="cargo-count" className="pixel" style={{ fontSize: 10, color: "var(--teal)", alignSelf: "center", whiteSpace: "nowrap" }}>📦 0/0</div>
         </div>
-        <div id="fichas-badge" className="pixel">🪙 0</div>
-        <div id="level-badge" className="pixel">NÍVEL {startLevel}/5</div>
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          className="fullscreen-btn"
-          aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia e deitada"}
-          title={isFullscreen ? "Sair da tela cheia" : "Tela cheia e deitada"}
-        >
-          {isFullscreen ? "⤡" : "⛶"}
-        </button>
+        <div id="hud-badges">
+          <div id="cargo-count" className="pixel">📦 0/0</div>
+          <div id="fichas-badge" className="pixel">🪙 0</div>
+          <div id="level-badge" className="pixel">NÍVEL {startLevel}/5</div>
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="fullscreen-btn"
+            aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia e deitada"}
+            title={isFullscreen ? "Sair da tela cheia" : "Tela cheia e deitada"}
+          >
+            {isFullscreen ? "⤡" : "⛶"}
+          </button>
+        </div>
       </div>
 
       {resourceInfo && (
@@ -996,7 +1028,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
 
       <div id="start-overlay" className="overlay">
         <div className="title-big pixel">ACROSS<br />AGE</div>
-        <img id="ship-briefing-img" src={shipImageUrl} alt="Sua nave" style={{ width: 260, borderRadius: 14, border: "2px solid var(--gold-dim)" }} />
+        <img id="ship-briefing-img" src={shipImageUrl} alt="Sua nave" style={{ width: "min(260px, 60%)", borderRadius: 14, border: "2px solid var(--gold-dim)" }} />
         <div className="subtitle" style={{ marginTop: -6, opacity: 0.8 }}>Piloto: {pilotName}</div>
         <div className="subtitle" style={{ marginTop: -10, color: theme.glowColor }}>
           Destino: {theme.label}{theme.danger ? " ☢️ (combustível some mais rápido aqui)" : ""}
@@ -1049,14 +1081,28 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
 
 const ACROSS_AGE_CSS = `
 .across-age-root{ --void:#0a0e27; --void-deep:#050714; --gold:#e8b34a; --gold-dim:#8a6a2a; --teal:#3ddbc9; --danger:#ff5c5c; --ink:#eef0ff; --ink-dim:#9aa0c8;
-  position:relative; width:100%; height:min(78vh, calc(100dvh - 130px)); max-height:760px; min-height:420px; margin:0 auto; border-radius:16px; overflow:hidden;
+  position:relative; width:100%;
+  /* LAYOUT EM COLUNA: a barra de status ocupa a altura que precisar e o
+     palco (#stage) fica com TODO o resto. Antes o palco usava
+     height:calc(100% - 46px), um chute fixo — no celular a barra passa de
+     46px, o palco sobrava pra fora e os controles ficavam cortados. */
+  display:flex; flex-direction:column;
+  height:calc(100dvh - 96px); min-height:420px;
+  margin:0 auto; border-radius:16px; overflow:hidden;
   background:radial-gradient(ellipse at 50% 20%, #14183c 0%, var(--void-deep) 70%); color:var(--ink); font-family:'Space Grotesk',sans-serif; }
+/* em tela grande volta a ter um teto, senão fica gigante no desktop */
+@media (min-width:768px){ .across-age-root{ max-height:760px; } }
 .across-age-root .pixel{ font-family:'Press Start 2P', monospace; }
 .across-age-root .hidden{ display:none !important; }
-.across-age-root #hud{ display:flex; justify-content:space-between; align-items:center; padding:10px 14px; gap:10px; position:relative; z-index:5; }
-.across-age-root #hud-normal{ display:flex; gap:10px; flex:1; align-items:center; }
-.across-age-root .gauge{ flex:1; }
-.across-age-root .gauge-label{ font-size:10px; color:var(--ink-dim); margin-bottom:4px; text-transform:uppercase; }
+
+/* ---- BARRA DE STATUS ----
+   flex-wrap deixa quebrar em duas linhas em vez de estourar a largura
+   (era isso que cortava o "NÍVEL" do lado direito no celular) */
+.across-age-root #hud{ flex:0 0 auto; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:8px 10px; gap:8px; position:relative; z-index:5; }
+.across-age-root #hud-normal{ display:flex; gap:10px; flex:1 1 180px; min-width:0; align-items:center; }
+.across-age-root #hud-badges{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; justify-content:flex-end; }
+.across-age-root .gauge{ flex:1 1 0; min-width:0; }
+.across-age-root .gauge-label{ font-size:10px; color:var(--ink-dim); margin-bottom:4px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .across-age-root .gauge-label-tap{ cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
 .across-age-root .resource-info-popup{ position:absolute; inset:0; z-index:30; background:rgba(5,7,20,.55); display:flex; align-items:flex-start; justify-content:center; padding-top:60px; }
 .across-age-root .resource-info-box{ background:#12163a; border:2px solid var(--gold); border-radius:14px; padding:16px; max-width:300px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,.5); }
@@ -1067,12 +1113,17 @@ const ACROSS_AGE_CSS = `
 .across-age-root .gauge-track{ height:8px; border-radius:4px; background:#1c2050; overflow:hidden; border:1px solid #2b2f66; }
 .across-age-root .gauge-fill{ height:100%; border-radius:4px; transition:width .15s linear; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); }
 .across-age-root .gauge-fill.o2{ background:linear-gradient(90deg,#1c6f8f,#5ad2e6); }
-.across-age-root #level-badge{ font-size:10px; padding:6px 10px; border:1px solid var(--gold); border-radius:20px; color:var(--gold); white-space:nowrap; height:fit-content; }
-.across-age-root #fichas-badge{ font-size:10px; padding:6px 10px; border:1px solid var(--teal); border-radius:20px; color:var(--teal); white-space:nowrap; height:fit-content; }
-.across-age-root #stage{ position:relative; height:calc(100% - 46px); overflow:hidden; }
+.across-age-root #cargo-count{ font-size:9px; color:var(--teal); white-space:nowrap; }
+.across-age-root #level-badge{ font-size:9px; padding:5px 8px; border:1px solid var(--gold); border-radius:20px; color:var(--gold); white-space:nowrap; height:fit-content; }
+.across-age-root #fichas-badge{ font-size:9px; padding:5px 8px; border:1px solid var(--teal); border-radius:20px; color:var(--teal); white-space:nowrap; height:fit-content; }
+
+/* ---- PALCO ----
+   flex:1 = ocupa toda a altura que sobrar depois da barra, seja qual for
+   a altura dela. min-height:0 é obrigatório pra o flex poder encolher. */
+.across-age-root #stage{ position:relative; flex:1 1 auto; min-height:0; overflow:hidden; }
 .across-age-root canvas{ position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
-.across-age-root #controls{ position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; align-items:flex-end; padding:12px 18px calc(14px + env(safe-area-inset-bottom)) 18px; z-index:6; pointer-events:none; }
-.across-age-root .fullscreen-btn{ font-size:14px; padding:6px 10px; border:1px solid var(--gold); border-radius:20px; color:var(--gold); background:transparent; cursor:pointer; height:fit-content; line-height:1; }
+.across-age-root #controls{ position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; align-items:flex-end; padding:10px 16px calc(12px + env(safe-area-inset-bottom)) 16px; z-index:6; pointer-events:none; }
+.across-age-root .fullscreen-btn{ font-size:13px; padding:5px 9px; border:1px solid var(--gold); border-radius:20px; color:var(--gold); background:transparent; cursor:pointer; height:fit-content; line-height:1; }
 .across-age-root .fullscreen-btn:active{ background:var(--gold); color:var(--void-deep); }
 /* tela cheia de verdade: some com o cantinho arredondado e ocupa 100% do dispositivo */
 .across-age-root:fullscreen{ width:100vw !important; height:100vh !important; max-height:none !important; min-height:0 !important; border-radius:0; }
@@ -1088,12 +1139,12 @@ const ACROSS_AGE_CSS = `
     border-radius:0; max-height:none; min-height:0;
   }
 }
-.across-age-root .collect-btn{ position:absolute; left:50%; bottom:112px; transform:translateX(-50%); z-index:7; padding:10px 18px; font-size:12px; animation:collectPulse 1s ease-in-out infinite; }
+.across-age-root .collect-btn{ position:absolute; left:50%; bottom:104px; transform:translateX(-50%); z-index:7; padding:10px 18px; font-size:12px; animation:collectPulse 1s ease-in-out infinite; }
 @keyframes collectPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(232,179,74,.55); } 50%{ box-shadow:0 0 0 14px rgba(232,179,74,0); } }
 .across-age-root .ctrl-btn{
-  pointer-events:auto; width:64px; height:64px; border-radius:50%;
+  pointer-events:auto; width:58px; height:58px; border-radius:50%;
   background:linear-gradient(150deg,#eef1f4 0%,#c3c9d1 35%,#8b929c 70%,#6b7280 100%);
-  border:2px solid #5a6068; color:#2a2f38; font-size:22px; display:flex; align-items:center; justify-content:center;
+  border:2px solid #5a6068; color:#2a2f38; font-size:20px; display:flex; align-items:center; justify-content:center;
   box-shadow:0 4px 0 #4a4f58, inset 0 1px 3px rgba(255,255,255,.7), inset 0 -3px 4px rgba(0,0,0,.15);
   text-shadow:0 1px 0 rgba(255,255,255,.5);
 }
@@ -1103,25 +1154,25 @@ const ACROSS_AGE_CSS = `
   transform:translateY(2px);
 }
 .across-age-root .lever-btn{
-  pointer-events:auto; width:60px; height:104px; border-radius:14px;
+  pointer-events:auto; width:54px; height:92px; border-radius:14px;
   background:linear-gradient(150deg,#dfe3e7,#9aa1ab);
   border:2px solid #5a6068; box-shadow:0 4px 0 #4a4f58, inset 0 1px 3px rgba(255,255,255,.6);
   display:flex; align-items:flex-end; justify-content:center; padding-bottom:8px;
 }
 .across-age-root .lever-track{
-  position:relative; width:10px; height:82px; margin:0 auto; border-radius:6px;
+  position:relative; width:10px; height:72px; margin:0 auto; border-radius:6px;
   background:linear-gradient(180deg,#3a3f47,#1c2026); box-shadow:inset 0 2px 4px rgba(0,0,0,.6);
 }
 .across-age-root .lever-handle{
-  position:absolute; left:50%; bottom:0; width:36px; height:26px; border-radius:8px;
+  position:absolute; left:50%; bottom:0; width:34px; height:24px; border-radius:8px;
   transform:translate(-50%,0); transition:bottom .12s ease;
   background:linear-gradient(150deg,#f2f4f6,#a8afb8); border:2px solid #5a6068;
   display:flex; align-items:center; justify-content:center; font-size:13px; color:#2a2f38;
   box-shadow:0 2px 0 #4a4f58, inset 0 1px 2px rgba(255,255,255,.7);
 }
-.across-age-root .lever-btn:active .lever-handle{ bottom:52px; }
+.across-age-root .lever-btn:active .lever-handle{ bottom:44px; }
 .across-age-root .side-pair{ display:flex; gap:12px; }
-.across-age-root .overlay{ position:absolute; inset:0; z-index:20; background:rgba(5,7,20,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px; gap:14px; overflow:auto; }
+.across-age-root .overlay{ position:absolute; inset:0; z-index:20; background:rgba(5,7,20,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px 20px; gap:12px; overflow:auto; }
 .across-age-root .title-big{ font-size:22px; color:var(--gold); line-height:1.6; }
 .across-age-root .subtitle{ font-size:13px; color:var(--ink-dim); max-width:340px; line-height:1.6; }
 .across-age-root .btn{ font-family:'Press Start 2P', monospace; font-size:12px; padding:14px 22px; border-radius:10px; border:2px solid var(--gold); background:transparent; color:var(--gold); cursor:pointer; }
@@ -1136,8 +1187,8 @@ const ACROSS_AGE_CSS = `
 .across-age-root .tool-icon{ font-size:26px; }
 .across-age-root .tool-name{ color:var(--ink); font-weight:700; }
 .across-age-root .tool-desc{ color:var(--ink-dim); font-size:9px; line-height:1.3; }
-.across-age-root #pilot-badge{ position:absolute; top:12px; left:12px; z-index:10; display:flex; flex-direction:column; align-items:center; gap:3px; }
-.across-age-root #pilot-img{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:3px solid var(--teal); background:#12163a; box-shadow:0 0 10px rgba(61,219,201,.45); }
+.across-age-root #pilot-badge{ position:absolute; top:10px; left:10px; z-index:10; display:flex; flex-direction:column; align-items:center; gap:3px; }
+.across-age-root #pilot-img{ width:52px; height:52px; border-radius:50%; object-fit:cover; border:3px solid var(--teal); background:#12163a; box-shadow:0 0 10px rgba(61,219,201,.45); }
 .across-age-root #pilot-badge span{ font-size:8px; color:var(--teal); letter-spacing:.5px; background:rgba(5,7,20,.7); padding:2px 6px; border-radius:8px; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .across-age-root #aim-section{ display:flex; flex-direction:column; align-items:center; margin-top:4px; }
 .across-age-root #collect-scene{ display:flex; flex-direction:column; align-items:center; gap:0; margin-bottom:10px; }
