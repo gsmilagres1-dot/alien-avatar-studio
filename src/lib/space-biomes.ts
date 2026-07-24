@@ -3,12 +3,13 @@
 // Cobre as 45 fases: 15 destinos solo + 30 destinos da rota
 // estendida (galáxias, nebulosas, aglomerados, exoplanetas).
 //
-// Fundos: fotos REAIS (NASA/ESA-Hubble/ESO) em src/assets/
-// (bg-*.jpg) ou por hotlink oficial. Se um hotlink falhar,
-// a fase usa só a paleta de cor — o jogo nunca quebra.
+// Fundos: fotos REAIS (NASA/ESA-Hubble/ESA-Webb/ESO) em
+// src/assets/ (bg-*.jpg) ou por hotlink oficial. Se um hotlink
+// falhar, a fase usa só a paleta de cor — o jogo nunca quebra.
 //
 // CRÉDITOS OBRIGATÓRIOS na tela de créditos do jogo:
-//   NASA/JPL-Caltech · ESA/Hubble (CC BY 4.0) · ESO (CC BY 4.0)
+//   NASA/JPL-Caltech · ESA/Hubble (CC BY 4.0) · ESA/Webb (CC BY 4.0)
+//   ESO (CC BY 4.0)
 //   NASA/JPL-Caltech/SwRI/MSSS/Thomas Thomopoulos (Júpiter)
 //
 // bgFit: "cover" = foto preenche a tela (texturas/superfícies);
@@ -206,6 +207,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://science.nasa.gov/wp-content/uploads/2024/05/europa-travel-poster-image.jpg",
     bgFit: "cover",
   },
+
   kepler: {
     id: "kepler", label: "Kepler-16b", kind: "exoplanet",
     skyTop: "#0a1a2a", skyBottom: "#2a6a7a", starColor: "#a0f0ff",
@@ -216,12 +218,17 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://d2pn8kiwq2w21t.cloudfront.net/original_images/kepler16b.jpg",
     bgFit: "cover",
   },
+
   alpha_a: {
     id: "alpha_a", label: "Alpha Centauri A", kind: "star",
     skyTop: "#2a1a00", skyBottom: "#ffb020", starColor: "#fff0c0",
     horizonColor: "#4a2c00", horizonGlow: "rgba(255,180,40,0.4)", glowColor: "#ffb020",
     danger: true, decor: ["🔥", "☀️👽", "🛰️💥"],
+    // Alpha Centauri A e B — ESO, CC BY 4.0. Estrela → distant.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1702b.jpg",
+    bgFit: "distant",
   },
+
   proxima: {
     id: "proxima", label: "Proxima Centauri b", kind: "exoplanet",
     skyTop: "#2a0a0a", skyBottom: "#9a2a2a", starColor: "#ffb0a0",
@@ -231,6 +238,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1629a.jpg",
     bgFit: "cover",
   },
+
   sol: {
     id: "sol", label: "Sol", kind: "star",
     skyTop: "#3a1400", skyBottom: "#ff6a00", starColor: "#ffd080",
@@ -240,11 +248,15 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_2048_0304.jpg",
     bgFit: "distant",
   },
+
   betelgeuse: {
     id: "betelgeuse", label: "Betelgeuse", kind: "star",
     skyTop: "#2a0000", skyBottom: "#c9302a", starColor: "#ffb0a0",
     horizonColor: "#4a0808", horizonGlow: "rgba(220,50,40,0.4)", glowColor: "#dc3228",
     danger: true, decor: ["💥", "👽🔴", "🛰️💫", "⭐💀"],
+    // Betelgeuse — ESO, CC BY 4.0. Estrela → distant.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso2109c.jpg",
+    bgFit: "distant",
   },
 
   // ============ ROTA ESTENDIDA — GALÁXIAS ============
@@ -256,6 +268,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic1502a.jpg",
     bgFit: "cover",
   },
+
   triangulum: {
     id: "triangulum", label: "Galáxia do Triângulo", ...GALAXY_BASE,
     decor: ["🔺🌌", "👽👀", "⭐⭐"],
@@ -263,6 +276,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic1901a.jpg",
     bgFit: "cover",
   },
+
   sombrero: {
     id: "sombrero", label: "Galáxia do Sombreiro", ...GALAXY_BASE,
     decor: ["👒🌌", "👽🎩", "⚫💫"],
@@ -270,6 +284,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/opo0328a.jpg",
     bgFit: "distant",
   },
+
   whirlpool: {
     id: "whirlpool", label: "Galáxia Redemoinho", ...GALAXY_BASE,
     decor: ["🌀🌌", "👽😵‍💫", "🛸💫"],
@@ -277,6 +292,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0506a.jpg",
     bgFit: "distant",
   },
+
   pinwheel: {
     id: "pinwheel", label: "Galáxia Cata-Vento", ...GALAXY_BASE,
     decor: ["🎡🌌", "👽🌟", "🛰️"],
@@ -284,6 +300,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0602a.jpg",
     bgFit: "distant",
   },
+
   cigar: {
     id: "cigar", label: "Galáxia do Charuto", ...GALAXY_BASE,
     decor: ["💨🌌", "👽🚬❌", "⭐🏭"],
@@ -291,6 +308,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0604a.jpg",
     bgFit: "distant",
   },
+
   centaurus_a: {
     id: "centaurus_a", label: "Centaurus A", ...GALAXY_BASE,
     decor: ["📡🌌", "👽🎧", "⚫💨"],
@@ -298,16 +316,23 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso0903a.jpg",
     bgFit: "distant",
   },
+
   smc: {
     id: "smc", label: "Pequena Nuvem de Magalhães", ...GALAXY_BASE,
     decor: ["☁️⭐", "👽🇧🇷🔭", "🛸"],
-    // sem foto por enquanto — paleta de galáxia
+    // Maior imagem infravermelha já feita da SMC, telescópio VISTA — ESO, CC BY 4.0.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1714a.jpg",
+    bgFit: "cover",
   },
+
   lmc: {
     id: "lmc", label: "Grande Nuvem de Magalhães", ...GALAXY_BASE,
     decor: ["☁️🌟", "🕷️🌌", "💥1987"],
-    // sem foto por enquanto — paleta de galáxia
+    // Trecho detalhado da LMC, MPG/ESO 2,2 m em La Silla — ESO, CC BY 4.0.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1021a.jpg",
+    bgFit: "cover",
   },
+
   messier_87: {
     id: "messier_87", label: "M87 (Virgo A)", ...GALAXY_BASE,
     danger: true, // buraco negro supermassivo de verdade
@@ -325,6 +350,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0601a.jpg",
     bgFit: "cover",
   },
+
   eagle_nebula: {
     id: "eagle_nebula", label: "Nebulosa da Águia", ...NEBULA_BASE,
     decor: ["🦅🌌", "🏛️⭐", "👽📸"],
@@ -332,6 +358,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic1501a.jpg",
     bgFit: "cover",
   },
+
   crab_nebula: {
     id: "crab_nebula", label: "Nebulosa do Caranguejo", ...NEBULA_BASE,
     danger: true, // pulsar girando 30x por segundo no centro
@@ -340,6 +367,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0515a.jpg",
     bgFit: "cover",
   },
+
   horsehead: {
     id: "horsehead", label: "Cabeça de Cavalo", ...NEBULA_BASE,
     decor: ["🐴🌌", "👽🤠", "🌑"],
@@ -347,6 +375,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic1307a.jpg",
     bgFit: "cover",
   },
+
   carina_nebula: {
     id: "carina_nebula", label: "Nebulosa de Carina", ...NEBULA_BASE,
     decor: ["🏔️🌌", "🔭✨", "👽🤩"],
@@ -355,10 +384,13 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esawebb.org/archives/images/screen/weic2205a.jpg",
     bgFit: "cover",
   },
+
   ring_nebula: {
     id: "ring_nebula", label: "Nebulosa do Anel", ...NEBULA_BASE,
     decor: ["💍🌌", "👽💎", "⚪🔥"],
-    // sem foto por enquanto — paleta de nebulosa
+    // M57 pelo Hubble (2013) — NASA/ESA e C. Robert O'Dell, CC BY 4.0.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic1310a.jpg",
+    bgFit: "cover",
   },
 
   // ============ ROTA ESTENDIDA — EXOPLANETAS ============
@@ -369,6 +401,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1706a.jpg",
     bgFit: "cover",
   },
+
   kepler_186f: {
     id: "kepler_186f", label: "Kepler-186f", ...EXO_BASE,
     decor: ["🌍👯", "🔴🌅", "👽🌱"],
@@ -376,6 +409,7 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia17/pia17999/PIA17999.jpg",
     bgFit: "cover",
   },
+
   kepler_452b: {
     id: "kepler_452b", label: "Kepler-452b", ...EXO_BASE,
     decor: ["🌍👵", "☀️😎", "👽📅385"],
@@ -383,30 +417,39 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia19/pia19827/PIA19827.jpg",
     bgFit: "cover",
   },
+
   proxima_c: {
     id: "proxima_c", label: "Proxima Centauri c", ...EXO_BASE,
     danger: true,
     decor: ["🥶🪐", "🔴⭐", "👽🧊"],
-    // sem foto por enquanto — paleta de exoplaneta
+    // sem foto oficial livre — usa só a paleta de cor
   },
+
   hd_209458b: {
     id: "hd_209458b", label: "Osiris (HD 209458 b)", ...EXO_BASE,
     danger: true, // planeta evaporando de verdade
     decor: ["💨🪐", "☄️🔥", "👽🏜️"],
-    // sem foto por enquanto — paleta de exoplaneta
+    // sem foto oficial livre — usa só a paleta de cor
   },
+
   "55_cancri_e": {
     id: "55_cancri_e", label: "55 Cancri e", ...EXO_BASE,
     danger: true, // oceano de lava de verdade
     decor: ["💎🪐", "🌋🔥", "👽🤑"],
-    // sem foto por enquanto — paleta de exoplaneta
+    // Concepção artística oficial do James Webb — NASA/ESA/CSA, CC BY 4.0.
+    bgImageUrl: "https://cdn.esawebb.org/archives/images/screen/weic2412a.jpg",
+    bgFit: "cover",
   },
 
   // ============ ROTA ESTENDIDA — SISTEMAS ESTELARES ============
   alpha_cen_b: {
     id: "alpha_cen_b", label: "Alpha Centauri B", ...STARSYS_BASE,
     decor: ["🟠⭐", "3️⃣☀️", "👽🏡"],
+    // Alpha Centauri B — ESO, CC BY 4.0. Estrela → distant.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1241e.jpg",
+    bgFit: "distant",
   },
+
   sirius: {
     id: "sirius", label: "Sirius A & B", ...STARSYS_BASE,
     decor: ["💎⭐", "🐕🌟", "👽😎"],
@@ -414,16 +457,19 @@ export const BIOMES: Record<string, BiomeTheme> = {
     bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/heic0516a.jpg",
     bgFit: "distant",
   },
+
   vega: {
     id: "vega", label: "Vega", ...STARSYS_BASE,
     decor: ["📏⭐", "🧭🔮", "👽📡"],
+    // sem foto oficial livre — usa só a paleta de cor
   },
+
   betelgeuse_team: {
     id: "betelgeuse_team", label: "Betelgeuse (visita guiada)", ...STARSYS_BASE,
     danger: true, // supergigante prestes a explodir (em escala cósmica!)
     decor: ["🔴💣", "💥⏳", "👽🏃"],
-    // Betelgeuse pelo ALMA — ESO/ALMA, CC BY 4.0. Estrela → distant.
-    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso1721a.jpg",
+    // Betelgeuse (visita guiada) — ESO, CC BY 4.0. Estrela → distant.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/eso2109a.jpg",
     bgFit: "distant",
   },
 
@@ -431,13 +477,17 @@ export const BIOMES: Record<string, BiomeTheme> = {
   pleiades: {
     id: "pleiades", label: "Plêiades (M45)", ...CLUSTER_BASE,
     decor: ["7️⃣⭐", "💙✨", "👽🚗"],
-    // sem foto por enquanto — paleta de aglomerado
+    // Plêiades (M45) — ESO, CC BY 4.0. Campo largo → cover.
+    bgImageUrl: "https://cdn.eso.org/images/wallpaper4/b11.jpg",
+    bgFit: "cover",
   },
+
   hyades: {
     id: "hyades", label: "Híades", ...CLUSTER_BASE,
     decor: ["🐂⭐", "🏠✨", "👽🔭"],
-    // sem foto por enquanto — paleta de aglomerado
+    // sem foto oficial livre — usa só a paleta de cor
   },
+
   omega_centauri: {
     id: "omega_centauri", label: "Omega Centauri", ...CLUSTER_BASE,
     decor: ["💫🌟", "🔟M⭐", "👽😵"],
@@ -453,7 +503,9 @@ export const BIOMES: Record<string, BiomeTheme> = {
     horizonColor: "#1a0a30", horizonGlow: "rgba(200,140,255,0.3)", glowColor: "#c88aff",
     danger: true, // mais brilhante que 100 Vias Lácteas de verdade
     decor: ["💡🌌", "👽🕶️🕶️", "⚫🔦"],
-    // sem foto por enquanto — paleta de quasar
+    // Quasar 3C 273 pelo Hubble — ESA/Hubble & NASA, CC BY 4.0. → distant.
+    bgImageUrl: "https://cdn.esahubble.org/archives/images/screen/potw1346a.jpg",
+    bgFit: "distant",
   },
 };
 
