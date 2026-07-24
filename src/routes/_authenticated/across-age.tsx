@@ -578,6 +578,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       // espelha pro resto — assim elas viram pro lado certo sem nunca
       // aparecer de cabeça pra baixo, e o motor continua sempre acompanhando.
       const freelyRotates = (shipStats.noseAngleDeg ?? 0) === -90;
+      const mirrorsOnCurve = !freelyRotates || Boolean(shipStats.flipX);
       // Espelhamento da ARTE: naves cuja imagem nasce com o bico virado pra
       // ESQUERDA são marcadas com flipX:true em ship-stats.ts.
       // (CORRIGIDO: antes isso só olhava noseAngleDeg===180, e como nenhuma
@@ -585,21 +586,23 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       // por isso que as naves continuavam voando invertidas.)
       // Espelha o corpo desde o início; o propulsor usa o mesmo referencial
       // local, então acompanha certo, na traseira de verdade.
-      const baseFlip = (shipStats.flipX || (shipStats.noseAngleDeg ?? 0) === 180) ? -1 : 1;
+      const baseFlipX = (!freelyRotates && (shipStats.flipX || (shipStats.noseAngleDeg ?? 0) === 180)) ? -1 : 1;
 
       let drawRot = ship.angle;
-      let mirror = 1;
-      if (!freelyRotates) {
+      let mirrorX = baseFlipX;
+      let mirrorY = 1;
+      if (mirrorsOnCurve) {
         let a = ship.angle % (Math.PI * 2);
         if (a > Math.PI) a -= Math.PI * 2;
         if (a < -Math.PI) a += Math.PI * 2;
         if (Math.abs(a) <= Math.PI / 2) {
-          mirror = 1; drawRot = a;
+          drawRot = a;
         } else {
-          mirror = -1; drawRot = a > 0 ? a - Math.PI : a + Math.PI;
+          drawRot = a > 0 ? a - Math.PI : a + Math.PI;
+          if (freelyRotates) mirrorY = -1;
+          else mirrorX *= -1;
         }
       }
-      mirror *= baseFlip;
 
       // direção "pra trás" da nave nesse instante (ângulo físico real) —
       // usada pra alinhar os itens coletados atrás dela
@@ -617,7 +620,7 @@ function GameCanvas({ pilotAvatarUrl, shipImageUrl, shipKey, pilotName, startLev
       c.rotate(drawRot);
       // aplica sempre que houver espelhamento — inclusive nas naves que giram
       // 360° (noseAngleDeg -90), que antes ficavam de fora dessa linha
-      if (mirror !== 1) c.scale(mirror, 1);
+      if (mirrorX !== 1 || mirrorY !== 1) c.scale(mirrorX, mirrorY);
 
       if (shipImgReady) {
         c.drawImage(shipImg, -shipDrawW / 2, -shipDrawH / 2, shipDrawW, shipDrawH);
