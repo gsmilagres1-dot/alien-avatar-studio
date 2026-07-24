@@ -194,8 +194,12 @@ export const setHangarSelection = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const progress = await ensureProgress(supabaseAdmin, userId);
 
+    // Testing: destrava todas as naves no servidor também (espelha
+    // UNLOCK_ALL_SHIPS_FOR_TESTING do HangarSelect). Trocar para false
+    // para reativar a checagem de compra.
+    const UNLOCK_ALL_SHIPS_FOR_TESTING = true;
     const extraShip = EXTRA_SHIPS.find((s) => s.id === data.selectedShip);
-    if (extraShip && extraShip.price > 0) {
+    if (!UNLOCK_ALL_SHIPS_FOR_TESTING && extraShip && extraShip.price > 0) {
       const purchasedShips = (progress.purchased_ships as string[] | null) ?? [];
       if (!purchasedShips.includes(data.selectedShip)) {
         throw new Error("Essa nave ainda não foi desbloqueada");
