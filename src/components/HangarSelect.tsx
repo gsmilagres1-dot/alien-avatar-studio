@@ -93,20 +93,50 @@ const EXTRA_SHIP_IMAGES: Record<string, string> = {
   "bolha-lander": shipBolhaLander,
 };
 
-// Naves cuja arte original nasce com o bico virado pra ESQUERDA — mesma
-// lista que recebeu noseAngleDeg: 180 em ship-stats.ts. A miniatura da
-// loja é espelhada (scaleX(-1)) pra mostrar a nave já virada pro lado
-// certo (bico/farol pra direita), igual vai aparecer parada no jogo.
+// ============================================================================
+// ORIENTAÇÃO DAS NAVES NA VITRINE DO HANGAR
+// ============================================================================
+//
+// Existem DOIS tipos de nave e a regra é diferente para cada um:
+//
+// TIPO A — nave vista de PERFIL (lado). Ônibus, coupé, jipe, pod racer,
+//          cruzadores, naves alongadas.
+//          Regra: o BICO tem que apontar para a DIREITA (lado da decolagem).
+//          Se a arte original nasce com o bico pra ESQUERDA, o id entra na
+//          lista NEEDS_MIRROR abaixo e a miniatura é espelhada.
+//
+// TIPO B — nave vista de FRENTE, formato oval / disco / cabine. Landers,
+//          discos voadores, quadricóptero, cabine teleportadora, "eggs".
+//          Regra: a PROPULSÃO fica na BASE. Já estão certas como estão.
+//          NUNCA colocar um id do Tipo B na lista NEEDS_MIRROR — espelhar
+//          uma nave dessas deita ela de lado e quebra o visual.
+//
+// Naves do TIPO B identificadas (NÃO adicionar em NEEDS_MIRROR):
+//   furtiva, teleportadora, navigator, navigator-original, unilander,
+//   unilander-77, egg-lander-1001, cruzer-noturno, galactic-diamond,
+//   modal-multidimensional
+//
+// ============================================================================
+
 const NEEDS_MIRROR = new Set([
-  "furtiva",
+  // --- naves base (as 3 de perfil): a arte nasce com o bico pra esquerda ---
+  "esportiva",
+  "offroad",
+  "corrida",
+
+  // --- extras que reaproveitam as imagens base acima ---
+  // (aerodeslizador usa a arte da esportiva, vtol-classica usa a da offroad,
+  //  quadricoptero usa a da corrida — precisam do mesmo espelhamento)
+  "aerodeslizador",
+  "vtol-classica",
+  "quadricoptero",
+
+  // --- extras de perfil com arte própria virada pra esquerda ---
   "cadillactic-zx",
   "modulo-c23",
-  "navigator-original",
   "supersonic-force1",
   "easy-rider-bus",
   "hover-coupe-rz",
-  "cruzer-noturno",
-  "cruzador-aurun",
   "aranha-lander",
   "super-duty-vanguard",
   "speed-bee-predator",
@@ -114,6 +144,12 @@ const NEEDS_MIRROR = new Set([
   "speed-bee-rubi",
   "bolha-lander",
 ]);
+
+// REMOVIDOS da lista antiga (eram Tipo B ou já nasciam viradas pra direita):
+//   furtiva              -> Tipo B, cabine, propulsão na base
+//   navigator-original   -> Tipo B, disco
+//   cruzer-noturno       -> Tipo B, disco
+//   cruzador-aurun       -> perfil, já nasce com o bico pra direita
 
 function shipThumbTransform(id: string) {
   return NEEDS_MIRROR.has(id) ? "scale(1.08) scaleX(-1)" : "scale(1.08)";
