@@ -135,6 +135,15 @@ function skinLabel(skin: RaceSkin) {
   return RACES.find((r) => r.id === skin)?.name ?? skin;
 }
 
+// ============================================================================
+// MODO TESTE — destrava TODAS as naves do hangar
+// ============================================================================
+// Deixe true pra conferir posicionamento/orientação de todas as naves sem
+// precisar comprar cada uma. Isso NÃO dá as naves de verdade na conta: é só
+// visual, pra teste. Volte pra false antes de publicar.
+const UNLOCK_ALL_SHIPS_FOR_TESTING = true;
+// ============================================================================
+
 export function HangarSelect({
   ownAvatarUrl,
   ownShipUrl,
@@ -177,7 +186,9 @@ export function HangarSelect({
   const selectedShip = ship ?? hangarState.selectedShip;
   const selectedSkin = skin === undefined ? hangarState.selectedSkin : skin;
   const unlockedSet = new Set(hangarState.unlockedSkins);
-  const unlockedShipSet = new Set(hangarState.unlockedExtraShips);
+  const unlockedShipSet = UNLOCK_ALL_SHIPS_FOR_TESTING
+    ? new Set(EXTRA_SHIPS.map((s) => s.id))
+    : new Set(hangarState.unlockedExtraShips);
 
   async function handleBuyShip(id: string) {
     setBusyShip(id);
