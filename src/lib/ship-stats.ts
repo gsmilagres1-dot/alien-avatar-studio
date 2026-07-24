@@ -60,14 +60,14 @@ export const SHIP_STATS: Record<string, ShipStats> = {
   // ---- naves base (SHIPS) ----
   esportiva: { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.85, speedMult: 1.15, blurb: "Ágil, carga baixa", noseAngleDeg: 0, flipX: true },
   offroad: { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Equilibrada, um pouco mais robusta", noseAngleDeg: 0, flipX: true },
-  corrida: { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.85, speedMult: 1.20, blurb: "Rápida, carga baixa", noseAngleDeg: 0 },
+  corrida: { category: "leve", fuelMult: 1.10, o2Mult: 1.05, cargoMult: 0.85, speedMult: 1.20, blurb: "Rápida, carga baixa", noseAngleDeg: 0, flipX: true },
   teleportadora: { category: "grande", fuelMult: 0.85, o2Mult: 0.90, cargoMult: 1.30, speedMult: 0.90, blurb: "Carrega muito, mais lenta", noseAngleDeg: -90 },
 
   // ---- 11 naves extras (EXTRA_SHIPS) ----
   // aerodeslizador e vtol-classica REAPROVEITAM a arte da esportiva e da
   // offroad — como aquelas duas levam flipX, estas precisam do mesmo.
-  aerodeslizador: { category: "medio", fuelMult: 1.05, o2Mult: 1.00, cargoMult: 1.00, speedMult: 1.05, blurb: "Equilibrada", noseAngleDeg: -90, flipX: true },
-  "vtol-classica": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Estável, carga um pouco maior", noseAngleDeg: -90, flipX: true },
+  aerodeslizador: { category: "medio", fuelMult: 1.05, o2Mult: 1.00, cargoMult: 1.00, speedMult: 1.05, blurb: "Equilibrada", noseAngleDeg: 0, flipX: true },
+  "vtol-classica": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Estável, carga um pouco maior", noseAngleDeg: 0, flipX: true },
   // quadricoptero usa a arte da corrida, que NÃO leva flipX
   quadricoptero: { category: "micro", fuelMult: 1.35, o2Mult: 1.25, cargoMult: 0.60, speedMult: 1.30, blurb: "Muita autonomia, carga mínima", noseAngleDeg: -90 },
   // furtiva = cabine teleportadora, propulsão na base — nunca espelhar
@@ -91,7 +91,7 @@ export const SHIP_STATS: Record<string, ShipStats> = {
   // ADICIONADO flipX — arte de perfil com o bico pra esquerda
   "supersonic-force1": { category: "medio", fuelMult: 0.95, o2Mult: 0.98, cargoMult: 1.10, speedMult: 1.10, blurb: "Veloz, carga um pouco maior", noseAngleDeg: 0, flipX: true },
   "easy-rider-bus": { category: "grande", fuelMult: 0.72, o2Mult: 0.82, cargoMult: 1.55, speedMult: 0.78, blurb: "Ônibus espacial, carga máxima", noseAngleDeg: 0, flipX: true },
-  "unilander-77": { category: "micro", fuelMult: 1.38, o2Mult: 1.28, cargoMult: 0.55, speedMult: 1.28, blurb: "Moto voadora, autonomia enorme", noseAngleDeg: -90 },
+  "unilander-77": { category: "micro", fuelMult: 1.38, o2Mult: 1.28, cargoMult: 0.55, speedMult: 1.28, blurb: "Moto voadora, autonomia enorme", noseAngleDeg: -90, flipX: true },
   "unilander": { category: "leve", fuelMult: 1.15, o2Mult: 1.10, cargoMult: 0.80, speedMult: 1.20, blurb: "VTOL leve e ágil", noseAngleDeg: -90 },
   "egg-lander-1001": { category: "micro", fuelMult: 1.32, o2Mult: 1.22, cargoMult: 0.60, speedMult: 1.25, blurb: "Drone compacto, pouca carga", noseAngleDeg: -90 },
   "navigator": { category: "grande", fuelMult: 0.70, o2Mult: 0.80, cargoMult: 1.60, speedMult: 0.75, blurb: "Estação-nave, carga máxima", noseAngleDeg: -90 },
@@ -100,10 +100,10 @@ export const SHIP_STATS: Record<string, ShipStats> = {
 
   // ---- leva nova: 12 naves ----
   "cruzer-noturno": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.18, blurb: "Ágil, visual furtivo", noseAngleDeg: -90 },
-  "cruzador-aurun": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Cruzador robusto e equilibrado", noseAngleDeg: 0 },
+  "cruzador-aurun": { category: "medio", fuelMult: 1.00, o2Mult: 1.00, cargoMult: 1.05, speedMult: 0.95, blurb: "Cruzador robusto e equilibrado", noseAngleDeg: 0, flipX: true },
   "aranha-lander": { category: "grande", fuelMult: 0.75, o2Mult: 0.85, cargoMult: 1.45, speedMult: 0.80, blurb: "Mecânica pesada, carga alta", noseAngleDeg: 0, flipX: true },
-  "galactic-diamond": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.20, blurb: "Angular e rápida", noseAngleDeg: 0, flipX: true },
-  "modal-multidimensional": { category: "medio", fuelMult: 0.98, o2Mult: 1.00, cargoMult: 1.10, speedMult: 1.00, blurb: "Tecnologia densa, carga extra", noseAngleDeg: 0, flipX: true },
+  "galactic-diamond": { category: "leve", fuelMult: 1.12, o2Mult: 1.08, cargoMult: 0.85, speedMult: 1.20, blurb: "Angular e rápida", noseAngleDeg: 0 },
+  "modal-multidimensional": { category: "medio", fuelMult: 0.98, o2Mult: 1.00, cargoMult: 1.10, speedMult: 1.00, blurb: "Tecnologia densa, carga extra", noseAngleDeg: 0 },
   "super-duty-vanguard": { category: "grande", fuelMult: 0.72, o2Mult: 0.82, cargoMult: 1.55, speedMult: 0.78, blurb: "Nave de guerra, carga máxima", noseAngleDeg: 0, flipX: true },
   "speed-bee-predator": { category: "medio", fuelMult: 0.95, o2Mult: 0.98, cargoMult: 1.05, speedMult: 1.10, blurb: "Ágil e agressiva", noseAngleDeg: -90 },
   // REMOVIDO flipX — a arte já nasce com o bico pra direita
